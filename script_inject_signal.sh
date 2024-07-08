@@ -21,7 +21,7 @@ mkdir -p $tmp_out
 rsync -Pav $fb_path $tmp_in
 rsync -Pav $par_path $tmp_in
 
-command="python3 inject_pulsar.py" 
+command="python3 script_inject_signal.py" 
 inputs="--signal $tmp_in/example.pulsar --filterbank=$tmp_in/$fb_name --output=$tmp_out"
 singularity exec -H $HOME:/home -B $sing_img $command $inputs
 
