@@ -6,6 +6,10 @@ import astropy.constants as const
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from binary_model import PulsarBinaryModel
 
+# run:
+# binary = InteractiveOrbit(period=5, pulsar_mass=1.4, companion_mass=2, eccentricity=0.5, inclination=90, LoAN=0, AoP=0)
+# binary.plot_orbit()
+
 class InteractiveOrbit(PulsarBinaryModel):
     def __init__(self, period=5, pulsar_mass=1.4, companion_mass=2, eccentricity=0.5, inclination=90, LoAN=0, AoP=0):
         super().__init__(period=period/3600, pulsar_mass=pulsar_mass, companion_mass=companion_mass, eccentricity=eccentricity,
