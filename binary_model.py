@@ -20,7 +20,7 @@ class PulsarBinaryModel:
 
         # orbit interpolation
         timeaxis = np.linspace(0, self.period, 10000)
-        orbit_delay = self.get_orbital_delay(timeaxis, interp=False)
+        orbit_delay = self.get_roemer_delay(timeaxis, interp=False)
         self.interp_orbit = interp1d(timeaxis, orbit_delay, kind='cubic')
         
     def get_semi_major(self):
