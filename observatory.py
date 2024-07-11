@@ -1,7 +1,8 @@
 import numpy as np 
 import astropy.units as u
 from astropy.time import Time
-from astropy.coordinates import SkyCoord, EarthLocation, get_body, solar_system_ephemeris
+from scipy.interpolate import interp1d
+from astropy.coordinates import SkyCoord, EarthLocation
 
 
 class Observation:
@@ -17,13 +18,14 @@ class Observation:
                                unit=(u.hourangle, u.deg), frame='gcrs',
                                obsgeoloc=np.array([*self.observatory.value])*u.m)
         
-        self.ref_time = Time(fb_header['tstart'], format='mjd')
+        self.ref_time = fb_header['tstart']
         self.dt = fb_header['tsamp']
         self.n_chan = fb_header['nchans']
         self.nbits = fb_header['nbits']
         self.n_samples = filterbank.n_samples
         self.fb_mean = filterbank.fb_mean
         self.fb_std = filterbank.fb_std
+        self.ephemeris = 'de432s'
         
         self.freq_arr = np.linspace(fb_header['fch1'], 
                                     fb_header['fch1'] + fb_header['nchans']*fb_header['foff'], 
@@ -32,6 +34,9 @@ class Observation:
         self.low_f = min(self.freq_arr)
         self.high_f = max(self.freq_arr)
 
+        self.topo_delay = self.get_topo_delay()
+
+        
     @staticmethod
     def convert_coord(coord_str):
         coord_str = str(coord_str)
@@ -47,12 +52,10 @@ class Observation:
             formatted_coord = '-' + formatted_coord
 
         return formatted_coord   
-    
-    @staticmethod
-    def set_ephemeris(ephemeris='de432s'):
-        solar_system_ephemeris.set(ephemeris) 
 
-    def get_topo_delay(self, dt, mjd): #todo
-        times = np.linspace(mjd, mjd+dt*u.day, 1000)
-        sun_refs =  get_body('sun', times, self.observatory)
-        seps = self.source.separation(sun_refs)
+    def get_topo_delay(self):
+        time_samples = time_samples = np.linspace(-self.dt, self.dt*(self.n_samples+1) * u.s.to(u.day), 10000) + self.ref_time
+        delta_time = Time(time_samples, format='mjd').light_travel_time(self.source, kind='barycentric', 
+                                                                        ephemeris=self.ephemeris, 
+                                                                        location=self.observatory)
+        return interp1d(time_samples, delta_time.to(u.s).value, kind='cubic')
