@@ -32,7 +32,8 @@ class PulsarSignal:
         return self.power_constant * (freq)**self.spectral_index
 
     def pulse(self, timeseries, freq):
-        return  self.spectral_power(freq) * np.exp(-(timeseries%self.p0)**2/(2*self.pulse_sigma**2))
+        phase = timeseries%self.p0 - self.phase_offset*self.p0
+        return  self.spectral_power(freq) * np.exp(-(phase)**2/(2*self.pulse_sigma**2))
     
     def period_doppler_shift(self, vr, rel=False):
         beta =  vr/const.c.value
@@ -53,7 +54,7 @@ class PulsarSignal:
         time_array = np.tile(timeseries, (len(self.obs.freq_arr),1)).T
         DM_array = np.tile(self.DM_delays, (len(timeseries),1))
 
-        pulse_offset = self.p0 * self.phase_offset - DM_array
+        pulse_offset = -DM_array
 
         if self.binary.period != 0:
             orbit_delay = self.binary.get_roemer_delay(timeseries) 
