@@ -48,13 +48,18 @@ class PulsarSignal:
         already_pulsed = np.floor((timeseries[0]-self.obs.dt)/self.p0)
         return int(n_pulses), max(int(already_pulsed), 0)
 
-    def generate_signal(self, n_samples, sample_start=0):
+    def generate_signal(self, n_samples, sample_start=0, bary=False):
         timeseries = np.linspace(self.obs.dt*sample_start, self.obs.dt*(n_samples+sample_start-1), n_samples)
-        freq_array = np.tile(self.obs.freq_arr, (len(timeseries),1))
         time_array = np.tile(timeseries, (len(self.obs.freq_arr),1)).T
-        DM_array = np.tile(self.DM_delays, (len(timeseries),1))
 
-        pulse_offset = -DM_array
+        freq_array = np.tile(self.obs.freq_arr, (len(timeseries),1))
+        DM_array = np.tile(self.DM_delays, (len(timeseries),1))
+        pulse_offset = - DM_array
+
+        if bary:
+            bary_delay = self.obs.topo_delay(timeseries*u.s.to(u.day) + self.obs.ref_time)
+            bary_delay_arr = np.tile(bary_delay, (len(self.obs.freq_arr),1)).T
+            pulse_offset += bary_delay_arr
 
         if self.binary.period != 0:
             orbit_delay = self.binary.get_roemer_delay(timeseries) 
