@@ -54,7 +54,7 @@ class Observation:
         return formatted_coord   
 
     def get_topo_delay(self):
-        time_samples = time_samples = np.linspace(-self.dt, self.dt*(self.n_samples+1) * u.s.to(u.day), 10000) + self.ref_time
+        time_samples = np.linspace(-self.dt, self.dt*(self.n_samples+1) * u.s.to(u.day), 10000) + self.ref_time
         delta_time = Time(time_samples, format='mjd').light_travel_time(self.source, kind='barycentric', 
                                                                         ephemeris=self.ephemeris, 
                                                                         location=self.observatory)
