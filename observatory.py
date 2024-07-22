@@ -1,8 +1,9 @@
 import numpy as np 
 import astropy.units as u
 from astropy.time import Time
+import astropy.constants as const
 from scipy.interpolate import interp1d
-from astropy.coordinates import SkyCoord, EarthLocation
+from astropy.coordinates import SkyCoord, EarthLocation, get_body_barycentric
 
 
 class Observation:
@@ -23,6 +24,7 @@ class Observation:
         self.n_chan = fb_header['nchans']
         self.nbits = fb_header['nbits']
         self.n_samples = filterbank.n_samples
+        self.fb_time = self.n_samples * self.dt
         self.fb_mean = filterbank.fb_mean
         self.fb_std = filterbank.fb_std
         self.ephemeris = 'de432s'
@@ -54,8 +56,8 @@ class Observation:
         return formatted_coord   
 
     def get_topo_delay(self):
-        time_samples = np.linspace(-self.dt, self.dt*(self.n_samples+1) * u.s.to(u.day), 10000) + self.ref_time
-        delta_time = Time(time_samples, format='mjd').light_travel_time(self.source, kind='barycentric', 
-                                                                        ephemeris=self.ephemeris, 
+        time_samples = np.linspace(0, self.dt*(self.n_samples+1) * u.s.to(u.day)*2, 10000) + self.ref_time
+        delta_time = Time(time_samples, format='mjd', scale='utc').light_travel_time(self.source, kind='barycentric', 
                                                                         location=self.observatory)
         return interp1d(time_samples, delta_time.to(u.s).value, kind='cubic')
+    
