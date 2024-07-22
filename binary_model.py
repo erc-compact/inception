@@ -89,4 +89,4 @@ class PulsarBinaryModel:
         if interp:
             return self.interp_orbit((t-ref_time)%self.period)
         else:
-            return -self.star_coord(self.true_anomaly(t-ref_time))[2]/const.c.value
+            return self.star_coord(self.true_anomaly(t-ref_time))[2]/const.c.value
