@@ -63,7 +63,7 @@ class PulsarSignal:
             pulse_offset += bary_delay + (topo_time_utc.tdb.value - topo_time_utc.value)*u.day.to(u.s)
         
         if self.binary.period != 0:
-            orbit_delay = self.binary.get_orbital_delay(timeseries+pulse_offset) 
+            orbit_delay = self.binary.get_roemer_delay(timeseries+pulse_offset) 
             pulse_offset -= orbit_delay
 
         pulse_offset_array = np.tile(pulse_offset, (len(self.obs.freq_arr),1)).T + DM_array
