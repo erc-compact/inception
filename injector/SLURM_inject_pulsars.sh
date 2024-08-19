@@ -31,7 +31,7 @@ singularity exec -H $HOME:/home -B $sing_img $command $inputs
 
 output_dir="/path/output"
 rsync -Pav  $tmp_dir/*.par  $output_dir
-rsync -Pav  $tmp_in/filterbank_test1.fil  $output_dir
+rsync -Pav  $tmp_in/filterbank_pulsar1.fil  $output_dir
 
 rm -rf $tmp_in
 rm -rf $tmp_out
