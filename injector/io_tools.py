@@ -4,7 +4,7 @@ import struct
 import numpy as np 
 
 
-class FilterbankIO:
+class FilterbankIO: # edited version from Michael Keith's filtools
     _inttypes = ['machine_id', 'telescope_id', 'data_type', 'nchans',\
                     'nbits', 'nifs', 'scan_number', 'barycentric','pulsarcentric',\
                     'nbeams', 'ibeam', 'nsamples']
