@@ -7,7 +7,7 @@
 #SBATCH --job-name=inject
 
 fb_path="/path/filterbank.fil"
-inj_path="/path/data.inject"
+inj_path="/path/example.inject"
 ephem_path="/path/de440.bsp"
 profile_path="/path/profile.npy"
 
@@ -25,7 +25,7 @@ rsync -Pav $profile_path $tmp_dir
 
 
 command="python3 SCRIPT_inject_pulsars.py"  
-inputs="--signal=$tmp_in/data.inject --filterbank=$tmp_in/filterbank.fil --ephem=$tmp_in/de440.bsp --output=$tmp_in --ncpu=$SLURM_NTASKS"
+inputs="--signal=$tmp_in/example.inject --filterbank=$tmp_in/filterbank.fil --ephem=$tmp_in/de440.bsp --output=$tmp_in --ncpu=$SLURM_NTASKS"
 singularity exec -H $HOME:/home -B $sing_img $command $inputs
 
 
