@@ -2,7 +2,6 @@ import os
 import sys
 import struct
 import numpy as np 
-from scipy.signal import correlate
 
 
 class FilterbankIO:
@@ -168,11 +167,6 @@ def read_datfile(path, nbits, count=-1):
     if nbits == 8:
         raw = np.fromfile(path, dtype=np.uint8, count=count)
         return raw.astype(np.uint8)
-    
-def cross_corr(path1, path2, nbits): # new class
-    data1 = read_datfile(path1, nbits=nbits)
-    data2 = read_datfile(path2, nbits=nbits)
-    return correlate(data1, data2, mode='valid', method='fft')
 
 def str2func(value, par, id, func):
     try:
