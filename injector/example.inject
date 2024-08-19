@@ -1,17 +1,17 @@
-ID             pulsar1
-mode           python
-PEPOCH         59379
-POSEPOCH       59378
-RAJ	           17:50:13.0600
-DECJ           -37:03:05.2000
-P0             0.005       # sec
-F1             1e-10
-F2             1e-11
-SNR            400
-DM             34
-spectral_index -2
-duty_cycle     0.08
-phase_offset   0
+ID               pulsar1
+mode             python
+PEPOCH           59379
+POSEPOCH         59378
+RAJ	             17:50:13.0600
+DECJ             -37:03:05.2000
+P0               0.005       # sec
+F1               1e-10
+F2               1e-11
+SNR              400
+DM               34
+spectral_index   -2
+duty_cycle       0.08
+phase_offset     0
 
 ID               pulsar2
 mode             python
@@ -33,25 +33,25 @@ A1               2.1
 ecc              0.2
 AoP              0.0
 
-ID             pulsar3
-mode           python
-RAJ	           17:50:13.0600
-DECJ           -37:03:05.2000
-PEPOCH         59378.8
-POSEPOCH       59378
-P0             0.012
-F1             1e-11
-P2             1e-15
-profile        profile.npy
-SNR            20
-DM             343
-binary_period  6
-T0             59379
-M1             1.4
-M2             2
-inc            90.0
-ecc            0.2
-LoAN           0.0
-AoP            0.0
+ID               pulsar3
+mode             python
+RAJ	             17:50:13.0600
+DECJ             -37:03:05.2000
+PEPOCH           59378.8
+POSEPOCH         59378
+P0               0.012
+F1               1e-11
+P2               1e-15
+profile          profile.npy
+SNR              20
+DM               343
+binary_period    6
+T0               59379
+M1               1.4
+M2               2
+inc              90.0
+ecc              0.2
+LoAN             0.0
+AoP              0.0
 
 
