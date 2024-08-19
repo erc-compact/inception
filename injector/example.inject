@@ -1,4 +1,4 @@
-ID               pulsar1
+ID               pulsar1     # added to name of injected filterbank (filterbank.fil -> filterbank_pulsar1.fil)
 mode             python
 PEPOCH           59379
 POSEPOCH         59378
