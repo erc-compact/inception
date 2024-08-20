@@ -15,7 +15,7 @@ if __name__=='__main__':
     if not ad.get('-h', 1):
         sys.exit('If you need help come to my office (E0.04). :D') 
         
-    setup = SetupManager(ad['--signal'], ad['--filterbank'], ad['--ephem'],  ad['--output'])
+    setup = SetupManager(ad['--signal'], ad['--filterbank'],  ad.get('--ephem', 'builtin'),  ad['--output'])
    
     injector = InjectSignal(setup, ad['--ncpu'])
     injector.parallel_inject()
