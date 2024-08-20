@@ -13,7 +13,7 @@ spectral_index   -2
 duty_cycle       0.08
 phase_offset     0
 
-ID               pulsar2
+ID               pulsar2  # code searched for ID flags to inject multiple pulsars  
 mode             python
 PEPOCH           59379
 separation       4        # arcmin
