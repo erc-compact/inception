@@ -1,6 +1,7 @@
 import re
 import sys
 import numpy as np 
+import pandas as pd
 from pathlib import Path
 import astropy.units as u
 from math import factorial
@@ -91,10 +92,19 @@ class PulsarSignal:
     def get_profile_func(self, pulsar_pars):
         profile = pulsar_pars.get('profile', None)
         if profile:
-            try:
-                profile_arr = np.load(profile)
-            except FileNotFoundError:
-                sys.exit(f'Unable to load {profile} pulse profile for pulsar {self.ID}.')
+            suffix = Path(profile).suffix
+            if suffix == '.npy':
+                try:
+                    profile_arr = np.load(profile)
+                except FileNotFoundError:
+                    sys.exit(f'Unable to load {profile} numpy pulse profile for pulsar {self.ID}.')
+            elif suffix == '.txt':
+                try:
+                    epn_profile = pd.read_csv(profile, delimiter=' ', 
+                                              names=['col0', 'col1', 'col2', 'intensity'])
+                    profile_arr = epn_profile['intensity'].values
+                except (FileNotFoundError, KeyError, ValueError):
+                    sys.exit(f'Unable to load {profile} EPN pulse profile for pulsar {self.ID}.')
 
             phase_range = np.linspace(0, 1, len(profile_arr))
             interp_func = interp1d(phase_range, profile_arr/np.max(profile_arr))
