@@ -1,4 +1,4 @@
-ID               pulsar1     # added to name of injected filterbank (filterbank.fil -> filterbank_pulsar1.fil)
+ID               pulsar1     # added to name of injected filterbank (filterbank.fil -> filterbank_pulsar1.fil), also name of outputed par file (pulsar1.par)
 mode             python
 PEPOCH           59379.123   # (mjd, tdb, barycentre) removing will default to observation start
 RAJ	             17:50:13.0600
@@ -6,6 +6,7 @@ DECJ             -37:03:05.2000
 P0               0.005       # sec
 F1               1e-10
 F2               1e-11
+F6               2e-13       # can supply inf FX, any missing FX will be set to zero
 SNR              400
 DM               34
 spectral_index   -2
