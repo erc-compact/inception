@@ -10,7 +10,7 @@ F7               2e-13       # can supply inf FX, any missing FX will be set to 
 SNR              400
 DM               34
 spectral_index   -2
-duty_cycle       0.08
+duty_cycle       0.08        # default gaussian profile
 phase_offset     0
 
 ID               pulsar2  # code searches for ID flags to inject multiple pulsars  
