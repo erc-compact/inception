@@ -24,7 +24,7 @@ class Observation:
                                      dec=self.convert_coord(fb_header['src_dej']), 
                                      unit=(u.hourangle, u.deg), frame='icrs')
         self.source = self.get_coords(pulsar_pars)
-        self.beam_fwhm = str2func(pulsar_pars.get('beam_fwhm', 0), 'beam_fwhm', self.ID, float)
+        self.beam_fwhm = str2func(pulsar_pars.get('beam_fwhm', 0), 'beam_fwhm', pulsar_pars['ID'], float)
         
         self.obs_start = fb_header['tstart']
         self.dt = fb_header['tsamp']
