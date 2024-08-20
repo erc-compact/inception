@@ -17,7 +17,7 @@ if __name__=='__main__':
         
     setup = SetupManager(ad['--signal'], ad['--filterbank'],  ad.get('--ephem', 'builtin'),  ad['--output'])
    
-    injector = InjectSignal(setup, ad['--ncpu'])
+    injector = InjectSignal(setup, ad.get('--ncpu', 1))
     injector.parallel_inject()
     injector.combine_files()
     
