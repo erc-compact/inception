@@ -24,6 +24,7 @@ class Observation:
                                      dec=self.convert_coord(fb_header['src_dej']), 
                                      unit=(u.hourangle, u.deg), frame='icrs')
         self.source = self.get_coords(pulsar_pars)
+        self.beam_fwhm = str2func(pulsar_pars.get('beam_fwhm', 0), 'beam_fwhm', self.ID, float)
         
         self.obs_start = fb_header['tstart']
         self.dt = fb_header['tsamp']
@@ -82,7 +83,15 @@ class Observation:
             return self.obs_pointing.directional_offset_by(PA_float*u.deg, sep_float*u.arcmin)
         else:
             return self.obs_pointing
- 
+
+    def get_beam_snr(self):
+        if self.beam_fwhm != 0:
+            beam_sigma = self.beam_fwhm/(2*np.sqrt(2*np.log(2))) # arcmin
+            beam_offset = self.source.separation(self.obs_pointing).arcmin
+            beam_SNR = np.exp(-(beam_offset)**2/(2*(beam_sigma)**2))
+            return beam_SNR
+        else:
+            return 1
     
     def sec2mjd(self, time_sec):
         return time_sec * u.s.to(u.day) + self.obs_start
