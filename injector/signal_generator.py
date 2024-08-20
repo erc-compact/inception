@@ -31,7 +31,6 @@ class PulsarSignal:
         self.duty_cycle = str2func(pulsar_pars.get('duty_cycle', 0.1), 'duty_cycle', self.ID, float)
         self.spectral_index = str2func(pulsar_pars.get('spectral_index', 0), 'spectral_index', self.ID, float)
         self.SNR = str2func(pulsar_pars.get('SNR', 100), 'SNR', self.ID, float)
-        self.beam_fwhm = str2func(pulsar_pars.get('beam_fwhm', 0), 'beam_fwhm', self.ID, float)
         self.power_constant = self.SNR2power()/(self.obs.f0**self.spectral_index)
 
         self.FX_list, self.PX_list = self.get_spin_pars(pulsar_pars)
@@ -184,14 +183,8 @@ class PulsarSignal:
         n_sample = self.obs.n_samples
         Weq_t = self.duty_cycle/(2*np.sqrt(2*np.log(2)))*np.sqrt(2*np.pi)
         Amp = self.SNR * sigma_pt / (np.sqrt(Weq_t) * np.sqrt(self.obs.n_chan) * np.sqrt(n_sample))
-
-        if self.beam_fwhm != 0:
-            beam_sigma = self.beam_fwhm/(2*np.sqrt(2*np.log(2))) # arcmin
-            beam_offset = self.obs.source.separation(self.obs.obs_pointing).arcmin
-            beam_SNR = np.exp(-(beam_offset)**2/(2*(beam_sigma)**2))
-            Amp *= beam_SNR
-            
-        return Amp 
+        
+        return Amp * self.obs.get_beam_snr()
 
     def spectral_power(self, freq):
         return self.power_constant * (freq)**self.spectral_index
