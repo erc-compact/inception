@@ -13,12 +13,12 @@ spectral_index   -2
 duty_cycle       0.08
 phase_offset     0
 
-ID               pulsar2  # code searched for ID flags to inject multiple pulsars  
+ID               pulsar2  # code searches for ID flags to inject multiple pulsars  
 mode             python
 PEPOCH           59379
-separation       4        # arcmin
-position_angle   35       # deg
-beam_fwhm        10       # arcmin
+separation       4        # (arcmin)
+position_angle   35       # (deg)
+beam_fwhm        10       # (arcmin) SNR will only be reduced if a beam_fwhm is given
 P0               0.005
 F1               1e-10
 F2               1e-11
