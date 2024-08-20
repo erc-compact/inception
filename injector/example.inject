@@ -40,7 +40,7 @@ PEPOCH           59378.8
 P0               0.012
 F1               1e-11
 P2               1e-15
-profile          profile.npy
+profile          profile.npy    # numpy .npy file or EPN .txt file (injector code will normalise the profile)
 SNR              20
 DM               343
 binary_period    6
