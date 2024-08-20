@@ -1,7 +1,6 @@
 ID               pulsar1     # added to name of injected filterbank (filterbank.fil -> filterbank_pulsar1.fil)
 mode             python
-PEPOCH           59379
-POSEPOCH         59378
+PEPOCH           59379       # mjd, tdb, barycentre
 RAJ	             17:50:13.0600
 DECJ             -37:03:05.2000
 P0               0.005       # sec
@@ -16,7 +15,6 @@ phase_offset     0
 ID               pulsar2
 mode             python
 PEPOCH           59379
-POSEPOCH         59378
 separation       4        # arcmin
 position_angle   35       # deg
 beam_fwhm        10       # arcmin
@@ -38,7 +36,6 @@ mode             python
 RAJ	             17:50:13.0600
 DECJ             -37:03:05.2000
 PEPOCH           59378.8
-POSEPOCH         59378
 P0               0.012
 F1               1e-11
 P2               1e-15
