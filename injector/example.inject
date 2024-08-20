@@ -1,6 +1,6 @@
 ID               pulsar1     # added to name of injected filterbank (filterbank.fil -> filterbank_pulsar1.fil)
 mode             python
-PEPOCH           59379       # mjd, tdb, barycentre
+PEPOCH           59379.123   # (mjd, tdb, barycentre) removing will default to observation start
 RAJ	             17:50:13.0600
 DECJ             -37:03:05.2000
 P0               0.005       # sec
