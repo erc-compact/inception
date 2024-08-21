@@ -1,7 +1,7 @@
 ID               pulsar1     # added to name of injected filterbank (filterbank.fil -> filterbank_pulsar1.fil), also name of outputed par file (pulsar1.par)
 mode             python
 PEPOCH           59379.123   # (mjd, tdb, barycentre) removing will default to observation start
-RAJ	             17:50:13.0600
+RAJ              17:50:13.0600
 DECJ             -37:03:05.2000
 P0               0.005       # (sec) Will accept PX or FX for any spin parameter
 F1               1e-10
