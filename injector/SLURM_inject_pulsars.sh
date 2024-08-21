@@ -33,5 +33,4 @@ output_dir="/path/output"
 rsync -Pav  $tmp_dir/*.par  $output_dir
 rsync -Pav  $tmp_dir/filterbank_pulsar1.fil  $output_dir
 
-rm -rf $tmp_in
-rm -rf $tmp_out
+rm -rf $tmp_dir
