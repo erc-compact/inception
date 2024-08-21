@@ -56,7 +56,7 @@ class PulsarSignal:
     def get_epochs(self, pulsar_pars):
         pepoch = pulsar_pars.get('PEPOCH', self.obs.obs_start_bary)
         posepoch = pulsar_pars.get('POSEPOCH', pepoch)
-        T0 = pulsar_pars.get('T0', pepoch)
+        T0 = pulsar_pars.get('T0', self.obs.obs_start_bary)
 
         pepoch_float = str2func(pepoch, 'PEPOCH', self.ID, float) 
         posepoch_float = str2func(posepoch, 'POSPOCH', self.ID, float) 
