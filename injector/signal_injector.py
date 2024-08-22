@@ -1,3 +1,4 @@
+import os
 import sys
 import numpy as np 
 from time import time
@@ -146,6 +147,7 @@ class InjectSignal:
             S_sub_block = filterbank_sub.read_block(size_S_blocks)
             filterbank_main.write_block(S_sub_block)
             filterbank_sub.read_file.close()
+            os.remove(self.injected_path + f"_{cpu}.tmpfil")
 
         filterbank_main.read_file.close()
         filterbank_main.write_file.close()
