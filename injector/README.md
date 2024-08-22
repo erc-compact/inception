@@ -16,6 +16,7 @@ read tutorial.ipynb
   - add more binary models to python mode (DD, DDGR, etc.) / allow pint mode to use any binary model
   - scintillation
   - pulse microstructure
+  - DMX
   - PMRA, PMDEC and parallax
   - add mask to injected signal in time/frequency
  
