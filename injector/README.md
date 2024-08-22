@@ -1,5 +1,8 @@
 read tutorial.ipynb
 
+## Recently added 
+  - 
+
 ## <font color='green'>TODO</font>
 - priority
   - add support for 2 and 4 bit filterbanks
