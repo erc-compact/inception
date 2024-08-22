@@ -5,7 +5,7 @@ read tutorial.ipynb
   - add support for 2 and 4 bit filterbanks
   - allow injection into dedispersed timeseries
   - write more useful output logs during injection
-  - more intuitive SNR input / correct SNR calculation for custom profiles
+  - more intuitive SNR input / correct SNR calculation for custom pulse profiles
   - frequency dependence for scattering / fix scattering_time units
 
 - nonpriority
