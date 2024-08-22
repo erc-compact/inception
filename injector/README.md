@@ -12,7 +12,7 @@ read tutorial.ipynb
   - add $\dot{\omega}$, $\dot{P_b}$, etc.
   - add more binary models to python mode (DD, DDGR, etc.) / allow pint mode to use any binary model
   - scintillation
-  - microstructure
+  - pulse microstructure
   - PMRA, PMDEC and parallax
   - add mask to injected signal in time/frequency
  
