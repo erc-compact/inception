@@ -28,7 +28,7 @@ command="python3 SCRIPT_inject_pulsars.py"
 inputs="--signal=$tmp_dir/example.inject --filterbank=$tmp_dir/filterbank.fil --ephem=$tmp_dir/de440.bsp --output=$tmp_dir --ncpu=$SLURM_NTASKS"
 singularity exec -H $HOME:/home -B $sing_img $command $inputs
 
-# warning: I forgot to delete temporary files created during the injection. Ignore .tmpfil files
+
 output_dir="/path/output"
 rsync -Pav  $tmp_dir/*.par  $output_dir
 rsync -Pav  $tmp_dir/filterbank_pulsar1.fil  $output_dir
