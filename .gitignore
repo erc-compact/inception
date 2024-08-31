@@ -1,0 +1,7 @@
+/.venv
+
+/.vscode
+
+/develop
+
+/injector/__pycache__

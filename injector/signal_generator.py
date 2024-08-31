@@ -38,6 +38,7 @@ class PulsarSignal:
         self.phase_offset = str2func(pulsar_pars.get('phase_offset', 0), 'phase_offset', self.ID, float)
 
         self.pulse_profile = self.get_profile_func(pulsar_pars)
+        self.micro_structure = str2func(pulsar_pars.get('micro_structure', 0), 'micro_structure', self.ID, float)
         self.spin_function = self.get_phase_function()
 
         self.mode = pulsar_pars.get('mode', 'python')
@@ -137,7 +138,7 @@ class PulsarSignal:
             
             return observed_pulse
         
-    def polycos_creator(self, par_file, pint_func): # file is made xcpu 
+    def polycos_creator(self, par_file, pint_func): # fix: file is made xcpu 
         models, Polycos = pint_func
         timing_model = models.get_model(par_file, EPHEM=self.obs.ephem)
 
@@ -219,7 +220,14 @@ class PulsarSignal:
         T_proper = bary_times+self.spin_ref - self.binary.orbital_delay(bary_times+self.orbit_ref)
 
         phase_abs = self.phase_offset + self.spin_function(T_proper)
-        return phase_abs % 1 
+        return phase_abs #% 1 
+    
+    def get_pulse(self, phase, freq):
+        if self.micro_structure:
+            pulse_generator = MicroStructure(phase, freq, self.micro_structure, self.pulse_profile)
+            return pulse_generator.pulse_profile()
+        else:
+            return self.pulse_profile(phase % 1, freq)
     
     def generate_signal_polcos(self, n_samples, sample_start=0):
         timeseries = np.linspace(self.obs.dt*sample_start, self.obs.dt*(n_samples+sample_start-1), n_samples)
@@ -230,8 +238,8 @@ class PulsarSignal:
         phase_array = np.tile(topo_times, (len(self.obs.freq_arr),1)).T
         phase_time = (phase_array + DM_array*u.s.to(u.day))
         
-        phase = self.polycos(phase_time) % 1
-        return self.pulse_profile(phase, freq_array)
+        phase = self.polycos(phase_time)
+        return self.get_pulse(phase, freq_array)
         
     def generate_signal_python(self, n_samples, sample_start=0):
         timeseries = np.linspace(self.obs.dt*sample_start, self.obs.dt*(n_samples+sample_start-1), n_samples)
@@ -244,7 +252,7 @@ class PulsarSignal:
         bary_array = np.tile(bary_times, (len(self.obs.freq_arr),1)).T
         phase_array = self.get_phase(bary_array + DM_array)
 
-        return self.pulse_profile(phase_array, obs_freq_array)
+        return self.get_pulse(phase_array, obs_freq_array)
 
     def get_generator(self):        
         if self.mode == 'pint':
@@ -284,3 +292,84 @@ def spin_pars_converter(spin_values, spin_types):
             FX_values.append(F_converter(x, PX_values))
 
     return FX_values, PX_values
+
+
+class MicroStructure:
+    def __init__(self, phase_abs, freq, scale, profile):
+        self.scale = scale
+        
+        self.phase_abs = phase_abs
+        self.intrinsic_profile = profile(phase_abs % 1, freq)
+        self.noise = np.zeros_like(phase_abs)
+        self.n_samples, self.nchans = phase_abs.shape
+
+        self.pulse_numbers = np.floor(phase_abs).astype(int)
+        self.pulse_range = np.arange(np.min(self.pulse_numbers), np.max(self.pulse_numbers)+1)
+
+        self.profile = self.pulse_profile()
+
+    def pulse_sample_counter(self, pulse_number):
+        pulse_index = np.where(self.pulse_numbers == pulse_number)
+        pulse_counts = np.bincount(pulse_index[1], minlength=self.nchans)
+        return pulse_counts, pulse_index
+
+    @staticmethod
+    def smoothstep_S2(x):
+        return 6 * x**5 - 15 * x**4 + 10 * x**3
+    
+    @staticmethod
+    def get_pulse_rng(pulse_num):
+        pulse_offset = 10**9 if np.sign(pulse_num) == -1 else 0
+        return np.random.default_rng(pulse_num+pulse_offset)
+    
+    def perlin_noise(self, pulse_length, pulse_num):
+        rng = self.get_pulse_rng(pulse_num)
+        scale = rng.normal(self.scale, 2)
+        gradients = rng.uniform(-1, 1, int(scale) + 1)
+        gradients /= np.linalg.norm(gradients, axis=0)  
+
+        grid_points = np.arange(0, pulse_length) + rng.integers(0, 100)
+        norm_len = pulse_length/scale
+        x0 = grid_points / norm_len
+        rel_x = (grid_points % norm_len) / norm_len
+        dot0 = gradients[(x0 % scale).astype(int)] * rel_x
+        dot1 = gradients[((x0+1) % scale).astype(int)] * (rel_x - 1)
+
+        u = self.smoothstep_S2(rel_x)
+        noise = (1 - u) * dot0 + u * dot1
+        return np.abs(noise)
+    
+    def create_microstructure(self, pulse_num):
+        pulse_counts_block, pulse_index = self.pulse_sample_counter(pulse_num)
+   
+        pulse_counts = pulse_counts_block.copy()
+        max_pulse_length = np.max(pulse_counts_block)
+        pulse_counts[(pulse_counts_block < max_pulse_length-1) & (pulse_counts_block > 0)] = max_pulse_length
+        
+        noise_unique = {max_pulse_length: self.perlin_noise(max_pulse_length, pulse_num),
+                        max_pulse_length-1: self.perlin_noise(max_pulse_length-1, pulse_num)}
+        pad = pulse_counts - pulse_counts_block
+
+        for chan in range(self.nchans):
+            pulse_intrinsic_length = pulse_counts[chan]
+            if pulse_intrinsic_length != 0:
+                chan_pad = pad[chan]
+                if chan_pad == 0:
+                    s_pad, e_pad = 0, None
+                elif chan > np.mean(np.nonzero(pulse_counts)[0]):
+                    s_pad, e_pad = chan_pad, None
+                else:
+                    s_pad, e_pad = 0, -chan_pad
+
+                noise_values = noise_unique[pulse_intrinsic_length][s_pad: e_pad]
+                channel_index = pulse_index[0][np.where(pulse_index[1] == chan)[0]]
+
+                self.noise[channel_index, chan] = noise_values
+
+    def pulse_profile(self):
+        for pulse_n in self.pulse_range:  
+            self.create_microstructure(pulse_n)
+
+        pulse_conv = self.intrinsic_profile * self.noise
+        norm = np.sum(self.intrinsic_profile) / np.sum(pulse_conv)
+        return pulse_conv * norm
