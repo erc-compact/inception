@@ -1,7 +1,7 @@
 read tutorial.ipynb
 
 ## Recently added 
-  - 
+  - pulse microstructure
 
 ## <font color='green'>TODO</font>
 - priority
@@ -15,7 +15,6 @@ read tutorial.ipynb
   - add $\dot{\omega}$, $\dot{P_b}$, etc.
   - add more binary models to python mode (DD, DDGR, etc.) / allow pint mode to use any binary model
   - scintillation
-  - pulse microstructure
   - single pulse
   - DMX
   - PMRA, PMDEC and parallax
