@@ -9,7 +9,7 @@ import astropy.constants as const
 from scipy.interpolate import interp1d
 from sympy import lambdify, symbols, Function
 
-from injector.io_tools import str2func
+from .io_tools import str2func
 
 
 

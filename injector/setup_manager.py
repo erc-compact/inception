@@ -4,10 +4,10 @@ import pandas as pd
 from pathlib import Path
 import astropy.units as u
 
-from injector.io_tools import FilterbankIO, print_exe
-from injector.binary_model import PulsarBinaryModel
-from injector.signal_generator import PulsarSignal
-from injector.observatory import Observation
+from .io_tools import FilterbankIO, print_exe
+from .binary_model import PulsarBinaryModel
+from .signal_generator import PulsarSignal
+from .observatory import Observation
 
 
 

@@ -1,8 +1,8 @@
 import sys
 import getopt
 
-from injector.setup_manager import SetupManager
-from injector.signal_injector import InjectSignal
+from .setup_manager import SetupManager
+from .signal_injector import InjectSignal
 
 
 if __name__=='__main__':

@@ -4,7 +4,8 @@ import astropy.units as u
 import matplotlib.pyplot as plt
 import astropy.constants as const
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from binary_model import PulsarBinaryModel
+
+from .binary_model import PulsarBinaryModel
 
 class InteractiveOrbit(PulsarBinaryModel):
     def __init__(self, period=5, pulsar_mass=1.4, companion_mass=2, eccentricity=0.5, inclination=90, LoAN=0, AoP=0):

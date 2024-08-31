@@ -181,7 +181,7 @@ class FilterbankIO: # edited version from Michael Keith's filtools
         elif self.header['nbits'] == 1:
             return read_block_1bit
         else:
-            sys.exit(f'{self.header['nbits']} bit filterbank is not supported.')
+            sys.exit(f"{self.header['nbits']} bit filterbank is not supported.")
 
     def get_writer(self):
         
@@ -254,7 +254,7 @@ class FilterbankIO: # edited version from Michael Keith's filtools
         elif self.header['nbits'] == 1:
             return write_block_1bit
         else:
-            sys.exit(f'{self.header['nbits']} bit filterbank is not supported.')
+            sys.exit(f"{self.header['nbits']} bit filterbank is not supported.")
 
     def read_block(self, nsamples):   
         return self.get_reader()(nsamples, dtype=np.float64)

@@ -4,7 +4,7 @@ import astropy.constants as const
 from scipy.optimize import fsolve
 from scipy.interpolate import interp1d
 
-from injector.io_tools import str2func
+from .io_tools import str2func
 
 class PulsarBinaryModel:
     def __init__(self, pulsar_pars, validate=False):

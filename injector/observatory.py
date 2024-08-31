@@ -6,7 +6,7 @@ import astropy.constants as const
 from scipy.interpolate import interp1d
 from astropy.coordinates import SkyCoord, EarthLocation, solar_system_ephemeris, solar_system
 
-from injector.io_tools import str2func
+from .io_tools import str2func
 
 
 class Observation:

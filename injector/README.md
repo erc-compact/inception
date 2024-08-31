@@ -1,10 +1,11 @@
 read tutorial.ipynb
 
 ## Recently added 
-  - pulse microstructure
+  
 
 ## <font color='green'>TODO</font>
 - priority
+  - pulse microstructure
   - add support for 2 and 4 bit filterbanks
   - allow injection into dedispersed timeseries
   - write more useful output logs during injection
