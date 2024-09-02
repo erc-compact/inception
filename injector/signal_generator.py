@@ -405,7 +405,11 @@ class MicroStructure:
                 channel_index = pulse_index[0][np.where(pulse_index[1] == chan)[0]]
 
                 intrinsic_profile = self.intrinsic_profile[channel_index, chan]
-                norm = np.sum(intrinsic_profile) / np.sum(intrinsic_profile*noise_values)
+                profile_sum = np.sum(intrinsic_profile*noise_values)
+                if profile_sum != 0:
+                    norm = np.sum(intrinsic_profile) / profile_sum
+                else:
+                    norm = 0
 
                 self.noise[channel_index, chan] = noise_values * norm
 
