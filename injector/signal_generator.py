@@ -297,7 +297,7 @@ def spin_pars_converter(spin_values, spin_types):
 class MicroStructure:
     def __init__(self, phase_abs, freq, scale, profile):
         self.scale = scale
-        
+
         self.phase_abs = phase_abs
         self.intrinsic_profile = profile(phase_abs % 1, freq)
         self.noise = np.zeros_like(phase_abs)
@@ -305,6 +305,8 @@ class MicroStructure:
 
         self.pulse_numbers = np.floor(phase_abs).astype(int)
         self.pulse_range = np.arange(np.min(self.pulse_numbers), np.max(self.pulse_numbers)+1)
+
+        self.max_pulse_length = self.get_max_pulse_length()
 
         self.profile = self.pulse_profile()
 
@@ -321,6 +323,10 @@ class MicroStructure:
     def get_pulse_rng(pulse_num):
         pulse_offset = 10**9 if np.sign(pulse_num) == -1 else 0
         return np.random.default_rng(pulse_num+pulse_offset)
+    
+    def get_max_pulse_length(self):
+        pulse_counts_block, _ = self.pulse_sample_counter(self.pulse_range[len(self.pulse_range)//2])
+        return np.max(pulse_counts_block)
     
     def perlin_noise(self, pulse_length, pulse_num):
         rng = self.get_pulse_rng(pulse_num)
@@ -339,37 +345,72 @@ class MicroStructure:
         noise = (1 - u) * dot0 + u * dot1
         return np.abs(noise)
     
+    @staticmethod
+    def get_pad_chunks(pad_arr):
+        nonzero = pad_arr != 0
+        changes = np.diff(nonzero.astype(int))
+
+        chunk_starts = np.where(changes == 1)[0] + 1
+        chunk_ends = np.where(changes == -1)[0] + 1
+
+        if nonzero[0]:
+            chunk_starts = np.r_[0, chunk_starts]
+
+        if nonzero[-1]:
+            chunk_ends = np.r_[chunk_ends, len(pad_arr)]
+
+        return chunk_starts, chunk_ends
+    
+    @staticmethod
+    def get_padding(chan, pad, chunk_starts, chunk_ends):
+        chan_pad = pad[chan]
+        if (chan_pad == 0) or (len(chunk_starts) == 0):
+            s_pad, e_pad = 0, None
+
+        elif len(chunk_starts) == 2:
+            if chunk_starts[0] <= chan <  chunk_ends[0]:
+                s_pad, e_pad = chan_pad, None
+            elif chunk_starts[1] <= chan <  chunk_ends[1]:
+                s_pad, e_pad = 0, -chan_pad
+
+        elif len(chunk_starts) == 1:
+            if pad[chunk_starts[0]] > pad[chunk_ends[0]-1]:
+                s_pad, e_pad = chan_pad, None
+            else:
+                s_pad, e_pad = 0, -chan_pad
+        
+        return s_pad, e_pad
+    
     def create_microstructure(self, pulse_num):
         pulse_counts_block, pulse_index = self.pulse_sample_counter(pulse_num)
    
         pulse_counts = pulse_counts_block.copy()
-        max_pulse_length = np.max(pulse_counts_block)
+        max_pulse_length = self.max_pulse_length 
         pulse_counts[(pulse_counts_block < max_pulse_length-1) & (pulse_counts_block > 0)] = max_pulse_length
         
         noise_unique = {max_pulse_length: self.perlin_noise(max_pulse_length, pulse_num),
                         max_pulse_length-1: self.perlin_noise(max_pulse_length-1, pulse_num)}
+        
         pad = pulse_counts - pulse_counts_block
+        chunk_starts, chunk_ends = self.get_pad_chunks(pad)
 
         for chan in range(self.nchans):
             pulse_intrinsic_length = pulse_counts[chan]
             if pulse_intrinsic_length != 0:
-                chan_pad = pad[chan]
-                if chan_pad == 0:
-                    s_pad, e_pad = 0, None
-                elif chan > np.mean(np.nonzero(pulse_counts)[0]):
-                    s_pad, e_pad = chan_pad, None
-                else:
-                    s_pad, e_pad = 0, -chan_pad
+                s_pad, e_pad = self.get_padding(chan, pad, chunk_starts, chunk_ends)
 
-                noise_values = noise_unique[pulse_intrinsic_length][s_pad: e_pad]
+                micro_structure_values = noise_unique[pulse_intrinsic_length]                
+
+                noise_values = micro_structure_values[s_pad: e_pad]
                 channel_index = pulse_index[0][np.where(pulse_index[1] == chan)[0]]
 
-                self.noise[channel_index, chan] = noise_values
+                intrinsic_profile = self.intrinsic_profile[channel_index, chan]
+                norm = np.sum(intrinsic_profile) / np.sum(intrinsic_profile*noise_values)
+
+                self.noise[channel_index, chan] = noise_values * norm
 
     def pulse_profile(self):
         for pulse_n in self.pulse_range:  
             self.create_microstructure(pulse_n)
 
-        pulse_conv = self.intrinsic_profile * self.noise
-        norm = np.sum(self.intrinsic_profile) / np.sum(pulse_conv)
-        return pulse_conv * norm
+        return self.intrinsic_profile * self.noise
