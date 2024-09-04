@@ -2,7 +2,7 @@ import os
 import sys
 import struct
 import numpy as np 
-
+# update and add io_tools to new folder in inception + extract_scripts
 
 class FilterbankIO: # edited version from Michael Keith's filtools
     _inttypes = ['machine_id', 'telescope_id', 'data_type', 'nchans',\
@@ -46,7 +46,7 @@ class FilterbankIO: # edited version from Michael Keith's filtools
         if key=="HEADER_START":
             key = read_string(self.read_file)
             bytes_read += len(key)+4
-            while key != "HEADER_END":
+            while key != "HEADER_END": # optimise
                 if key in FilterbankIO._inttypes:
                     self.header[key] = np.fromfile(self.read_file,dtype=np.int32,count=1)[0]
                     bytes_read += 4

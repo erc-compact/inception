@@ -1,6 +1,6 @@
 import sys, os
 from pathlib import Path
-sys.path.insert(0, Path(__file__).parent.parent)
+sys.path.insert(0, str(Path(__file__).absolute().parent.parent))
 
 import time
 import getopt
@@ -19,10 +19,10 @@ class SignalCorrelate:
     def __init__(self, output, fb_name, ncpu=1, DM_min=0, DM_max=500, DM_resolution=2):
         self.output = output
         self.fb_name = fb_name
-        self.ncpu = ncpu
+        self.ncpu = np.float64(ncpu)
 
-        self.DM_min = DM_min
-        self.DM_max = DM_max
+        self.DM_min = np.float64(DM_min)
+        self.DM_max = np.float64(DM_max)
         self.DM_res = int(DM_resolution)
 
         self.DM_bins = np.round(np.arange(self.DM_min, self.DM_max, 10**-self.DM_res, dtype=np.float64), self.DM_res)
