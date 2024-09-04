@@ -29,11 +29,15 @@ class SignalCorrelate:
         self.DM_bins_dict = dict(zip(self.DM_bins, np.arange(len(self.DM_bins))))
 
         fb = FilterbankIO(fb_name) 
+        print_exe(f'Spliting channels of filterbank {self.fb_name}.')
         fb.split_fb_channels(output)
         del fb
 
-        self.path_channel = lambda chan: self.output+f'/_{chan}.dat'
-        self.path_cpu = lambda cpu: self.output+f'/{cpu}_power_stack.npy'
+    def path_channel(self, channel):
+        return self.output+f'/_{channel}.dat'
+    
+    def path_cpu(self, cpu):
+        return self.output+f'/{cpu}_power_stack.npy'
 
     def get_compute_data(self):
         fb = FilterbankIO(self.fb_name) 
@@ -96,22 +100,17 @@ class SignalCorrelate:
             start_pairs.append(cpu*(N_pairs+add))
             end_pairs.append((cpu+1)*(N_pairs+add))
 
+        
+
         pair_inds = zip(start_pairs, end_pairs)
         args = list(zip(np.arange(self.ncpu), pair_inds))
+        print_exe(f'Starting {len(channel_pairs)} channel-pair cross-correlations, across {self.ncpu} cpus.')
         with Pool(self.ncpu) as p:
             p.starmap(self.stack_correlations, args)
-
-    def clean_directory(self):
-        obs, _, _ = self.get_compute_data()
-        for chan in range(obs.n_chan):
-            os.remove(self.path_channel(chan))
-        for cpu in range(self.ncpu):
-            os.remove(self.path_cpu(cpu))
 
     def save_compute(self, return_result=True, save_plot=False, save_file=False):
         cpu_results = [np.load(self.path_cpu(cpu)) for cpu in range(self.ncpu)]
         stacked_power = np.sum(np.stack(cpu_results), axis=0)
-
 
         if save_file:
             np.save(self.output+'/stacked_DM.npy', np.stack([self.DM_bins, stacked_power]))
@@ -125,6 +124,13 @@ class SignalCorrelate:
         if return_result:
             return self.DM_bins, stacked_power
     
+    def clean_directory(self):
+        obs, _, _ = self.get_compute_data()
+        for chan in range(obs.n_chan):
+            os.remove(self.path_channel(chan))
+        for cpu in range(self.ncpu):
+            os.remove(self.path_cpu(cpu))
+
 
 if __name__=='__main__':
     try:
