@@ -94,7 +94,7 @@ class SignalCorrelate:
         N_pairs, remain = divmod(len(channel_pairs), self.ncpu)
         start_pairs, end_pairs = [], []
         for cpu in range(self.ncpu):
-            add = 1 if cpu <= remain else 0 
+            add = 1 if cpu < remain else 0 
             start_pairs.append(cpu*(N_pairs+add))
             end_pairs.append((cpu+1)*(N_pairs+add))
 
