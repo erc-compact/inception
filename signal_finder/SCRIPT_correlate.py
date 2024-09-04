@@ -2,6 +2,7 @@ import sys, os
 from pathlib import Path
 sys.path.insert(0, Path(__file__).parent.parent)
 
+import time
 import getopt
 import itertools
 import numpy as np
@@ -11,7 +12,7 @@ from multiprocessing import Pool
 from scipy.signal import correlate, correlation_lags
 
 from injector.observatory import Observation
-from injector.io_tools import read_datfile, FilterbankIO
+from injector.io_tools import read_datfile, FilterbankIO, print_exe
 
 
 class SignalCorrelate:
@@ -76,8 +77,13 @@ class SignalCorrelate:
         obs, channel_pairs, channel_files = self.get_compute_data()
         power_stack = np.zeros_like(self.DM_bins)
 
-        compute_pairs = channel_pairs[*pair_inds]
-        for pair in compute_pairs:
+        compute_pairs = channel_pairs[slice(*pair_inds)]
+        t_stamp = time.time()
+        for i, pair in enumerate(compute_pairs):
+            if (i % 50 == 0) and (i != 0):
+                print_exe(f'cpu {cpu}: 50 cross-correlation pairs completed in {time.time()-t_stamp:.2f}s, {len(compute_pairs)-i} pairs remaining')
+                t_stamp = time.time()
+
             power_stack += self.get_correlation(pair, obs, channel_files)
 
         self.stacked_power_cpu[cpu] = power_stack
@@ -113,8 +119,7 @@ class SignalCorrelate:
             ax.set_ylabel('stacked power')
             ax.set_xlabel('DM')
 
-            plt.tight_layout()
-            fig.savefig(self.output+'/stacked_DM.png')
+            fig.savefig(self.output+'/stacked_DM.png', bbox_inches="tight")
         
         return self.DM_bins, stacked_power
     
