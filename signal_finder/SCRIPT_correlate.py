@@ -19,7 +19,7 @@ class SignalCorrelate:
     def __init__(self, output, fb_name, ncpu=1, DM_min=0, DM_max=500, DM_resolution=2):
         self.output = output
         self.fb_name = fb_name
-        self.ncpu = np.float64(ncpu)
+        self.ncpu = int(ncpu)
 
         self.DM_min = np.float64(DM_min)
         self.DM_max = np.float64(DM_max)
