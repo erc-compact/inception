@@ -32,17 +32,15 @@ class SignalCorrelate:
         fb.split_fb_channels(output)
         del fb
 
-        self.stacked_power_cpu = {}
+        self.path_channel = lambda chan: self.output+f'/_{chan}.dat'
+        self.path_cpu = lambda cpu: self.output+f'/{cpu}_power_stack.npy'
 
     def get_compute_data(self):
         fb = FilterbankIO(self.fb_name) 
         obs = Observation(fb, 'BUILTIN', {'DM':0, 'ID':'None'}, validate=True)
         channel_pairs = list(itertools.combinations(range(obs.n_chan), 2))
-        channel_files = [read_datfile(self.get_path(chan), nbits=64) for chan in range(obs.n_chan)]
+        channel_files = [read_datfile(self.path_channel(chan), nbits=64) for chan in range(obs.n_chan)]
         return obs, channel_pairs, channel_files
-
-    def get_path(self, channel):
-        return self.output+f'/_{channel}.dat'
 
     @staticmethod
     def cross_corr(chan1, chan2, channel_files): 
@@ -86,7 +84,7 @@ class SignalCorrelate:
 
             power_stack += self.get_correlation(pair, obs, channel_files)
 
-        self.stacked_power_cpu[cpu] = power_stack
+        np.save(self.path_cpu(cpu))
 
     def compute_power_stack(self):
         _, channel_pairs, _ = self.get_compute_data()
@@ -106,13 +104,17 @@ class SignalCorrelate:
     def clean_directory(self):
         obs, _, _ = self.get_compute_data()
         for chan in range(obs.n_chan):
-            os.remove(self.get_path(chan))
+            os.remove(self.path_channel(chan))
+        for cpu in range(self.ncpu):
+            os.remove(self.path_cpu(cpu))
 
-    def save_compute(self, save_plot=False, save_file=False):
-        stacked_power = np.sum(np.stack(list(self.stacked_power_cpu.values())), axis=0)
+    def save_compute(self, return_result=True, save_plot=False, save_file=False):
+        cpu_results = [np.load(self.path_cpu(cpu)) for cpu in range(self.ncpu)]
+        stacked_power = np.sum(np.stack(cpu_results), axis=0)
+
 
         if save_file:
-            np.save('stacked_DM', np.stack([self.DM_bins, stacked_power]))
+            np.save(self.output+'/stacked_DM.npy', np.stack([self.DM_bins, stacked_power]))
         if save_plot:
             fig, ax = plt.subplots(figsize=(15, 4))
             ax.plot(self.DM_bins, stacked_power)
@@ -120,8 +122,8 @@ class SignalCorrelate:
             ax.set_xlabel('DM')
 
             fig.savefig(self.output+'/stacked_DM.png', bbox_inches="tight")
-        
-        return self.DM_bins, stacked_power
+        if return_result:
+            return self.DM_bins, stacked_power
     
 
 if __name__=='__main__':
@@ -139,5 +141,5 @@ if __name__=='__main__':
                                DM_resolution=ad.get('--DM_res', 2))
     
     computer.compute_power_stack()
+    computer.save_compute(return_result=False, save_plot=True, save_file=True)
     computer.clean_directory()
-    _ = computer.save_compute(save_plot=True, save_file=True)

@@ -19,7 +19,7 @@ class FilterbankIO: # edited version from Michael Keith's filtools
         self.write_file = None
         self.read_header_pos = 0
         self.read_data_pos = 0
-        self.write_header_pos = 0
+        self.write_header_pos = 0 
         self.write_data_pos = 0
 
         self.load(filterbank)
