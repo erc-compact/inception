@@ -1,8 +1,10 @@
 import sys
-import getopt
+from pathlib import Path
+sys.path.insert(0, Path(__file__).parent.parent)
 
-from .setup_manager import SetupManager
-from .signal_injector import InjectSignal
+import getopt
+from injector.setup_manager import SetupManager
+from injector.signal_injector import InjectSignal
 
 
 if __name__=='__main__':
