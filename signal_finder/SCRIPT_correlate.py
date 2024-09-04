@@ -36,7 +36,7 @@ class SignalCorrelate:
 
     def get_compute_data(self):
         fb = FilterbankIO(self.fb_name) 
-        obs = Observation(fb, 'BUILTIN', {'DM':self.DM, 'ID':'None'}, validate=True)
+        obs = Observation(fb, 'BUILTIN', {'DM':0, 'ID':'None'}, validate=True)
         channel_pairs = list(itertools.combinations(range(self.obs.n_chan), 2))
         channel_files = [read_datfile(self.get_path(chan), nbits=64) for chan in range(self.obs.n_chan)]
         return obs, channel_pairs, channel_files
