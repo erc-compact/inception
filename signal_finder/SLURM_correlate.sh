@@ -9,7 +9,7 @@
 fb_path="/path/filterbank.fil"
 sing_img="/path/singularity.sif"
 
-tmp_dir="/tmp"
+tmp_dir="/tmp/user"
 
 rm -rf $tmp_dir
 mkdir -p $tmp_dir
