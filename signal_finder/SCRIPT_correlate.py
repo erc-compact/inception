@@ -88,7 +88,7 @@ class SignalCorrelate:
 
             power_stack += self.get_correlation(pair, obs, channel_files)
 
-        np.save(self.path_cpu(cpu))
+        np.save(self.path_cpu(cpu), power_stack)
 
     def compute_power_stack(self):
         _, channel_pairs, _ = self.get_compute_data()
@@ -99,8 +99,6 @@ class SignalCorrelate:
             add = 1 if cpu < remain else 0 
             start_pairs.append(cpu*(N_pairs+add))
             end_pairs.append((cpu+1)*(N_pairs+add))
-
-        
 
         pair_inds = zip(start_pairs, end_pairs)
         args = list(zip(np.arange(self.ncpu), pair_inds))
