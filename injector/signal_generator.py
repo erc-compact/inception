@@ -294,7 +294,7 @@ def spin_pars_converter(spin_values, spin_types):
     return FX_values, PX_values
 
 
-class MicroStructure:
+class MicroStructure: 
     def __init__(self, phase_abs, freq, scale, profile):
         self.scale = scale
 
@@ -306,7 +306,10 @@ class MicroStructure:
         self.pulse_numbers = np.floor(phase_abs).astype(int)
         self.pulse_range = np.arange(np.min(self.pulse_numbers), np.max(self.pulse_numbers)+1)
 
-        self.max_pulse_length = self.get_max_pulse_length()
+        self.pulse_counts_block = {}
+        self.pulse_index = {}
+
+        self.max_pulse_length = self.pre_process()
 
         self.profile = self.pulse_profile()
 
@@ -324,10 +327,16 @@ class MicroStructure:
         pulse_offset = 10**9 if np.sign(pulse_num) == -1 else 0
         return np.random.default_rng(pulse_num+pulse_offset)
     
-    def get_max_pulse_length(self):
-        pulse_counts_block, _ = self.pulse_sample_counter(self.pulse_range[len(self.pulse_range)//2])
-        return np.max(pulse_counts_block)
-    
+    def pre_process(self):
+        
+        for pulse_n in self.pulse_range:
+            pcb, pix = self.pulse_sample_counter(pulse_n)
+            self.pulse_counts_block[pulse_n] = pcb
+            self.pulse_index[pulse_n] = pix
+        
+        max_pulse_length = np.max([np.max(pcb) for pcb in self.pulse_counts_block.values()])
+        return max_pulse_length
+
     def perlin_noise(self, pulse_length, pulse_num):
         rng = self.get_pulse_rng(pulse_num)
         scale = rng.normal(self.scale, 2)
@@ -382,7 +391,8 @@ class MicroStructure:
         return s_pad, e_pad
     
     def create_microstructure(self, pulse_num):
-        pulse_counts_block, pulse_index = self.pulse_sample_counter(pulse_num)
+        pulse_counts_block = self.pulse_counts_block[pulse_num]
+        pulse_index = self.pulse_index[pulse_num]
    
         pulse_counts = pulse_counts_block.copy()
         max_pulse_length = self.max_pulse_length 
