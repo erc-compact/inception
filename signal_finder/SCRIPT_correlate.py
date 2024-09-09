@@ -6,6 +6,7 @@ import time
 import getopt
 import itertools
 import numpy as np
+from pathlib import Path
 from operator import itemgetter
 import matplotlib.pyplot as plt
 from multiprocessing import Pool
@@ -20,6 +21,7 @@ class SignalCorrelate:
         self.output = output
         self.fb_name = fb_name
         self.ncpu = int(ncpu)
+        self.output_name = Path(fb_name).stem
 
         self.DM_min = np.float64(DM_min)
         self.DM_max = np.float64(DM_max)
@@ -111,14 +113,14 @@ class SignalCorrelate:
         stacked_power = np.sum(np.stack(cpu_results), axis=0)
 
         if save_file:
-            np.save(self.output+'/stacked_DM.npy', np.stack([self.DM_bins, stacked_power]))
+            np.save(self.output+f'/{self.output_name}.npy', np.stack([self.DM_bins, stacked_power]))
         if save_plot:
             fig, ax = plt.subplots(figsize=(15, 4))
             ax.plot(self.DM_bins, stacked_power)
             ax.set_ylabel('stacked power')
             ax.set_xlabel('DM')
 
-            fig.savefig(self.output+'/stacked_DM.png', bbox_inches="tight")
+            fig.savefig(self.output+f'/{self.output_name}.png', bbox_inches="tight")
         if return_result:
             return self.DM_bins, stacked_power
     

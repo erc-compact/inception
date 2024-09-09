@@ -22,7 +22,7 @@ singularity exec -H $HOME:/home -B $sing_img $command $inputs
 
 
 output_dir="/path/output"
-rsync -Pav  $tmp_dir/stacked_DM.png  $output_dir
-rsync -Pav  $tmp_dir/stacked_DM.npy  $output_dir
+rsync -Pav  $tmp_dir/*.png  $output_dir
+rsync -Pav  $tmp_dir/*.npy  $output_dir
 
 rm -rf $tmp_dir
