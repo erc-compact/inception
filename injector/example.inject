@@ -26,7 +26,7 @@ SNR              200
 DM               100
 scattering_time  60       # arb. unit
 duty_cycle       0.08
-micro_structure  300      # microseconds
+micro_structure  300      # microseconds (reference point at PEPOCH - will scale as pulse period changes)
 binary_period    6        # hour
 T0               59379
 A1               2.1

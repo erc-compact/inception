@@ -220,11 +220,11 @@ class PulsarSignal:
         T_proper = bary_times+self.spin_ref - self.binary.orbital_delay(bary_times+self.orbit_ref)
 
         phase_abs = self.phase_offset + self.spin_function(T_proper)
-        return phase_abs #% 1 
+        return phase_abs 
     
     def get_pulse(self, phase, freq):
         if self.micro_structure:
-            pulse_generator = MicroStructure(phase, freq, self.micro_structure, self.pulse_profile)
+            pulse_generator = MicroStructure(phase, freq, self.micro_structure, self.PX_list[0], self.pulse_profile)
             return pulse_generator.pulse_profile()
         else:
             return self.pulse_profile(phase % 1, freq)
@@ -295,8 +295,8 @@ def spin_pars_converter(spin_values, spin_types):
 
 
 class MicroStructure: 
-    def __init__(self, phase_abs, freq, scale, profile):
-        self.scale = scale
+    def __init__(self, phase_abs, freq, scale, pulse_period, profile):
+        self.scale = pulse_period/(scale*u.us.to(u.s))
 
         self.phase_abs = phase_abs
         self.intrinsic_profile = profile(phase_abs % 1, freq)
