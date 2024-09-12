@@ -2,11 +2,10 @@ read tutorial.ipynb
 
 ## Recently added 
 - pulse microstructure
+- added support for 1, 2, 4, 8 & 16 bit filterbanks
 
 ## <font color='green'>TODO</font>
 - priority
-  
-  - add support for 2 and 4 bit filterbanks
   - allow injection into dedispersed timeseries
   - write more useful output logs during injection
   - more intuitive SNR input / correct SNR calculation for custom pulse profiles
@@ -17,6 +16,7 @@ read tutorial.ipynb
   - add more binary models to python mode (DD, DDGR, etc.) / allow pint mode to use any binary model
   - scintillation
   - single pulse
+  - pulsar spectra file
   - DMX
   - PMRA, PMDEC and parallax
   - add mask to injected signal in time/frequency
