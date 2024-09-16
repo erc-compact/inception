@@ -6,7 +6,7 @@ from pathlib import Path
 from multiprocessing import Pool
 from scipy.stats import truncnorm
 
-from .io_tools import FilterbankIO, print_exe
+from .io_tools import FilterbankReader, FilterbankWriter, print_exe
 from .binary_model import PulsarBinaryModel
 from .signal_generator import PulsarSignal
 from .observatory import Observation
@@ -54,11 +54,11 @@ class InjectSignal:
         return cpu_start
             
     def open_tmp_fb(self, cpu):        
-        filterbank_sub = FilterbankIO(self.fb_path) 
-        filterbank_sub.read_file.seek(filterbank_sub.read_data_pos + self.get_file_start(cpu)*filterbank_sub.header['nchans'])
+        filterbank_reader = FilterbankReader(self.fb_path) 
+        filterbank_reader.read_file.seek(filterbank_reader.read_data_pos + self.get_file_start(cpu)*filterbank_reader.nchans)
 
-        filterbank_sub.new_filterbank(self.injected_path + f"_{cpu}.tmpfil")
-        return filterbank_sub
+        filterbank_writer = FilterbankWriter(filterbank_reader, self.injected_path + f"_{cpu}.tmpfil")
+        return filterbank_writer
     
     def construct_models(self, fb):
         pulsar_models = []
@@ -90,16 +90,17 @@ class InjectSignal:
 
         return data_block
     
-    def inject_block(self, fb, cpu, block_start, block_size, models):
-        block = fb.read_block(block_size)
+    def inject_block(self, filterbank, cpu, block_start, block_size, models):
+        reader = filterbank.fb_reader
+        block = reader.read_block(block_size)
         sample_start = block_start + self.get_file_start(cpu)
         
         pulsar_signal = np.zeros_like(block)
         for pulsar_model in models:
             pulsar_signal += pulsar_model.generate_signal(block_size, sample_start)
 
-        analog_block = self.de_digitize(fb, block)
-        fb.write_block(np.round(analog_block + pulsar_signal))
+        analog_block = self.de_digitize(reader, block)
+        filterbank.write_block(np.round(analog_block + pulsar_signal))
 
     def progress(self, cpu, N_blocks, block_i, t_stamp):
         if (block_i%10 == 0) and (block_i!=0):
@@ -120,7 +121,7 @@ class InjectSignal:
         if size_S_blocks != 0:
             self.inject_block(fb, cpu, N_L_blocks*size_L_blocks, size_S_blocks, models)
 
-        fb.read_file.close()
+        fb.fb_reader.read_file.close()
         fb.write_file.close()
 
     def parallel_inject(self):
@@ -130,12 +131,11 @@ class InjectSignal:
             p.map(self.inject_signal, args)
 
     def combine_files(self):
-        filterbank_main = FilterbankIO(self.fb_path) 
-        filterbank_main.new_filterbank(self.injected_path + ".fil")
+        filterbank_main = FilterbankWriter(self.fb_path, self.injected_path + ".fil") 
         
         for cpu in range(self.n_cpus):
             print_exe(f'combining file {cpu+1}/{self.n_cpus}...')
-            filterbank_sub = FilterbankIO(self.injected_path + f"_{cpu}.tmpfil") 
+            filterbank_sub = FilterbankReader(self.injected_path + f"_{cpu}.tmpfil") 
             filterbank_sub.read_file.seek(filterbank_sub.read_data_pos)
 
             (N_L_blocks, size_L_blocks), (_, size_S_blocks) = self.compute_plan[cpu]
@@ -149,7 +149,7 @@ class InjectSignal:
             filterbank_sub.read_file.close()
             os.remove(self.injected_path + f"_{cpu}.tmpfil")
 
-        filterbank_main.read_file.close()
+        filterbank_main.fb_reader.read_file.close()
         filterbank_main.write_file.close()
 
     

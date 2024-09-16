@@ -4,17 +4,16 @@ import pandas as pd
 from pathlib import Path
 import astropy.units as u
 
-from .io_tools import FilterbankIO, print_exe
+from .io_tools import FilterbankReader, print_exe
 from .binary_model import PulsarBinaryModel
 from .signal_generator import PulsarSignal
 from .observatory import Observation
 
 
 
-
 class SetupManager:
     def __init__(self, pulsar_data_path, filterbank_path, ephem_path, output_path):
-        self.fb = FilterbankIO(filterbank_path) 
+        self.fb = self.get_filterbank(filterbank_path) 
         self.pulsars = self.get_pulsars(pulsar_data_path)
         self.ephem = self.get_ephem(ephem_path)
         self.output_path = output_path
@@ -25,7 +24,7 @@ class SetupManager:
     @staticmethod
     def get_filterbank(filterbank_path):
         try:
-            fb = FilterbankIO(filterbank_path)
+            fb = FilterbankReader(filterbank_path)
         except FileNotFoundError:
             sys.exit(f'Unable to open filterbank file: {filterbank_path}')
         else:
