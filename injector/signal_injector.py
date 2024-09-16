@@ -110,7 +110,7 @@ class InjectSignal:
 
     def inject_signal(self, cpu):
         fb = self.open_tmp_fb(cpu)
-        models = self.construct_models(fb)
+        models = self.construct_models(fb.fb_reader)
         (N_L_blocks, size_L_blocks), (_, size_S_blocks) = self.compute_plan[cpu]
 
         t_stamp = time()
