@@ -387,6 +387,8 @@ class MicroStructure:
                 s_pad, e_pad = chan_pad, None
             else:
                 s_pad, e_pad = 0, -chan_pad
+        else:
+            sys.exit("I was aware of this edge-case but didn't think it was possible. Please let me know what inputs casued this error.")
         
         return s_pad, e_pad
     
@@ -396,10 +398,11 @@ class MicroStructure:
    
         pulse_counts = pulse_counts_block.copy()
         max_pulse_length = self.max_pulse_length 
-        pulse_counts[(pulse_counts_block < max_pulse_length-1) & (pulse_counts_block > 0)] = max_pulse_length
+        pulse_counts[(pulse_counts_block < max_pulse_length-2) & (pulse_counts_block > 0)] = max_pulse_length
         
         noise_unique = {max_pulse_length: self.perlin_noise(max_pulse_length, pulse_num),
-                        max_pulse_length-1: self.perlin_noise(max_pulse_length-1, pulse_num)}
+                        max_pulse_length-1: self.perlin_noise(max_pulse_length-1, pulse_num),
+                        max_pulse_length-2: self.perlin_noise(max_pulse_length-2, pulse_num)}
         
         pad = pulse_counts - pulse_counts_block
         chunk_starts, chunk_ends = self.get_pad_chunks(pad)
