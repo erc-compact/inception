@@ -339,12 +339,12 @@ class MicroStructure:
 
     def perlin_noise(self, pulse_length, pulse_num):
         rng = self.get_pulse_rng(pulse_num)
-        scale = rng.normal(self.scale, 2)
+        scale = abs(rng.normal(self.scale, self.scale*0.05))
         gradients = rng.uniform(-1, 1, int(scale) + 1)
         gradients /= np.linalg.norm(gradients, axis=0)  
 
-        grid_points = np.arange(0, pulse_length) + rng.integers(0, 100)
-        norm_len = pulse_length/scale
+        grid_points = np.arange(pulse_length)
+        norm_len = pulse_length / scale
         x0 = grid_points / norm_len
         rel_x = (grid_points % norm_len) / norm_len
         dot0 = gradients[(x0 % scale).astype(int)] * rel_x
@@ -398,14 +398,15 @@ class MicroStructure:
    
         pulse_counts = pulse_counts_block.copy()
         max_pulse_length = self.max_pulse_length 
-        pulse_counts[(pulse_counts_block < max_pulse_length-2) & (pulse_counts_block > 0)] = max_pulse_length
-        
-        noise_unique = {max_pulse_length: self.perlin_noise(max_pulse_length, pulse_num),
-                        max_pulse_length-1: self.perlin_noise(max_pulse_length-1, pulse_num),
-                        max_pulse_length-2: self.perlin_noise(max_pulse_length-2, pulse_num)}
+        pulse_counts[(pulse_counts_block < max_pulse_length-2) & (pulse_counts_block > 0)] = max_pulse_length # fix edge case
         
         pad = pulse_counts - pulse_counts_block
         chunk_starts, chunk_ends = self.get_pad_chunks(pad)
+
+        noise_unique = {max_pulse_length: self.perlin_noise(max_pulse_length, pulse_num),
+                        max_pulse_length-1: self.perlin_noise(max_pulse_length-1, pulse_num),
+                        max_pulse_length-2: self.perlin_noise(max_pulse_length-2, pulse_num)}
+
 
         for chan in range(self.nchans):
             pulse_intrinsic_length = pulse_counts[chan]
