@@ -15,10 +15,11 @@ if __name__=='__main__':
     parser.add_argument('--output', metavar='directory', required=True, help='output directory for injected filterbank')
     parser.add_argument('--ephem', metavar='file', required=False, default='builtin', help='JPL ephemeris file for solar system (.bsp)')
     parser.add_argument('--ncpu', metavar='integer', required=False, default=1, type=int, help='number of cpus')
+    args = parser.parse_args()
 
-    setup = SetupManager(parser.signal, parser.filterbank, parser.ephem, parser.output)
+    setup = SetupManager(args.signal, args.filterbank, args.ephem, args.output)
    
-    injector = InjectSignal(setup, parser.ncpu)
+    injector = InjectSignal(setup, args.ncpu)
     injector.parallel_inject()
     injector.combine_files()
     
