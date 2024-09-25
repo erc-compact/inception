@@ -14,7 +14,7 @@ from .observatory import Observation
 
 class InjectSignal:
     def __init__(self, setup_manager, n_cpus):
-        self.n_cpus = int(n_cpus)
+        self.n_cpus = n_cpus
         self.n_samples = setup_manager.pulsar_models[0].obs.n_samples
         self.compute_plan = self.create_parallel_plan()
 

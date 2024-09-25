@@ -2,24 +2,23 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).absolute().parent.parent))
 
-import getopt
+import argparse
 from injector.setup_manager import SetupManager
 from injector.signal_injector import InjectSignal
 
 
 if __name__=='__main__':
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "h", ["signal=", "filterbank=", "ephem=", "output=", 'ncpu='])
-    except Exception as err:
-        sys.exit(err)
+    parser = argparse.ArgumentParser(prog='Inception injector',
+                                     epilog='Feel free to contact me if you have questions - rsenzel@mpifr-bonn.mpg.de')
+    parser.add_argument('--signal', metavar='file', required=True, help='text file containing pulsar parameters to inject')
+    parser.add_argument('--filterbank', metavar='file', required=True, help='path to filterbank where signal is injected')
+    parser.add_argument('--output', metavar='directory', required=True, help='output directory for injected filterbank')
+    parser.add_argument('--ephem', metavar='file', required=False, default='builtin', help='JPL ephemeris file for solar system (.bsp)')
+    parser.add_argument('--ncpu', metavar='integer', required=False, default=1, type=int, help='number of cpus')
 
-    ad = dict(opts) 
-    if not ad.get('-h', 1):
-        sys.exit('If you need help come to my office (E0.04). :D') 
-        
-    setup = SetupManager(ad['--signal'], ad['--filterbank'],  ad.get('--ephem', 'builtin'),  ad['--output'])
+    setup = SetupManager(parser.signal, parser.filterbank, parser.ephem, parser.output)
    
-    injector = InjectSignal(setup, ad.get('--ncpu', 1))
+    injector = InjectSignal(setup, parser.ncpu)
     injector.parallel_inject()
     injector.combine_files()
     

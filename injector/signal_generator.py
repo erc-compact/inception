@@ -403,7 +403,7 @@ class MicroStructure:
         pad = pulse_counts - pulse_counts_block
         chunk_starts, chunk_ends = self.get_pad_chunks(pad)
 
-        noise_unique = {max_pulse_length: self.perlin_noise(max_pulse_length, pulse_num),
+        noise_unique = {max_pulse_length: self.perlin_noise(max_pulse_length, pulse_num), # do this recursively
                         max_pulse_length-1: self.perlin_noise(max_pulse_length-1, pulse_num),
                         max_pulse_length-2: self.perlin_noise(max_pulse_length-2, pulse_num)}
 
