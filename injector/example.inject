@@ -1,56 +1,63 @@
-ID               pulsar1     # added to name of injected filterbank (filterbank.fil -> filterbank_pulsar1.fil), also name of outputed par file (pulsar1.par)
-mode             python
-PEPOCH           59379.123   # (mjd, tdb, barycentre) removing will default to observation start
-RAJ              17:50:13.0600
-DECJ             -37:03:05.2000
-P0               0.005       # (sec) Will accept PX or FX for any spin parameter
-F1               1e-10
-F2               1e-11
-F7               2e-13       # can supply inf FX, any missing FX will be set to zero
-SNR              400
-DM               34
-spectral_index   -2
-duty_cycle       0.08        # default gaussian profile
-phase_offset     0
-
-ID               pulsar2  # code searches for ID flags to inject multiple pulsars  
-mode             python
-PEPOCH           59379
-separation       4        # (arcmin)
-position_angle   35       # (deg)
-beam_fwhm        10       # (arcmin) SNR will only be reduced if a beam_fwhm is given
-P0               0.005
-F1               1e-10
-F2               1e-11
-SNR              200
-DM               100
-scattering_time  60       # arb. unit
-duty_cycle       0.08
-micro_structure  300      # microseconds (reference point at PEPOCH - will scale as pulse period changes)
-binary_period    6        # hour
-T0               59379
-A1               2.1
-ecc              0.2
-AoP              0.0
-
-ID               pulsar3
-mode             python
-RAJ	             17:50:13.0600
-DECJ             -37:03:05.2000
-PEPOCH           59378.8
-P0               0.012
-F1               1e-11
-P2               1e-15
-profile          profile.npy    # numpy .npy file or EPN .txt file (injector code will normalise the profile)
-SNR              20
-DM               343
-binary_period    6
-T0               59379
-M1               1.4
-M2               2
-inc              90.0
-ecc              0.2
-LoAN             0.0
-AoP              0.0
-
-
+{
+    "pulsars": [
+        {
+            "ID": "pulsar1",            
+            "mode": "python",
+            "PEPOCH": 59379.123,      
+            "RAJ": "17:50:13.0600",
+            "DECJ": "-37:03:05.2000",
+            "P0": 0.005,               
+            "F1": 1e-10,
+            "F2": 1e-11,
+            "F7": 2e-13,             
+            "SNR": 400,
+            "DM": 34,
+            "spectral_index": -2,
+            "duty_cycle": 0.08,       
+            "phase_offset": 0           
+        },
+        {
+            "ID": "pulsar2", 
+            "mode": "python",
+            "PEPOCH": 59379,            
+            "separation": 4,           
+            "position_angle": 35,   
+            "beam_fwhm": 10,    
+            "P0": 0.005,                
+            "F1": 1e-10,
+            "F2": 1e-11,
+            "SNR": 30,
+            "DM": 34,
+            "scattering_time": 60,    
+            "duty_cycle": 0.08,
+            "micro_structure": 300, 
+            "binary_period": 6,  
+            "T0": 59379,
+            "A1": 2.1,
+            "ecc": 0.2,
+            "AoP": 0.0
+        },
+        {
+            "ID": "pulsar3", 
+            "mode": "python",
+            "PEPOCH": 59379,            
+            "RAJ": "17:50:13.0600",
+            "DECJ": "-37:03:05.2000",
+            "P0": 0.015,
+            "F1": 1e-10,
+            "P2": 1e-15,
+            "profile": "profile.npy", 
+            "SNR": 400,
+            "DM": 420,
+            "duty_cycle": 0.08,
+            "binary_period": 6,         
+            "T0": 59379,
+            "M1": 1.4,
+            "M2": 2,
+            "inc": 90.0,
+            "ecc": 0.2,
+            "LoAN": 0.0,
+            "AoP": 0.0
+        }
+    ]
+}

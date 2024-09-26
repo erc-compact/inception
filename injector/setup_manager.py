@@ -1,4 +1,5 @@
 import sys
+import json
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -41,17 +42,23 @@ class SetupManager:
 
     @staticmethod
     def get_pulsars(pulsar_data_path):
-        pulsar_list = []
-        pulsar_data = np.genfromtxt(pulsar_data_path, dtype=None, encoding=None)
-        pulsar_IDs = np.where(pulsar_data.T[0] == 'ID')[0]
-        if len(pulsar_IDs) == 0:
-            sys.exit(f'No pulsar ID flags found in: {pulsar_data_path}')
-        else:
-            for i in range(len(pulsar_IDs)):
-                end_ = pulsar_IDs[i+1] if len(pulsar_IDs) > i+1 else None
-                pulsar_pars = dict(pulsar_data[pulsar_IDs[i]:end_])
-                pulsar_list.append(pulsar_pars)
+        try:
+            with open(pulsar_data_path, 'r') as file:
+                read_inject_file = json.load(file)
+        except FileNotFoundError:
+            sys.exit(f'Unable to find {pulsar_data_path}.')
+        except json.JSONDecodeError:
+            sys.exit(f'Unable to parse {pulsar_data_path} using JSON.')
+
+        pulsar_list = read_inject_file.get('pulsars', None)
+        help=r'See "example.inject" file in https://github.com/erc-compact/inception/tree/main/injector.'
+        if pulsar_list:
+            for i, pulsar in enumerate(pulsar_list):
+                if not pulsar.get('ID', None):
+                    sys.exit(f'No "ID" key word found in pulsar {i+1} in {pulsar_data_path}. {help}')
             return pulsar_list
+        else:
+            sys.exit(f'No "pulsars" key word found in {pulsar_data_path}. {help}')
 
     @staticmethod
     def get_ephem(ephem):
