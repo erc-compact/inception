@@ -12,7 +12,7 @@ from .io_tools import str2func
 class Observation:
     telescope_id = {64: ['Meerkat', 'mk'], 6: ['GBT', 'gb']}
 
-    def __init__(self, filterbank, ephem, pulsar_pars, validate=False):
+    def __init__(self, filterbank, ephem, pulsar_pars, generate=True):
         solar_system_ephemeris.set(ephem) 
         self.ephem = ephem
 
@@ -24,7 +24,7 @@ class Observation:
                                      dec=self.convert_coord(fb_header['src_dej']), 
                                      unit=(u.hourangle, u.deg), frame='icrs')
         self.source = self.get_coords(pulsar_pars)
-        self.beam_fwhm = str2func(pulsar_pars.get('beam_fwhm', 0), 'beam_fwhm', pulsar_pars['ID'], float)
+        self.beam_fwhm = str2func(pulsar_pars.get('beam_fwhm', 0), 'beam_fwhm', pulsar_pars['ID'], float) # beam reader, one beam/ multi beams- meta map
         
         self.obs_start = fb_header['tstart']
         self.dt = fb_header['tsamp']
@@ -41,13 +41,14 @@ class Observation:
         self.f0 = fb_header['fch1'] + fb_header['foff'] * (fb_header['nchans']-1)/2
         self.low_f = min(self.freq_arr)
         self.high_f = max(self.freq_arr)
+        self.df = self.freq_arr[1]-self.freq_arr[0]
 
         self.DM = str2func(pulsar_pars.get('DM', None), 'DM', pulsar_pars['ID'], float)
         self.DM_const = (const.e.si**2/(8*np.pi**2*const.m_e*const.c) /(const.eps0) * u.pc.to(u.m)*u.m).value*1e-6   # Mhz^2 pc^-1 cm^3 s
-        self.DM_delays = -self.DM * self.DM_const / self.freq_arr**2
+        self.DM_delays = -self.DM * self.DM_const / self.freq_arr**2  
 
         self.obs_start_bary = self.topo2bary([self.obs_start])[0]
-        if not validate:
+        if generate:
             self.barycentre_delays_interp = self.generate_interp()
         
         
@@ -135,4 +136,7 @@ class Observation:
         delta_time = self.barycentre_delays(time_samples)
         return interp1d(time_samples, delta_time, kind='cubic')
     
+
+
+
     

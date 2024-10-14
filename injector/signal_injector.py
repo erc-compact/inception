@@ -7,9 +7,9 @@ from multiprocessing import Pool
 from scipy.stats import truncnorm
 
 from .io_tools import FilterbankReader, FilterbankWriter, print_exe
-from .binary_model import PulsarBinaryModel
-from .signal_generator import PulsarSignal
-from .observatory import Observation
+from .binary_model import BinaryModel
+from .pulsar_model import PulsarModel
+from .observation import Observation
 
 
 class InjectSignal:
@@ -62,10 +62,10 @@ class InjectSignal:
     
     def construct_models(self, fb):
         pulsar_models = []
-        for i, pulsar_data in enumerate(self.pulsars):
-            obs = Observation(fb, self.ephem, pulsar_data, validate=False)
-            binary = PulsarBinaryModel(pulsar_data, validate=False)
-            pulsar_model = PulsarSignal(obs, binary, pulsar_data, validate=False, par_file=self.parfile_paths[i])
+        for pulsar_data in self.pulsars:
+            obs = Observation(fb, self.ephem, pulsar_data, generate=True)
+            binary = BinaryModel(pulsar_data, generate=True)
+            pulsar_model = PulsarModel(obs, binary, pulsar_data, generate=True)
             pulsar_models.append(pulsar_model)
 
         return pulsar_models

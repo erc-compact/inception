@@ -6,9 +6,9 @@ from scipy.interpolate import interp1d
 
 from .io_tools import str2func
 
-class PulsarBinaryModel:
-    def __init__(self, pulsar_pars, validate=False):
-        period, A1, M1, M2, inc, ecc, AoP, LoAN = sanitize_binary_pars(pulsar_pars)
+class BinaryModel:
+    def __init__(self, pulsar_pars, generate=True):
+        period, A1, M1, M2, inc, ecc, AoP, LoAN = self.sanitize_binary_pars(pulsar_pars)
         self.mass_p = M1 # Msun
         self.mass_c = M2 # Msun
         self.period = period # s
@@ -27,7 +27,7 @@ class PulsarBinaryModel:
             self.gamma =  M2**2 * (M1 + 2*M2) * self.P2pi * self.e / (self.a1 * (M1 + M2)**2)
 
         self.T0 = None
-        if not validate:
+        if generate:
             self.orbital_delay = self.generate_interp()
 
    
@@ -38,29 +38,6 @@ class PulsarBinaryModel:
     @staticmethod
     def mass_func(period, semi_major_axis):
         return  semi_major_axis ** 3 * 4 * np.pi**2 /(const.G.value * period**2 * const.M_sun.value) 
-    
-    @staticmethod
-    def orbit_par_converter(period, find='A1', A1=None, M1=None, M2=None, inc=None):
-        T = const.G.value * period**2 / (4*np.pi**2)
-
-        def get_M1(M2_):
-            sini = np.sin(np.deg2rad(inc))
-            term1 = np.sqrt(T) * ((sini * M2_*const.M_sun.value)/(const.c.value * A1))**(3/2)
-            return term1/const.M_sun.value - M2_
-
-        if find == 'inc':
-            sini3 = (M1 + M2)**2/M2**3 *1/const.M_sun.value * 1/T * (const.c.value * A1) ** 3
-            return np.rad2deg(np.arcsin(sini3**(1/3)))
-        
-        elif find == 'M1':
-            return get_M1(M2)
-        
-        elif find == 'M2':
-            return fsolve(lambda M2_: M1 - get_M1(M2_), 1)
-        
-        elif find == 'A1':
-            sini = np.sin(np.deg2rad(inc))
-            return PulsarBinaryModel.get_semi_major(period, M1+M2) * M2/(M1+M2) * sini / const.c.value
     
     def radial(self, theta):
         return (1-self.e**2)/(1+self.e*np.cos(theta)) * self.a
@@ -157,76 +134,97 @@ class PulsarBinaryModel:
         else:
             return lambda t: np.zeros_like(t)
         
+    def orbit_par_converter(self, period, find='A1', A1=None, M1=None, M2=None, inc=None):
+        T = const.G.value * period**2 / (4*np.pi**2)
 
-def sanitize_binary_pars(pulsar_pars):
-    period = pulsar_pars.get('binary_period', None)
-    if not period:
-        return 0, 0, 0, 0, 0, 0, 0, 0
-    period_float = str2func(period, 'Binary period', pulsar_pars['ID'], float) * 3600
+        def get_M1(M2_):
+            sini = np.sin(np.deg2rad(inc))
+            term1 = np.sqrt(T) * ((sini * M2_*const.M_sun.value)/(const.c.value * A1))**(3/2)
+            return term1/const.M_sun.value - M2_
 
-    ecc = str2func(pulsar_pars.get('ecc', 0), 'ecc', pulsar_pars['ID'], float)
-    aop = str2func(pulsar_pars.get('aop', 0), 'aop', pulsar_pars['ID'], float)
-    loan = str2func(pulsar_pars.get('laon', 0), 'loan', pulsar_pars['ID'], float)
-    
-    A1 = pulsar_pars.get('A1', None)
-    M1 = pulsar_pars.get('M1', None)
-    M2 = pulsar_pars.get('M2', None)
-    inc = pulsar_pars.get('inc', None)
-    if A1:
-        if not (M1 and M2 and inc):
-            A1_float = str2func(A1, 'A1', pulsar_pars['ID'], float) 
-            M1_default, inc_default = 1.4, 90
+        if find == 'inc':
+            sini3 = (M1 + M2)**2/M2**3 *1/const.M_sun.value * 1/T * (const.c.value * A1) ** 3
+            return np.rad2deg(np.arcsin(sini3**(1/3)))
+        
+        elif find == 'M1':
+            return get_M1(M2)
+        
+        elif find == 'M2':
+            return fsolve(lambda M2_: M1 - get_M1(M2_), 1)
+        
+        elif find == 'A1':
+            sini = np.sin(np.deg2rad(inc))
+            return self.get_semi_major(period, M1+M2) * M2/(M1+M2) * sini / const.c.value
+        
+    def sanitize_binary_pars(self, pulsar_pars):
+        period = pulsar_pars.get('binary_period', None)
+        if not period:
+            return 0, 0, 0, 0, 0, 0, 0, 0
+        period_float = str2func(period, 'Binary period', pulsar_pars['ID'], float) * 3600
 
-            if (not M1) and (not M2) and (not inc):
-                inc_float = inc_default
-                M1_float = M1_default
-                M2_float = PulsarBinaryModel.orbit_par_converter(period_float, find='M2', A1=A1_float, M1=M1_float, inc=inc_float) 
-            
-            elif (M1) and (not M2) and (not inc):
-                inc_float = inc_default
-                M1_float = str2func(M1, 'M1', pulsar_pars['ID'], float) 
-                M2_float = PulsarBinaryModel.orbit_par_converter(period_float, find='M2', A1=A1_float, M1=M1_float, inc=inc_float) 
-            
-            elif (not M1) and (M2) and (not inc):
-                inc_float = inc_default
-                M2_float = str2func(M2, 'M2', pulsar_pars['ID'], float)
-                M1_float = PulsarBinaryModel.orbit_par_converter(period_float, find='M1', A1=A1_float, M2=M2_float, inc=inc_float) 
-            
-            elif (not M1) and (not M2) and (inc):
-                inc_float = str2func(inc, 'inc', pulsar_pars['ID'], float)
-                M1_float = M1_default
-                M2_float = PulsarBinaryModel.orbit_par_converter(period_float, find='M2', A1=A1_float, M1=M1_float, inc=inc_float) 
-            
-            elif (M1) and (M2) and (not inc):
-                M1_float = str2func(M1, 'M1', pulsar_pars['ID'], float) 
-                M2_float = str2func(M2, 'M2', pulsar_pars['ID'], float) 
-                inc_float = PulsarBinaryModel.orbit_par_converter(period_float, find='inc', A1=A1_float, M1=M1_float, M2=M2_float) 
-            
-            elif (M1) and (not M2) and (inc):
-                M1_float = str2func(M1, 'M1', pulsar_pars['ID'], float) 
-                inc_float = str2func(inc, 'inc', pulsar_pars['ID'], float)
-                M2_float = PulsarBinaryModel.orbit_par_converter(period_float, find='M2', A1=A1_float, M1=M1_float, inc=inc_float) 
-            
-            elif (not M1) and (M2) and (inc):
-                M2_float = str2func(M2, 'M2', pulsar_pars['ID'], float) 
-                inc_float = str2func(inc, 'inc', pulsar_pars['ID'], float)
-                M1_float = PulsarBinaryModel.orbit_par_converter(period_float, find='M1', A1=A1_float, M2=M2_float, inc=inc_float) 
-            
-            else:
-                M1_float = str2func(M1, 'M1', pulsar_pars['ID'], float) 
-                M2_float = str2func(M2, 'M2', pulsar_pars['ID'], float) 
-                inc_float = str2func(inc, 'inc', pulsar_pars['ID'], float)
-                A1_calc = PulsarBinaryModel.orbit_par_converter(period_float, find='A1', M1=M1_float, M2=M2_float, inc=inc_float) 
-                if A1_calc != A1_float:
-                    sys.exit(f"Error: Inputed A1 for pulsar {pulsar_pars['ID']} is not compatible with inputed M1, M2 and inc. Only three out of these four parameters are required.")
-            
-            
-    elif (M1) and (M2) and (inc):
-        M1_float = str2func(M1, 'M1', pulsar_pars['ID'], float) 
-        M2_float = str2func(M2, 'M2', pulsar_pars['ID'], float) 
-        inc_float = str2func(inc, 'inc', pulsar_pars['ID'], float)
-        A1_float = PulsarBinaryModel.orbit_par_converter(period_float, find='A1', M1=M1_float, M2=M2_float, inc=inc_float) 
-    else:
-        sys.exit(f"Error: Pulsar {pulsar_pars['ID']} requires either an A1 or M1, M2 and inc.")
+        ecc = str2func(pulsar_pars.get('ecc', 0), 'ecc', pulsar_pars['ID'], float)
+        aop = str2func(pulsar_pars.get('aop', 0), 'aop', pulsar_pars['ID'], float)
+        loan = str2func(pulsar_pars.get('laon', 0), 'loan', pulsar_pars['ID'], float)
+        
+        A1 = pulsar_pars.get('A1', None)
+        M1 = pulsar_pars.get('M1', None)
+        M2 = pulsar_pars.get('M2', None)
+        inc = pulsar_pars.get('inc', None)
+        if A1:
+            if not (M1 and M2 and inc):
+                A1_float = str2func(A1, 'A1', pulsar_pars['ID'], float) 
+                M1_default, inc_default = 1.4, 90
 
-    return abs(period_float), abs(A1_float), abs(M1_float), abs(M2_float), inc_float, abs(ecc), aop, loan
+                if (not M1) and (not M2) and (not inc):
+                    inc_float = inc_default
+                    M1_float = M1_default
+                    M2_float = self.orbit_par_converter(period_float, find='M2', A1=A1_float, M1=M1_float, inc=inc_float) 
+                
+                elif (M1) and (not M2) and (not inc):
+                    inc_float = inc_default
+                    M1_float = str2func(M1, 'M1', pulsar_pars['ID'], float) 
+                    M2_float = self.orbit_par_converter(period_float, find='M2', A1=A1_float, M1=M1_float, inc=inc_float) 
+                
+                elif (not M1) and (M2) and (not inc):
+                    inc_float = inc_default
+                    M2_float = str2func(M2, 'M2', pulsar_pars['ID'], float)
+                    M1_float = self.orbit_par_converter(period_float, find='M1', A1=A1_float, M2=M2_float, inc=inc_float) 
+                
+                elif (not M1) and (not M2) and (inc):
+                    inc_float = str2func(inc, 'inc', pulsar_pars['ID'], float)
+                    M1_float = M1_default
+                    M2_float = self.orbit_par_converter(period_float, find='M2', A1=A1_float, M1=M1_float, inc=inc_float) 
+                
+                elif (M1) and (M2) and (not inc):
+                    M1_float = str2func(M1, 'M1', pulsar_pars['ID'], float) 
+                    M2_float = str2func(M2, 'M2', pulsar_pars['ID'], float) 
+                    inc_float = self.orbit_par_converter(period_float, find='inc', A1=A1_float, M1=M1_float, M2=M2_float) 
+                
+                elif (M1) and (not M2) and (inc):
+                    M1_float = str2func(M1, 'M1', pulsar_pars['ID'], float) 
+                    inc_float = str2func(inc, 'inc', pulsar_pars['ID'], float)
+                    M2_float = self.orbit_par_converter(period_float, find='M2', A1=A1_float, M1=M1_float, inc=inc_float) 
+                
+                elif (not M1) and (M2) and (inc):
+                    M2_float = str2func(M2, 'M2', pulsar_pars['ID'], float) 
+                    inc_float = str2func(inc, 'inc', pulsar_pars['ID'], float)
+                    M1_float = self.orbit_par_converter(period_float, find='M1', A1=A1_float, M2=M2_float, inc=inc_float) 
+                
+                else:
+                    M1_float = str2func(M1, 'M1', pulsar_pars['ID'], float) 
+                    M2_float = str2func(M2, 'M2', pulsar_pars['ID'], float) 
+                    inc_float = str2func(inc, 'inc', pulsar_pars['ID'], float)
+                    A1_calc = self.orbit_par_converter(period_float, find='A1', M1=M1_float, M2=M2_float, inc=inc_float) 
+                    if A1_calc != A1_float:
+                        sys.exit(f"Error: Inputed A1 for pulsar {pulsar_pars['ID']} is not compatible with inputed M1, M2 and inc. Only three out of these four parameters are required.")
+                
+                
+        elif (M1) and (M2) and (inc):
+            M1_float = str2func(M1, 'M1', pulsar_pars['ID'], float) 
+            M2_float = str2func(M2, 'M2', pulsar_pars['ID'], float) 
+            inc_float = str2func(inc, 'inc', pulsar_pars['ID'], float)
+            A1_float = self.orbit_par_converter(period_float, find='A1', M1=M1_float, M2=M2_float, inc=inc_float) 
+        else:
+            sys.exit(f"Error: Pulsar {pulsar_pars['ID']} requires either an A1 or M1, M2 and inc.")
+
+        return abs(period_float), abs(A1_float), abs(M1_float), abs(M2_float), inc_float, abs(ecc), aop, loan

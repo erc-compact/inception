@@ -1,22 +1,21 @@
 read tutorial.ipynb
 
 ## Recently added 
-- pulse microstructure
-- added support for 1, 2, 4, 8 & 16 bit filterbanks
+- intra-channel DM smearing
+- custom PSD
+- more robust SNR estimation for custom profiles
+- frequency dependent scattering
 
 ## <font color='green'>TODO</font>
 - priority
   - allow injection into dedispersed timeseries
   - write more useful output logs during injection
-  - more intuitive SNR input / correct SNR calculation for custom pulse profiles
-  - frequency dependence for scattering / fix scattering_time units
 
 - nonpriority
   - add $\dot{\omega}$, $\dot{P_b}$, etc.
   - add more binary models to python mode (DD, DDGR, etc.) / allow pint mode to use any binary model
   - scintillation
   - single pulse
-  - pulsar spectra file
   - DMX
   - PMRA, PMDEC and parallax
   - add mask to injected signal in time/frequency
