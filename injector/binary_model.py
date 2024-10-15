@@ -127,7 +127,7 @@ class BinaryModel:
         
     def generate_interp(self):
         if self.period:
-            time_series = np.linspace(0, self.period, int(3e4))
+            time_series = np.linspace(0, self.period, int(1e5))
             roemer_delay = self.get_roemer_delay_coord(time_series)
             interp_func = interp1d(time_series, roemer_delay)
             return lambda t: interp_func(t % self.period)

@@ -8,12 +8,13 @@ read tutorial.ipynb
 
 ## <font color='green'>TODO</font>
 - priority
+  - multibeam injection
   - allow injection into dedispersed timeseries
   - write more useful output logs during injection
 
 - nonpriority
   - add $\dot{\omega}$, $\dot{P_b}$, etc.
-  - add more binary models to python mode (DD, DDGR, etc.) / allow pint mode to use any binary model
+  - add more binary models to python mode (DD, DDGR, etc.)
   - scintillation
   - single pulse
   - DMX

@@ -36,7 +36,7 @@ class PropagationEffects:
         ref_scattering_time = self.pulsar_pars.get('scattering_time', 'inf')
         
 
-        if (ref_scattering_time == 'inf') or (ref_scattering_time == '0'):
+        if (ref_scattering_time == 'inf') or (str(ref_scattering_time) == '0'):
             return intrinsic_pulse
         else:
             if ref_scattering_time == 'relation_1':
@@ -65,11 +65,11 @@ class PropagationEffects:
     
 
     def intra_channel_DM_smearing(self, intrinsic_pulse): # freq of ind pulse, spectra
-        DM_smear_str = self.pulsar_pars.get('DM_smear', False)
-        DM_smear = str2func(DM_smear_str, 'DM_smear', self.ID, bool)
+        DM_smear_str = self.pulsar_pars.get('DM_smear', 'false')
+        DM_smear = True if DM_smear_str.lower() == 'true' else False
         
         def channel_profile(phase, freq, channel_freq, chan_num):
-            dt = self.obs.DM_const * self.DM * (channel_freq**-2 - freq**-2)
+            dt = self.DM_const * self.DM * (channel_freq**-2 - freq**-2)
             phase_freq = phase + dt/self.period
             PSD_corr = self.spectra(freq)/self.spectra(channel_freq)
             return intrinsic_pulse(phase_freq % 1, chan_num) * PSD_corr
@@ -87,10 +87,9 @@ class PropagationEffects:
                                         a=channel_bottom, b=channel_top,
                                         epsabs=1e-3, epsrel=1e-3)
                 
-                if integrate_freq[1] < 1:
-                    self.smeared_profiles.append(interp1d(self.phase, integrate_freq[0]/np.abs(self.obs.df)))
-                else:
-                    sys.exit(f'Unable to DM smear pulse profile for pulsar {self.pulsar_pars['ID']}.')
+                self.smeared_profiles.append(interp1d(self.phase, integrate_freq[0]/np.abs(self.obs.df)))
+                # if integrate_freq[1] < 1:
+                #     sys.exit(f'Unable to DM smear pulse profile for pulsar {self.pulsar_pars['ID']}.')
 
             def smeared_pulse(phase, chan_num):
                 return self.smeared_profiles[chan_num](phase)

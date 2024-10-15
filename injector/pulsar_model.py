@@ -17,7 +17,7 @@ from .io_tools import str2func
 
 class PulsarModel:
     def __init__(self, obs, binary, pulsar_pars, generate=True):
-        self.get_mode()
+        self.get_mode(pulsar_pars)
         self.ID = pulsar_pars['ID']
         self.obs = obs
         self.binary = binary
@@ -27,15 +27,16 @@ class PulsarModel:
         self.get_spin_functions(pulsar_pars)
         self.get_period_start()
 
+        self.spectra = self.get_spectra(pulsar_pars)
+        self.intrinsic_profile_chan = self.get_intrinsic_profile(pulsar_pars)
         self.micro_structure = str2func(pulsar_pars.get('micro_structure', 0), 'micro_structure', self.ID, float)
+        self.prop_effect = PropagationEffects(self.obs, pulsar_pars, self.profile_length, self.period, self.spectra)
 
         if generate:
-            self.spectra = self.get_spectra(pulsar_pars)
-            self.intrinsic_profile_chan = self.get_intrinsic_profile(pulsar_pars)
-            self.observed_profile_chan = self.get_observed_profile(pulsar_pars)
-
-            self.calculate_SNR(pulsar_pars)
+            self.observed_profile_chan = self.get_observed_profile()
             self.observed_profile = self.vectorise_observed_profile()
+
+        self.calculate_SNR(pulsar_pars, generate)
     
     def get_mode(self, pulsar_pars):
         self.mode = pulsar_pars.get('mode', 'python')
@@ -45,8 +46,7 @@ class PulsarModel:
         elif self.mode == 'pint':
             self.generate_signal = self.generate_signal_polcos
 
-    def get_observed_profile(self, pulsar_pars):
-        self.prop_effect = PropagationEffects(self.obs, pulsar_pars, self.profile_length, self.period, self.spectra)
+    def get_observed_profile(self):
         scatterd_profile = self.prop_effect.ISM_scattering(self.intrinsic_profile_chan)
         smeared_profile = self.prop_effect.intra_channel_DM_smearing(scatterd_profile)
         return smeared_profile
@@ -141,7 +141,7 @@ class PulsarModel:
         return bary_times+self.spin_ref - self.binary.orbital_delay(bary_times+self.orbit_ref)
     
     def get_period_start(self):
-        T_mid_proper = self.coord2proper_time(self.obs.obs_start_bary)
+        T_mid_proper = self.obs.obs_start_bary + self.spin_ref 
         self.period = 1/self.spin_func(T_mid_proper)
 
     def get_spectra(self, pulsar_pars):
@@ -213,26 +213,27 @@ class PulsarModel:
 
         return intrinsic_pulse
     
-    def calculate_SNR(self, pulsar_pars):
+    def calculate_SNR(self, pulsar_pars, generate):
         SNR_obs = str2func(pulsar_pars.get('SNR', 0), 'SNR', self.ID, float)
         SNR_intrinsic = str2func(pulsar_pars.get('SNRi', 0), 'SNRi', self.ID, float)
-
-        if SNR_obs:
-            SNR = SNR_obs
-            SNR_function = self.observed_profile_chan
-        elif SNR_intrinsic:
-            SNR = SNR_intrinsic
-            SNR_function = self.intrinsic_profile_chan
-        else:
+        if (not SNR_obs) and (not SNR_intrinsic):
             sys.exit(f'SNR value is required for pulsar {self.ID}.')
 
-        integrated_profile = 0
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", IntegrationWarning)
-            for chan in range(self.obs.n_chan):
-                integrated_profile += quad(SNR_function, args=(chan,), a=0, b=1, epsabs=1e-5)[0]
+        if generate:
+            if SNR_obs:
+                SNR = SNR_obs
+                SNR_function = self.observed_profile_chan
+            elif SNR_intrinsic:
+                SNR = SNR_intrinsic
+                SNR_function = self.intrinsic_profile_chan
+        
+            integrated_profile = 0
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", IntegrationWarning)
+                for chan in range(self.obs.n_chan):
+                    integrated_profile += quad(SNR_function, args=(chan,), a=0, b=1, epsabs=1e-5)[0]
 
-        self.SNR_scale = SNR * self.obs.fb_std * np.sqrt(self.period * self.obs.n_chan / self.obs.obs_len) / integrated_profile
+            self.SNR_scale = SNR * self.obs.fb_std * np.sqrt(self.period * self.obs.n_chan / self.obs.obs_len) / integrated_profile
     
     def vectorise_observed_profile(self):
         phases = self.prop_effect.phase
@@ -269,7 +270,7 @@ class PulsarModel:
     def generate_signal_polcos(self, n_samples, sample_start=0):
         timeseries = np.linspace(self.obs.dt*sample_start, self.obs.dt*(n_samples+sample_start-1), n_samples)
         freq_array = np.tile(self.obs.freq_arr, (len(timeseries),1))
-        DM_array = np.tile(self.obs.DM_delays, (len(timeseries),1))
+        DM_array = np.tile(self.prop_effect.DM_delays, (len(timeseries),1))
 
         topo_times = self.obs.sec2mjd(timeseries)
         phase_array = np.tile(topo_times, (len(self.obs.freq_arr),1)).T
@@ -280,15 +281,14 @@ class PulsarModel:
         
     def generate_signal_python(self, n_samples, sample_start=0):
         timeseries = np.linspace(self.obs.dt*sample_start, self.obs.dt*(n_samples+sample_start-1), n_samples)
-        DM_array = np.tile(self.obs.DM_delays, (len(timeseries),1))
+        DM_array = np.tile(self.prop_effect.DM_delays, (len(timeseries),1))
         obs_freq_array = np.tile(self.obs.freq_arr, (len(timeseries),1))
-        
+
         topo_times = self.obs.sec2mjd(timeseries)
         bary_times = self.obs.topo2bary(topo_times, mjd=False, interp=True)
-
         bary_array = np.tile(bary_times, (len(self.obs.freq_arr),1)).T
-        phase_array = self.get_phase(bary_array + DM_array)
 
+        phase_array = self.get_phase(bary_array + DM_array)
         return self.get_pulse(phase_array, obs_freq_array)
 
    

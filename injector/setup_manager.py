@@ -91,7 +91,7 @@ class SetupManager:
             parfile_params['RAJ'], parfile_params['DECJ'] = self.source2str(pulsar_model.obs.source)
             parfile_params['POSEPOCH'] = pulsar_model.posepoch
 
-            parfile_params['DM'] = pulsar_model.obs.DM
+            parfile_params['DM'] = pulsar_model.prop_effect.DM
 
             parfile_params['PEPOCH'] = pulsar_model.pepoch
             for i, freq_deriv in enumerate(pulsar_model.FX_list):
@@ -131,7 +131,8 @@ class SetupManager:
     def mode_resolver(self):
         for i, pulsar_pars in enumerate(self.pulsars):
             mode = pulsar_pars.get('mode', 'python')
-
+            polycos_path = pulsar_pars.get('polycos', None)
+            
             if mode not in ['pint', 'python']:
                 sys.exit(f"Invalid mode for pulsar {pulsar_pars['ID']}. Must be either 'python' or 'pint'")
             if polycos_path:
@@ -147,7 +148,7 @@ class SetupManager:
                 except ImportError:
                     sys.exit('pint-pulsar package not installed, cannot use polycos.')
                 else:
-                    polycos_path = pulsar_pars.get('polycos', None)
+                    
                     if not polycos_path:
                         polyco_path = self.polycos_creator(self.parfile_paths[i], pulsar_pars, self.pulsar_models[i].obs,  pint_func=[models, Polycos])
                         self.pulsars[i]['polycos'] = polyco_path

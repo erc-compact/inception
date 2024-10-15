@@ -1,4 +1,4 @@
-import sys
+import time
 import numpy as np 
 import astropy.units as u
 from astropy.time import Time
@@ -7,16 +7,28 @@ from scipy.interpolate import interp1d
 from astropy.coordinates import SkyCoord, EarthLocation, solar_system_ephemeris, solar_system
 
 from .io_tools import str2func
-
+from .propagation_effects import PropagationEffects
 
 class Observation:
-    telescope_id = {64: ['Meerkat', 'mk'], 6: ['GBT', 'gb']}
+    telescope_id = {64: ['Meerkat', 'mk'],  1: ['Arecibo', 'ao'], 4: ['Parkes', 'pk'], 5: ['Jodrell', 'jb'], 
+                    6: ['GBT', 'gb'], 7: ['GMRT', 'gm'], 8: ['Effelsberg', 'ef']}
 
     def __init__(self, filterbank, ephem, pulsar_pars, generate=True):
         solar_system_ephemeris.set(ephem) 
         self.ephem = ephem
-
         fb_header = filterbank.header
+        
+        self.get_pointing_data(fb_header, pulsar_pars)
+        self.get_beam_data(pulsar_pars)
+        self.get_obs_data(fb_header, filterbank)
+        self.get_freq_data(fb_header)
+
+        self.obs_start_bary = self.topo2bary([self.obs_start])[0]
+        if generate:
+            self.prop_effect = PropagationEffects(self, pulsar_pars, 1, '', '')
+            self.barycentre_delays_interp = self.generate_interp()
+
+    def get_pointing_data(self, fb_header, pulsar_pars):
         self.telescope_ID, self.tempo_id = Observation.telescope_id[fb_header['telescope_id']]
         self.observatory = EarthLocation.of_site(self.telescope_ID)
 
@@ -24,8 +36,11 @@ class Observation:
                                      dec=self.convert_coord(fb_header['src_dej']), 
                                      unit=(u.hourangle, u.deg), frame='icrs')
         self.source = self.get_coords(pulsar_pars)
+    
+    def get_beam_data(self, pulsar_pars):
         self.beam_fwhm = str2func(pulsar_pars.get('beam_fwhm', 0), 'beam_fwhm', pulsar_pars['ID'], float) # beam reader, one beam/ multi beams- meta map
-        
+
+    def get_obs_data(self, fb_header, filterbank):
         self.obs_start = fb_header['tstart']
         self.dt = fb_header['tsamp']
         self.n_chan = fb_header['nchans']
@@ -34,7 +49,8 @@ class Observation:
         self.obs_len = self.n_samples * self.dt
         self.fb_mean = filterbank.fb_mean
         self.fb_std = filterbank.fb_std
-        
+
+    def get_freq_data(self, fb_header):
         self.freq_arr = np.linspace(fb_header['fch1'], 
                                     fb_header['fch1'] + fb_header['nchans']*fb_header['foff'], 
                                     fb_header['nchans'], endpoint=False)
@@ -42,15 +58,6 @@ class Observation:
         self.low_f = min(self.freq_arr)
         self.high_f = max(self.freq_arr)
         self.df = self.freq_arr[1]-self.freq_arr[0]
-
-        self.DM = str2func(pulsar_pars.get('DM', None), 'DM', pulsar_pars['ID'], float)
-        self.DM_const = (const.e.si**2/(8*np.pi**2*const.m_e*const.c) /(const.eps0) * u.pc.to(u.m)*u.m).value*1e-6   # Mhz^2 pc^-1 cm^3 s
-        self.DM_delays = -self.DM * self.DM_const / self.freq_arr**2  
-
-        self.obs_start_bary = self.topo2bary([self.obs_start])[0]
-        if generate:
-            self.barycentre_delays_interp = self.generate_interp()
-        
         
     @staticmethod
     def convert_coord(coord_str):
@@ -98,14 +105,14 @@ class Observation:
         return time_sec * u.s.to(u.day) + self.obs_start
     
     def observation_span(self, n_samples, mjd=True):
-        lower_bound, upper_bound = np.min(self.DM_delays), self.obs_len + self.dt
+        lower_bound, upper_bound = np.min(self.prop_effect.DM_delays), self.obs_len + self.dt
         obs_sec = np.linspace(lower_bound, upper_bound, n_samples)
         if mjd:
             return obs_sec * u.s.to(u.day) + self.obs_start
         else:
             return obs_sec
     
-    def barycentre_delays(self, topo_time):
+    def topo2bary_calc(self, topo_time, mjd=True):
         time_scale = Time(topo_time, format='mjd', scale='utc')
         L_hat  = self.source.cartesian.xyz.value.astype(np.float64)
 
@@ -114,26 +121,24 @@ class Observation:
         pos = ep.xyz.value.astype(np.float64) + op.xyz.value.astype(np.float64)*u.m.to(u.km)
 
         re_dot_L = np.sum(pos.T * L_hat, axis=1)
-        return re_dot_L * u.km.to(u.lightsecond)
+        bary_delays_sec = re_dot_L * u.km.to(u.lightsecond) 
+        bary_times = time_scale.tdb.value + bary_delays_sec * u.s.to(u.day)
+        if mjd:
+            return bary_times
+        else:
+            return (bary_times - self.obs_start_bary)*u.day.to(u.s)
     
     def topo2bary(self, topo_times, mjd=True, interp=False):
-        topo_times_tdb = Time(topo_times, format='mjd', scale='utc', precision=9).tdb.value
-
         if interp:
             bary_delays = self.barycentre_delays_interp(topo_times)
         else:
-            bary_delays = self.barycentre_delays(topo_times)
-        bary_times = Time(topo_times_tdb + bary_delays  * u.s.to(u.day), format='mjd', scale='tdb')
-
-        if mjd:
-            return bary_times.value
-        else:
-            return (bary_times.value - self.obs_start_bary)*u.day.to(u.s)
+            bary_delays = self.topo2bary_calc(topo_times, mjd=mjd)
+        return bary_delays
         
     def generate_interp(self):
-        time_samples = self.observation_span(n_samples=10**4)
+        time_samples = self.observation_span(n_samples=10**5)
        
-        delta_time = self.barycentre_delays(time_samples)
+        delta_time = self.topo2bary_calc(time_samples, mjd=False)
         return interp1d(time_samples, delta_time, kind='cubic')
     
 
