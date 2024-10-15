@@ -13,6 +13,7 @@
             "SNR": 400,
             "DM": 34,
             "spectral_index": -2,
+            "DM_smear": "True",
             "duty_cycle": 0.08,       
             "phase_offset": 0           
         },
@@ -28,7 +29,7 @@
             "F2": 1e-11,
             "SNR": 30,
             "DM": 34,
-            "scattering_time": 60,    
+            "scattering_time": 1,    
             "duty_cycle": 0.08,
             "micro_structure": 300, 
             "binary_period": 6,  
