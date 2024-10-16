@@ -237,8 +237,9 @@ class PulsarModel:
                 for chan in range(self.obs.n_chan):
                     integrated_profile += quad(SNR_function, args=(chan,), a=0, b=1, epsabs=1e-5)[0]
 
-            self.SNR_scale = SNR * self.obs.fb_std * np.sqrt(self.period * self.obs.n_chan / self.obs.obs_len) / integrated_profile
-    
+            profile_bin = self.period / self.obs.dt
+            self.SNR_scale = SNR * self.obs.fb_std * np.sqrt(self.period * self.obs.n_chan / self.obs.obs_len) / (integrated_profile * profile_bin)
+     
     def vectorise_observed_profile(self):
         phases = self.prop_effect.phase
         freqs = self.obs.freq_arr
