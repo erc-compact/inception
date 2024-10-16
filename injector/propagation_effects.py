@@ -64,7 +64,7 @@ class PropagationEffects:
             return scattered_pulse
     
 
-    def intra_channel_DM_smearing(self, intrinsic_pulse): # freq of ind pulse, spectra
+    def intra_channel_DM_smearing(self, intrinsic_pulse):
         DM_smear_str = self.pulsar_pars.get('DM_smear', 'false')
         DM_smear = True if DM_smear_str.lower() == 'true' else False
         

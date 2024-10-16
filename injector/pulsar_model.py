@@ -162,6 +162,8 @@ class PulsarModel:
                     spectra_arr = np.load(spectra_input)
                 except FileNotFoundError:
                     sys.exit(f'Unable to load {spectra_input} numpy spectra for pulsar {self.ID}.')
+            else:
+                sys.exit(f'Pulsar {self.ID} has an invalid spectra file extension: {spectra_input}. Must be a numpy .npy file.')
 
             freq_min = np.min(self.obs.freq_arr) - abs(self.obs.df)/2
             freq_max = np.max(self.obs.freq_arr) + abs(self.obs.df)/2
@@ -193,6 +195,8 @@ class PulsarModel:
                     profile_arr = epn_profile['intensity'].values
                 except (FileNotFoundError, KeyError, ValueError):
                     sys.exit(f'Unable to load {profile} EPN pulse profile for pulsar {self.ID}.')
+            else:
+                sys.exit(f'Pulsar {self.ID} has an invalid profile file extension: {profile}. Must be a numpy .npy or EPN .txt file.')
 
             if profile_arr.ndim == 1:
                 phase_range = np.linspace(0, 1, len(profile_arr))
