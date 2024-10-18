@@ -12,7 +12,7 @@
             "F7": 2e-13,             
             "SNR": 400,
             "DM": 34,
-            "spectral_index": -2,
+            "spectra": -2,
             "DM_smear": "True",
             "duty_cycle": 0.08,       
             "phase_offset": 0           

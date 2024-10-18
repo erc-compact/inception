@@ -60,10 +60,17 @@ class InjectSignal:
         filterbank_writer = FilterbankWriter(filterbank_reader, self.injected_path + f"_{cpu}.tmpfil")
         return filterbank_writer
     
-    def construct_models(self, fb):
+    def get_cpu_range(self, cpu):
+        samp_lower = self.get_file_start(cpu)
+        compute_plan = self.compute_plan[cpu]
+        samp_upper = compute_plan[0][0] * compute_plan[0][1] + compute_plan[1][1]
+        return samp_lower, samp_upper 
+    
+    def construct_models(self, fb, cpu):
         pulsar_models = []
+        generate_range = self.get_cpu_range(cpu)
         for pulsar_data in self.pulsars:
-            obs = Observation(fb, self.ephem, pulsar_data, generate=True)
+            obs = Observation(fb, self.ephem, pulsar_data, generate=generate_range)
             binary = BinaryModel(pulsar_data, generate=True)
             pulsar_model = PulsarModel(obs, binary, pulsar_data, generate=True)
             pulsar_models.append(pulsar_model)
@@ -110,7 +117,7 @@ class InjectSignal:
 
     def inject_signal(self, cpu):
         fb = self.open_tmp_fb(cpu)
-        models = self.construct_models(fb.fb_reader)
+        models = self.construct_models(fb.fb_reader, cpu)
         (N_L_blocks, size_L_blocks), (_, size_S_blocks) = self.compute_plan[cpu]
 
         t_stamp = time()

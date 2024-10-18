@@ -1,4 +1,4 @@
-import time
+import sys
 import numpy as np 
 import astropy.units as u
 from astropy.time import Time
@@ -6,14 +6,13 @@ import astropy.constants as const
 from scipy.interpolate import interp1d
 from astropy.coordinates import SkyCoord, EarthLocation, solar_system_ephemeris, solar_system
 
-from .io_tools import str2func
 from .propagation_effects import PropagationEffects
 
 class Observation:
     telescope_id = {64: ['Meerkat', 'mk'],  1: ['Arecibo', 'ao'], 4: ['Parkes', 'pk'], 5: ['Jodrell', 'jb'], 
                     6: ['GBT', 'gb'], 7: ['GMRT', 'gm'], 8: ['Effelsberg', 'ef']}
 
-    def __init__(self, filterbank, ephem, pulsar_pars, generate=True):
+    def __init__(self, filterbank, ephem, pulsar_pars, generate=[]):
         solar_system_ephemeris.set(ephem) 
         self.ephem = ephem
         fb_header = filterbank.header
@@ -26,7 +25,7 @@ class Observation:
         self.obs_start_bary = self.topo2bary([self.obs_start])[0]
         if generate:
             self.prop_effect = PropagationEffects(self, pulsar_pars, 1, '', '')
-            self.barycentre_delays_interp = self.generate_interp()
+            self.barycentre_delays_interp = self.generate_interp(generate)
 
     def get_pointing_data(self, fb_header, pulsar_pars):
         self.telescope_ID, self.tempo_id = Observation.telescope_id[fb_header['telescope_id']]
@@ -38,7 +37,7 @@ class Observation:
         self.source = self.get_coords(pulsar_pars)
     
     def get_beam_data(self, pulsar_pars):
-        self.beam_fwhm = str2func(pulsar_pars.get('beam_fwhm', 0), 'beam_fwhm', pulsar_pars['ID'], float) # beam reader, one beam/ multi beams- meta map
+        self.beam_fwhm = pulsar_pars['beam_fwhm'] # beam reader, one beam/ multi beams- meta map
 
     def get_obs_data(self, fb_header, filterbank):
         self.obs_start = fb_header['tstart']
@@ -76,21 +75,16 @@ class Observation:
         return formatted_coord   
     
     def get_coords(self, pulsar_pars):       
-        pulsar_ra, pulsar_dec = pulsar_pars.get('RAJ', None),  pulsar_pars.get('DECJ', None)
-        pulsar_sep, pulsar_PA = pulsar_pars.get('separation', None),  pulsar_pars.get('position_angle', None)
+        pulsar_ra, pulsar_dec = pulsar_pars['RAJ'],  pulsar_pars['DECJ']
         if pulsar_ra and pulsar_dec:
             try: 
                 source = SkyCoord(ra=pulsar_ra, dec=pulsar_dec, unit=(u.hourangle, u.deg), frame='icrs')
             except ValueError:
-                str2func(None, 'RA or DEC', pulsar_pars['ID'], float)
+                sys.exit(f"Invalid RA/DEC for pulsar {pulsar_pars['ID']}")
             else:
                 return source
-        elif pulsar_sep and pulsar_PA:
-            sep_float = str2func(pulsar_sep, 'separation', pulsar_pars['ID'], float)
-            PA_float = str2func(pulsar_PA, 'position_angle', pulsar_pars['ID'], float)
-            return self.obs_pointing.directional_offset_by(PA_float*u.deg, sep_float*u.arcmin)
         else:
-            return self.obs_pointing
+            return self.obs_pointing.directional_offset_by(pulsar_pars['position_angle']*u.deg, pulsar_pars['separation']*u.arcmin)
 
     def get_beam_snr(self):
         if self.beam_fwhm != 0:
@@ -104,8 +98,12 @@ class Observation:
     def sec2mjd(self, time_sec):
         return time_sec * u.s.to(u.day) + self.obs_start
     
-    def observation_span(self, n_samples, mjd=True):
-        lower_bound, upper_bound = np.min(self.prop_effect.DM_delays), self.obs_len + self.dt
+    def observation_span(self, obs_range, n_samples, mjd=True):
+        if type(obs_range) == list:
+            pad_time = 1
+            lower_bound, upper_bound = np.min(self.prop_effect.DM_delays) + obs_range[0] * self.dt - pad_time, obs_range[1] * self.dt + pad_time
+        else:
+            lower_bound, upper_bound = np.min(self.prop_effect.DM_delays), self.obs_len + self.dt
         obs_sec = np.linspace(lower_bound, upper_bound, n_samples)
         if mjd:
             return obs_sec * u.s.to(u.day) + self.obs_start
@@ -135,8 +133,8 @@ class Observation:
             bary_delays = self.topo2bary_calc(topo_times, mjd=mjd)
         return bary_delays
         
-    def generate_interp(self):
-        time_samples = self.observation_span(n_samples=10**5)
+    def generate_interp(self, obs_range):
+        time_samples = self.observation_span(obs_range, n_samples=10**4)
        
         delta_time = self.topo2bary_calc(time_samples, mjd=False)
         return interp1d(time_samples, delta_time, kind='cubic')

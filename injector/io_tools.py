@@ -194,10 +194,3 @@ def read_datfile(path, nbits, count=-1):
     if nbits == 8:
         raw = np.fromfile(path, dtype=np.uint8, count=count)
         return raw.astype(np.uint8)
-
-def str2func(value, par, id, func):
-    try:
-        converted_value = func(value)
-    except ValueError:
-        sys.exit(f'Error: Invalid {par} for pulsar {id}')
-    return converted_value
