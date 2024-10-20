@@ -1,9 +1,15 @@
-{
+{   
+    "psr_global":
+    {
+        "micro_structure":  0,
+        "DM_smear":         1,
+        "PEPOCH": 59379,
+        "mode": "python"
+    },
+    
     "pulsars": [
         {
-            "ID": "pulsar1",            
-            "mode": "python",
-            "PEPOCH": 59379.123,      
+            "ID": "pulsar1",        
             "RAJ": "17:50:13.0600",
             "DECJ": "-37:03:05.2000",
             "P0": 0.005,               
@@ -12,15 +18,12 @@
             "F7": 2e-13,             
             "SNR": 400,
             "DM": 34,
-            "spectra": -2,
-            "DM_smear": "True",
+            "spectral_index": -2,
             "duty_cycle": 0.08,       
             "phase_offset": 0           
         },
         {
             "ID": "pulsar2", 
-            "mode": "python",
-            "PEPOCH": 59379,            
             "separation": 4,           
             "position_angle": 35,   
             "beam_fwhm": 10,    
@@ -29,7 +32,9 @@
             "F2": 1e-11,
             "SNR": 30,
             "DM": 34,
+            "PSD": "pulsar_PSD.npy",
             "scattering_time": 1,    
+            "scattering_index": -4.4, 
             "duty_cycle": 0.08,
             "micro_structure": 300, 
             "binary_period": 6,  
@@ -39,15 +44,13 @@
             "AoP": 0.0
         },
         {
-            "ID": "pulsar3", 
-            "mode": "python",
-            "PEPOCH": 59379,            
+            "ID": "pulsar3",            
             "RAJ": "17:50:13.0600",
             "DECJ": "-37:03:05.2000",
             "P0": 0.015,
             "F1": 1e-10,
             "P2": 1e-15,
-            "profile": "profile.npy", 
+            "profile": "puslar_profile.npy", 
             "SNR": 400,
             "DM": 420,
             "duty_cycle": 0.08,
@@ -59,6 +62,17 @@
             "ecc": 0.2,
             "LoAN": 0.0,
             "AoP": 0.0
+        }, 
+        {
+            "ID":               "pulsar4",
+            "PEPOCH":           59379,
+            "P0":               0.005,
+            "F1":               1e-12,
+            "SNR":              10,
+            "duty_cycle":       0.12,
+            "spectral_index":   -2,
+            "double_pulsar":    "pulsar3"
+
         }
     ]
 }

@@ -38,8 +38,8 @@ class PulsarModel:
         self.calculate_SNR(pulsar_pars, generate)
 
     def get_mode(self, pulsar_pars):
-        self.mode = pulsar_pars.get('mode', 'python')
-        self.polycos_path = pulsar_pars.get('polycos', None)
+        self.mode = pulsar_pars['mode'] if pulsar_pars['mode'] else 'python'
+        self.polycos_path = pulsar_pars['polycos']
         if self.mode == 'python':
             self.generate_signal = self.generate_signal_python
         elif self.mode == 'pint':
@@ -51,19 +51,19 @@ class PulsarModel:
         return smeared_profile
 
     def get_epochs(self, pulsar_pars):
-        pepoch = pulsar_pars.get('PEPOCH', self.obs.obs_start_bary)
-        posepoch = pulsar_pars.get('POSEPOCH', pepoch)
-        T0 = pulsar_pars.get('T0', self.obs.obs_start_bary)
+        pepoch = pulsar_pars['PEPOCH'] if pulsar_pars['PEPOCH'] else self.obs.obs_start_bary
+        # posepoch = pulsar_pars['POSEPOCH'] if pulsar_pars['POSEPOCH'] else pepoch
+        T0 = pulsar_pars['T0'] if pulsar_pars['T0'] else self.obs.obs_start_bary
 
         spin_ref = (self.obs.obs_start_bary - pepoch) * u.day.to(u.s)
-        pos_ref = (self.obs.obs_start_bary - posepoch) * u.day.to(u.s)
+        # pos_ref = (self.obs.obs_start_bary - posepoch) * u.day.to(u.s)
         orbit_ref = (self.obs.obs_start_bary - T0) * u.day.to(u.s)
 
         self.pepoch = pepoch
-        self.posepoch = posepoch
+        # self.posepoch = posepoch
         self.binary.T0 = T0
         self.spin_ref = spin_ref
-        self.pos_ref = pos_ref
+        # self.pos_ref = pos_ref
         self.orbit_ref = orbit_ref
 
     def get_spin_functions(self, pulsar_pars):

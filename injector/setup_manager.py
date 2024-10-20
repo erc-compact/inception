@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 from pathlib import Path 
 import astropy.units as u
+import astropy.constants as const
+from scipy.optimize import fsolve
 from sympy import lambdify, symbols, Function
 
 from .io_tools import FilterbankReader, print_exe
@@ -74,23 +76,32 @@ class SetupManager:
             parser = PulsarParamParser(pulsar, global_list)
             pulsar_clean_list.append(parser.psr_pars)
 
-        pulsar_clean_list = self.double_pulsar(pulsar_clean_list)
+        pulsar_clean_list = self.double_pulsar(pulsar_clean_list, ID_list)
         
         return pulsar_clean_list
 
     def double_pulsar(self, pulsar_list, ID_list):
+        dble_psr_pars = ['RAJ', 'DECJ', 'separation', 'position_angle', 'beam_fwhm', 'DM', 'scattering_time', 'scattering_index', 'DM_smear',
+                      'binary_period', 'T0', 'inc', 'ecc', 'LoAN']
+        
         for i in range(len((pulsar_list))):
             double_psr = pulsar_list[i]['double_pulsar']
             if double_psr:
                 if double_psr in ID_list:
-                    companion_psr = pulsar_list[ID_list.index(double_psr)]
-                    # check if double pulsar keyword exists in companion_psr 
-                    # pulsar_list[i]['key'] = 'value'
-                    
+                    c_psr = pulsar_list[ID_list.index(double_psr)]
+                    if (not c_psr['double_pulsar']):
+                        for par in dble_psr_pars:
+                            pulsar_list[i][par] = c_psr[par]
+                        pulsar_list[i]['M1'] = c_psr['M2']
+                        pulsar_list[i]['M2'] = c_psr['M1']
+                        pulsar_list[i]['AoP'] = c_psr['AoP'] + 180
+                        pulsar_list[i]['A1'] = PulsarParamParser.orbit_par_converter(c_psr['binary_period'], find='A1', 
+                                                                                     M1=c_psr['M2'], M2=c_psr['M1'], inc=c_psr['inc']) 
+                    else:
+                         sys.exit(f"Only one 'double_pulsar' parameter allowed per binary pulsar pair.")                    
                 else:
                     sys.exit(f"Invalid double_pulsar ID parameter for pulsar {pulsar_list[i]['ID']}.")
         return pulsar_list
-    
 
     @staticmethod   
     def get_ephem(ephem):
@@ -120,7 +131,7 @@ class SetupManager:
             parfile_params = {'PSR': f'0000+{i+1:04}i'}
 
             parfile_params['RAJ'], parfile_params['DECJ'] = self.source2str(pulsar_model.obs.source)
-            parfile_params['POSEPOCH'] = pulsar_model.posepoch
+            # parfile_params['POSEPOCH'] = pulsar_model.posepoch
 
             parfile_params['DM'] = pulsar_model.prop_effect.DM
 
@@ -146,7 +157,7 @@ class SetupManager:
             if pulsar_model.binary.period != 0:
                 parfile_params['BINARY'] = 'BT'
                 parfile_params['T0'] = pulsar_model.binary.T0
-                parfile_params['A1'] = pulsar_model.binary.A1
+                parfile_params['A1'] = pulsar_model.binary.a1_sini_c
                 parfile_params['PB'] = pulsar_model.binary.period * u.s.to(u.day)
                 parfile_params['ECC'] = pulsar_model.binary.e
                 parfile_params['OM'] =  np.rad2deg(pulsar_model.binary.AoP+pulsar_model.binary.LoAN)
@@ -216,6 +227,7 @@ class PulsarParamParser:
             args_list.append(str(value))
         return args_list
     
+    @staticmethod
     def str2func(value, par, id, func):
         try:
             converted_value = func(value)
@@ -224,18 +236,25 @@ class PulsarParamParser:
         return converted_value
     
     def parse_inputs(self, pulsar_pars, global_pars):
-        psr_pars = global_pars.copy()
-        psr_pars.update(pulsar_pars.copy())
+        if global_pars:
+            psr_pars = global_pars.copy()
+            psr_pars.update(pulsar_pars.copy())
+        else:
+            psr_pars = pulsar_pars.copy()
 
         FX_list, PX_list = self.get_spin_params(psr_pars)
-
+        RAJ = psr_pars.pop('RAJ', None)
+        DECJ = psr_pars.pop('DECJ', None)
         psr_args_list = self.dict_to_args(psr_pars)
         psr_args, _ = self.parser.parse_known_args(psr_args_list)
 
         clean_psr_pars = vars(psr_args)
+        clean_psr_pars['RAJ'] = RAJ
+        clean_psr_pars['DECJ'] = DECJ
         clean_psr_pars['FX'] = FX_list
         clean_psr_pars['PX'] = PX_list
-        
+
+        clean_psr_pars = self.calc_binary_pars(clean_psr_pars)
         self.psr_pars = clean_psr_pars
     
     def get_argument_parser(self):
@@ -243,7 +262,7 @@ class PulsarParamParser:
             def add_usage(self, usage, actions, groups, prefix=None): pass
 
         parser = argparse.ArgumentParser(description='Pulsar parameters', formatter_class=CustomFormatter)
-        parser.add_argument('--ID', metavar='(str)', required=True, type=float, help='Identifier for injected pulsar')
+        parser.add_argument('--ID', metavar='(str)', required=True, type=str, help='Identifier for injected pulsar')
         
         parser.add_argument('--RAJ', metavar='(hh:mm:ss)', required=False, type=str, help='Right Ascension (J2000) (default: beam centre)')
         parser.add_argument('--DECJ', metavar='(dd:mm:ss)', required=False, type=str, help='Declination (J2000) (default: beam centre)')
@@ -255,7 +274,7 @@ class PulsarParamParser:
         parser.add_argument('--FX', metavar='(Hz)', required=False, type=float, help='Xth frequency derivative of pulsar spin')
         parser.add_argument('--PX', metavar='(sec)', required=False, type=float, help='Xth period derivative of pulsar spin')
         parser.add_argument('--phase_offset', metavar='(phase)', required=False, default=0, type=float, help='Phase offset from PEPOCH')
-        parser.add_argument('--DM', metavar='(pc/cm^3)', required=True, type=float, help='Dispersion measure')
+        parser.add_argument('--DM', metavar='(pc/cm^3)', required=False, default=0, type=float, help='Dispersion measure')
         parser.add_argument('--SNR', required=True, type=float, help='Injected signal-to-noise')
         parser.add_argument('--PSD', metavar='(file)', required=False, type=str, help='NumPy .npy file containing a pulsar power spectrum (1D)')
         parser.add_argument('--spectral_index', required=False, default=0, type=float, help='Spectral index of pulsar')
@@ -337,3 +356,79 @@ class PulsarParamParser:
         spin_values = [self.str2func(pulsar_pars.get(key, 0), key, ID, float) for key in spin_types]
 
         return self.spin_pars_converter(spin_values, spin_types)
+    
+    @staticmethod
+    def orbit_par_converter(period, find='A1', A1=None, M1=None, M2=None, inc=None):
+        T = const.G.value * period**2 / (4*np.pi**2)
+
+        def get_M1(M2_):
+            sini = np.sin(np.deg2rad(inc))
+            term1 = np.sqrt(T) * ((sini * M2_*const.M_sun.value)/(const.c.value * A1))**(3/2)
+            return term1/const.M_sun.value - M2_
+
+        if find == 'inc':
+            sini3 = (M1 + M2)**2/M2**3 *1/const.M_sun.value * 1/T * (const.c.value * A1) ** 3
+            return np.rad2deg(np.arcsin(sini3**(1/3)))
+        
+        elif find == 'M1':
+            return get_M1(M2)
+        
+        elif find == 'M2':
+            return fsolve(lambda M2_: M1 - get_M1(M2_), 1)
+        
+        elif find == 'A1':
+            sini = np.sin(np.deg2rad(inc))
+            return BinaryModel.get_semi_major(period, M1+M2) * M2/(M1+M2) * sini / const.c.value
+        
+    def calc_binary_pars(self, pulsar_pars):
+        if not pulsar_pars['binary_period']:
+            return pulsar_pars
+        period = abs(pulsar_pars['binary_period']) * 3600
+
+        A1 = pulsar_pars['A1']
+        M1 = pulsar_pars['M1']
+        M2 = pulsar_pars['M2']
+        inc = pulsar_pars['inc']
+        M1_default, inc_default = 1.4, 90
+        if A1:
+            if not (M1 and M2 and inc):
+                if (not M1) and (not M2) and (not inc):
+                    M2 = self.orbit_par_converter(period, find='M2', A1=A1, M1=M1_default, inc=inc_default) 
+                elif (M1) and (not M2) and (not inc):
+                    M2 = self.orbit_par_converter(period, find='M2', A1=A1, M1=M1, inc=inc_default)                
+                elif (not M1) and (M2) and (not inc):
+                    M1 = self.orbit_par_converter(period, find='M1', A1=A1, M2=M2, inc=inc_default)                
+                elif (not M1) and (not M2) and (inc):
+                    M2 = self.orbit_par_converter(period, find='M2', A1=A1, M1=M1_default, inc=inc)                 
+                elif (M1) and (M2) and (not inc):
+                    inc = self.orbit_par_converter(period, find='inc', A1=A1, M1=M1, M2=M2)                 
+                elif (M1) and (not M2) and (inc):
+                    M2 = self.orbit_par_converter(period, find='M2', A1=A1, M1=M1, inc=inc)                 
+                elif (not M1) and (M2) and (inc):
+                    M1 = self.orbit_par_converter(period, find='M1', A1=A1, M2=M2, inc=inc)                
+                else:
+                    A1_calc = self.orbit_par_converter(period, find='A1', M1=M1, M2=M2, inc=inc) 
+                    if A1_calc != A1:
+                        sys.exit(f"Error: Inputed A1 for pulsar {pulsar_pars['ID']} is not compatible with inputed M1, M2 and inc. Only three out of these four parameters are required.")
+        elif M1 and M2 and inc:
+            A1 = self.orbit_par_converter(period, find='A1', M1=M1, M2=M2, inc=inc) 
+        elif M1 and M2 and (not inc):
+            inc = inc_default
+            A1 = self.orbit_par_converter(period, find='A1', M1=M1, M2=M2, inc=inc) 
+        elif (not M1) and M2 and inc:
+            M1 = M1_default
+            A1 = self.orbit_par_converter(period, find='A1', M1=M1, M2=M2, inc=inc) 
+        elif (not M1) and M2 and (not inc):
+            M1, inc = M1_default, inc_default
+            A1 = self.orbit_par_converter(period, find='A1', M1=M1, M2=M2, inc=inc) 
+        else:
+            sys.exit(f"Error: Pulsar {pulsar_pars['ID']} requires either an A1 or M1, M2 and inc.")
+
+        pulsar_pars['binary_period'] = period
+        pulsar_pars['A1'] = abs(A1)
+        pulsar_pars['M1'] = abs(M1)
+        pulsar_pars['M2'] = abs(M2)
+        pulsar_pars['inc'] = inc
+        pulsar_pars['ecc'] = abs(pulsar_pars['ecc'])
+
+        return pulsar_pars
