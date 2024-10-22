@@ -20,6 +20,8 @@ class PulsarParParser:
 
         parser = argparse.ArgumentParser(description='Pulsar parameters', formatter_class=CustomFormatter)
         parser.add_argument('--ID', metavar='(str)', required=True, type=str, help='Identifier for injected pulsar')
+        parser.add_argument('--seed', metavar='(positive int)', required=False, default=0, type=int, help='Random number generator seed for pulsar')
+        parser.add_argument('--create_parfile', metavar='(0 or 1)', required=False, default=1, type=int, help="If '1', then create a TEMPO style parfile for injected pulsar")
         
         parser.add_argument('--RAJ', metavar='(hh:mm:ss)', required=False, type=str, help='Right Ascension (J2000) (default: beam centre)')
         parser.add_argument('--DECJ', metavar='(dd:mm:ss)', required=False, type=str, help='Declination (J2000) (default: beam centre)')
@@ -78,9 +80,9 @@ class PulsarParParser:
     def parse_inputs(self, pulsar_pars, global_pars):
         if global_pars:
             psr_pars = global_pars.copy()
-            psr_pars.update(pulsar_pars.copy())
+            psr_pars.update(pulsar_pars)
         else:
-            psr_pars = pulsar_pars.copy()
+            psr_pars = pulsar_pars
 
         FX_list, PX_list = self.get_spin_params(psr_pars)
         RAJ = psr_pars.pop('RAJ', None)

@@ -17,6 +17,7 @@ class PulsarModel:
     def __init__(self, obs, binary, pulsar_pars, generate=True):
         self.get_mode(pulsar_pars)
         self.ID = pulsar_pars['ID']
+        self.seed = pulsar_pars['seed']
         self.obs = obs
         self.binary = binary
         
@@ -188,7 +189,7 @@ class PulsarModel:
     
     def get_pulse(self, phase_abs, freq):
         if self.micro_structure:
-            pulse_generator = MicroStructure(phase_abs, freq, self.micro_structure, self.period, self.observed_profile)
+            pulse_generator = MicroStructure(phase_abs, freq, self.micro_structure, self.period, self.observed_profile, self.seed)
             return pulse_generator.pulse_profile()
         else:
             return self.observed_profile(phase_abs % 1, freq)

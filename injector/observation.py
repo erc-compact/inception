@@ -74,7 +74,7 @@ class Observation:
 
         return formatted_coord   
     
-    def get_coords(self, pulsar_pars):       
+    def get_coords(self, pulsar_pars):   
         pulsar_ra, pulsar_dec = pulsar_pars['RAJ'],  pulsar_pars['DECJ']
         if pulsar_ra and pulsar_dec:
             try: 

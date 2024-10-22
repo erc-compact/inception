@@ -4,8 +4,9 @@ import astropy.units as u
 
 
 class MicroStructure: 
-    def __init__(self, phase_abs, freq, scale, pulse_period, profile):
+    def __init__(self, phase_abs, freq, scale, pulse_period, profile, seed):
         self.scale = pulse_period/(scale*u.us.to(u.s))
+        self.seed = seed
 
         self.phase_abs = phase_abs
         self.intrinsic_profile = profile(phase_abs % 1, freq)
@@ -32,9 +33,9 @@ class MicroStructure:
         return 6 * x**5 - 15 * x**4 + 10 * x**3
     
     @staticmethod
-    def get_pulse_rng(pulse_num):
+    def get_pulse_rng(pulse_num, seed=0):
         pulse_offset = 10**9 if np.sign(pulse_num) == -1 else 0
-        return np.random.default_rng(pulse_num+pulse_offset)
+        return np.random.default_rng(seed+pulse_num+pulse_offset)
     
     def pre_process(self):
         
@@ -47,7 +48,7 @@ class MicroStructure:
         return max_pulse_length
 
     def perlin_noise(self, pulse_length, pulse_num):
-        rng = self.get_pulse_rng(pulse_num)
+        rng = self.get_pulse_rng(pulse_num, self.seed)
         scale = abs(rng.normal(self.scale, self.scale*0.05))
         gradients = rng.uniform(-1, 1, int(scale) + 1)
         gradients /= np.linalg.norm(gradients, axis=0)  

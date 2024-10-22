@@ -54,6 +54,18 @@ class SetupManager:
         pulsar_list = read_inject_file.get('pulsars', None)
         global_list = read_inject_file.get('psr_global', None)
 
+        pulsar_list, ID_list = self.resolve_ID(pulsar_list, pulsar_data_path)
+
+        pulsar_clean_list = []
+        for pulsar in pulsar_list:
+            parser = PulsarParParser(pulsar, global_list)
+            pulsar_clean_list.append(parser.psr_pars)
+
+        pulsar_clean_list = self.double_pulsar(pulsar_clean_list, ID_list)
+        
+        return pulsar_clean_list
+    
+    def resolve_ID(self, pulsar_list, pulsar_data_path):
         ID_list = []
         help="See 'example.inject' file in https://github.com/erc-compact/inception/tree/main/injector."
         if pulsar_list:
@@ -64,17 +76,58 @@ class SetupManager:
                     ID_list.append(pulsar['ID'])
         else:
             sys.exit(f'No "pulsars" key word found in {pulsar_data_path}. {help}')
-        if len(ID_list) != len(set(ID_list)):
+
+
+        non_dict_elements = [item for item in ID_list if not isinstance(item, dict)]
+        if len(non_dict_elements) != len(set(non_dict_elements)):
             sys.exit('Pulsar IDs must be unique.')
 
-        pulsar_clean_list = []
-        for i, pulsar in enumerate(pulsar_list):
-            parser = PulsarParParser(pulsar, global_list)
-            pulsar_clean_list.append(parser.psr_pars)
+        for i, ID in enumerate(ID_list):
+            if type(ID) == dict:
+                rng = np.random.default_rng(ID['seed'])
+                seeds = rng.integers(0, 1e12, size=int(ID['replicate']))
+                rng_pars = pulsar_list.pop(i)
+                for j, seed in enumerate(seeds):
+                    psr_pars = rng_pars.copy()
+                    psr_pars['ID'] = f'pulsar_{j}'
+                    psr_pars['seed'] = seed
+                    psr_pars = self.resolve_random(psr_pars)
+                    pulsar_list.append(psr_pars)
 
-        pulsar_clean_list = self.double_pulsar(pulsar_clean_list, ID_list)
-        
-        return pulsar_clean_list
+        return pulsar_list, ID_list
+
+    def resolve_random(self, pulsar_pars):
+        seed = pulsar_pars['seed']
+        for key, value in pulsar_pars.items():
+            rng = np.random.default_rng(seed)
+            if type(value) == dict:
+                units = value.get('units', 1)
+                if units == 'T_obs':
+                    units = self.fb.header['tsamp'] * self.fb.n_samples
+                elif units == 'dt':
+                    units = self.fb.header['tsamp']
+
+                if value['rng'] == 'choice':
+                    p = value.get('weights', np.ones_like(value['samples']))
+                    pulsar_pars[key] = rng.choice(a=value['samples'], p=p/np.sum(p))
+                elif value['rng'] == 'uniform':
+                    pulsar_pars[key] = rng.uniform(low=value['low']*units, high=value['high']*units)
+                elif value['rng'] == 'loguniform':
+                    pulsar_pars[key] = np.exp(rng.uniform(low=np.log(value['low']*units), high=np.log(value['high']*units)))
+                elif value['rng'] == 'normal':
+                    pulsar_pars[key] = rng.normal(loc=value['mean']*units, scale=value['sigma']*units)
+
+                elif value['rng'] == 'split_uniform':
+                    p = value.get('weights', [1, 1])
+                    which_range = rng.choice(a=[0, 1], p=p/np.sum(p))
+                    val_range = value['lower_range'] if which_range == 0 else value['upper_range']
+                    pulsar_pars[key] = rng.uniform(low=val_range[0]*units, high=val_range[1]*units)
+
+                    binary = value.get('binary', [1, 1])
+                    if not binary[which_range]:
+                        pulsar_pars['binary_period'] = 0
+
+        return pulsar_pars
 
     def double_pulsar(self, pulsar_list, ID_list):
         dble_psr_pars = ['RAJ', 'DECJ', 'separation', 'position_angle', 'beam_fwhm', 'DM', 'scattering_time', 'scattering_index', 'DM_smear',
@@ -124,45 +177,46 @@ class SetupManager:
         parfile_paths = []
         for i in range(len(self.pulsars)):
             pulsar_model = self.pulsar_models[i]
-            parfile_params = {'PSR': f'0000+{i+1:04}i'}
+            if self.pulsars[i]['create_parfile']:
+                parfile_params = {'PSR': f'0000+{i+1:04}i'}
 
-            parfile_params['RAJ'], parfile_params['DECJ'] = self.source2str(pulsar_model.obs.source)
-            # parfile_params['POSEPOCH'] = pulsar_model.posepoch
+                parfile_params['RAJ'], parfile_params['DECJ'] = self.source2str(pulsar_model.obs.source)
+                # parfile_params['POSEPOCH'] = pulsar_model.posepoch
 
-            parfile_params['DM'] = pulsar_model.prop_effect.DM
+                parfile_params['DM'] = pulsar_model.prop_effect.DM
 
-            parfile_params['PEPOCH'] = pulsar_model.pepoch
-            for i, freq_deriv in enumerate(pulsar_model.FX_list):
-                if freq_deriv != 0:
-                    parfile_params[f'F{i}'] = str(freq_deriv).replace('e', 'D')
-                
-            ephem = Path(pulsar_model.obs.ephem).stem.upper()
-            parfile_params['EPHEM'] = ephem if (ephem != 'BUILTIN') else 'DE440'
+                parfile_params['PEPOCH'] = pulsar_model.pepoch
+                for i, freq_deriv in enumerate(pulsar_model.FX_list):
+                    if freq_deriv != 0:
+                        parfile_params[f'F{i}'] = str(freq_deriv).replace('e', 'D')
+                    
+                ephem = Path(pulsar_model.obs.ephem).stem.upper()
+                parfile_params['EPHEM'] = ephem if (ephem != 'BUILTIN') else 'DE440'
 
-            parfile_params['TZRMJD'] = pulsar_model.obs.obs_start_bary
-            parfile_params['TZRFRQ'] = 0
+                parfile_params['TZRMJD'] = pulsar_model.obs.obs_start_bary
+                parfile_params['TZRFRQ'] = 0
 
-            parfile_params['CLK'] = 'TT(BIPM)'
-            parfile_params['UNITS'] = 'TDB'
-            parfile_params['TIMEEPH'] = 'FB90'
-            parfile_params['T2CMETHOD'] = 'TEMPO'
-            parfile_params['CORRECT_TROPOSPHERE'] = 'N'
-            parfile_params['PLANET_SHAPIRO'] = 'N'
-            parfile_params['DILATEFREQ'] = 'N'
+                parfile_params['CLK'] = 'TT(BIPM)'
+                parfile_params['UNITS'] = 'TDB'
+                parfile_params['TIMEEPH'] = 'FB90'
+                parfile_params['T2CMETHOD'] = 'TEMPO'
+                parfile_params['CORRECT_TROPOSPHERE'] = 'N'
+                parfile_params['PLANET_SHAPIRO'] = 'N'
+                parfile_params['DILATEFREQ'] = 'N'
 
-            if pulsar_model.binary.period != 0:
-                parfile_params['BINARY'] = 'BT'
-                parfile_params['T0'] = pulsar_model.binary.T0
-                parfile_params['A1'] = pulsar_model.binary.a1_sini_c
-                parfile_params['PB'] = pulsar_model.binary.period * u.s.to(u.day)
-                parfile_params['ECC'] = pulsar_model.binary.e
-                parfile_params['OM'] =  np.rad2deg(pulsar_model.binary.AoP+pulsar_model.binary.LoAN)
+                if pulsar_model.binary.period != 0:
+                    parfile_params['BINARY'] = 'BT'
+                    parfile_params['T0'] = pulsar_model.binary.T0
+                    parfile_params['A1'] = pulsar_model.binary.a1_sini_c
+                    parfile_params['PB'] = pulsar_model.binary.period * u.s.to(u.day)
+                    parfile_params['ECC'] = pulsar_model.binary.e
+                    parfile_params['OM'] =  np.rad2deg(pulsar_model.binary.AoP+pulsar_model.binary.LoAN)
 
-            par_file = pd.Series(parfile_params)
-            par_file_path = self.output_path+f'/{pulsar_model.ID}.par'
-            par_file.to_csv(par_file_path, sep='\t', header=False)
+                par_file = pd.Series(parfile_params)
+                par_file_path = self.output_path+f'/{pulsar_model.ID}.par'
+                par_file.to_csv(par_file_path, sep='\t', header=False)
 
-            parfile_paths.append(par_file_path)
+                parfile_paths.append(par_file_path)
 
         return parfile_paths
     

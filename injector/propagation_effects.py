@@ -19,7 +19,6 @@ class PropagationEffects:
         self.spectra = spectra
         self.phase = np.linspace(0, 1, profile_length)
           
-
     def get_DM_delays(self):
         self.DM = self.pulsar_pars['DM']
         self.DM_const = (const.e.si**2/(8*np.pi**2*const.m_e*const.c) /(const.eps0) * u.pc.to(u.m)*u.m).value*1e-6   # Mhz^2 pc^-1 cm^3 s
@@ -61,7 +60,6 @@ class PropagationEffects:
     
 
     def intra_channel_DM_smearing(self, intrinsic_pulse):
-        DM_smear = self.pulsar_pars['DM_smear']
         
         def channel_profile(phase, freq, channel_freq, chan_num):
             dt = self.DM_const * self.DM * (channel_freq**-2 - freq**-2)
@@ -69,7 +67,7 @@ class PropagationEffects:
             PSD_corr = self.spectra(freq)/self.spectra(channel_freq)
             return intrinsic_pulse(phase_freq % 1, chan_num) * PSD_corr
         
-        if not DM_smear:
+        if not self.pulsar_pars['DM_smear']:
             return intrinsic_pulse
         else:
             self.smeared_profiles = []

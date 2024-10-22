@@ -1,8 +1,8 @@
 {   
     "psr_global":
-    {
-        "micro_structure":  0,
-        "DM_smear":         1,
+    {   
+        "create_parfile": 1,
+        "DM_smear": 1,
         "PEPOCH": 59379,
         "mode": "python"
     },
@@ -12,6 +12,7 @@
             "ID": "pulsar1",        
             "RAJ": "17:50:13.0600",
             "DECJ": "-37:03:05.2000",
+            "PEPOCH": 59379.311,
             "P0": 0.005,               
             "F1": 1e-10,
             "F2": 1e-11,
@@ -36,6 +37,7 @@
             "scattering_time": 1,    
             "scattering_index": -4.4, 
             "duty_cycle": 0.08,
+            "seed": 0,
             "micro_structure": 300, 
             "binary_period": 6,  
             "T0": 59379,
@@ -53,7 +55,9 @@
             "profile": "puslar_profile.npy", 
             "SNR": 400,
             "DM": 420,
-            "duty_cycle": 0.08,
+            "PSD": "pulsar_PSD.npy",
+            "scattering_time": 1,    
+            "scattering_index": -4.4, 
             "binary_period": 6,         
             "T0": 59379,
             "M1": 1.4,
@@ -64,14 +68,14 @@
             "AoP": 0.0
         }, 
         {
-            "ID":               "pulsar4",
-            "PEPOCH":           59379,
-            "P0":               0.005,
-            "F1":               1e-12,
-            "SNR":              10,
-            "duty_cycle":       0.12,
-            "spectral_index":   -2,
-            "double_pulsar":    "pulsar3"
+            "ID": "pulsar4",
+            "PEPOCH": 59379,
+            "P0": 0.005,
+            "F1": 1e-12,
+            "SNR": 10,
+            "duty_cycle": 0.12,
+            "spectral_index": -2,
+            "double_pulsar": "pulsar3"
 
         }
     ]
