@@ -2,6 +2,7 @@ read tutorial.ipynb
 
 ## Recently added 
 - intra-channel DM smearing
+- double pulsar injector
 - global pulsar parameters
 - custom PSD
 - more robust SNR estimation for custom profiles

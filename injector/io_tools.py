@@ -22,6 +22,10 @@ class FilterbankReader:
         self.read_header(filterbank)
         self.nchans = self.header['nchans']
         self.nbits = self.header['nbits']
+        self.bandwidth = abs(self.header['foff']) * self.header['nchans']
+        self.ftop = self.header['fch1'] - 0.5 * self.header['foff']
+        self.fbottom = self.ftop + self.header['foff'] * self.header['nchans']
+        self.center = self.ftop + 0.5 * self.header['foff'] * self.header['nchans']
 
         self.n_samples = self.get_n_samples()
         self.fb_mean, self.fb_std = self.get_FB_stats(2**14)
@@ -158,6 +162,7 @@ class FilterbankWriter:
 
     def write_block(self, block):
         block = np.clip(block, 0, 2**self.nbits-1)
+        # block = np.mod(block, 2**self.nbits-1) overflows values, too slow
 
         if self.nbits == 16:
             out = block.flatten(order='C').astype('uint16')

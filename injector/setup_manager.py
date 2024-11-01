@@ -84,7 +84,7 @@ class SetupManager:
 
         for i, ID in enumerate(ID_list):
             if type(ID) == dict:
-                rng = np.random.default_rng(ID['seed'])
+                rng = np.random.default_rng(ID.get('seed', 0))
                 seeds = rng.integers(0, 1e12, size=int(ID['replicate']))
                 rng_pars = pulsar_list.pop(i)
                 for j, seed in enumerate(seeds):
@@ -93,11 +93,15 @@ class SetupManager:
                     psr_pars['seed'] = seed
                     psr_pars = self.resolve_random(psr_pars)
                     pulsar_list.append(psr_pars)
+            else:
+                psr_pars = pulsar_list.pop(i)
+                psr_pars = self.resolve_random(psr_pars)
+                pulsar_list.append(psr_pars)
 
         return pulsar_list, ID_list
 
     def resolve_random(self, pulsar_pars):
-        seed = pulsar_pars['seed']
+        seed = pulsar_pars.get('seed', 0)
         for key, value in pulsar_pars.items():
             rng = np.random.default_rng(seed)
             if type(value) == dict:
@@ -204,7 +208,7 @@ class SetupManager:
                 parfile_params['PLANET_SHAPIRO'] = 'N'
                 parfile_params['DILATEFREQ'] = 'N'
 
-                if pulsar_model.binary.period != 0:
+                if pulsar_model.binary.period:
                     parfile_params['BINARY'] = 'BT'
                     parfile_params['T0'] = pulsar_model.binary.T0
                     parfile_params['A1'] = pulsar_model.binary.a1_sini_c
