@@ -1,9 +1,11 @@
+import os
 import sys
 import json
 import numpy as np
 import pandas as pd
 from pathlib import Path 
 import astropy.units as u
+from datetime import datetime
 
 from .io_tools import FilterbankReader, print_exe
 from .pulsar_par_parser import PulsarParParser
@@ -23,6 +25,8 @@ class SetupManager:
         self.pulsar_models = self.construct_models()
         self.parfile_paths = self.create_parfiles()
         self.mode_resolver()
+
+        self.create_injection_report()
         
     @staticmethod
     def get_filterbank(filterbank_path):
@@ -51,9 +55,13 @@ class SetupManager:
         except json.JSONDecodeError:
             sys.exit(f'Unable to parse {pulsar_data_path} using JSON.')
 
-        pulsar_list = read_inject_file.get('pulsars', None)
         global_list = read_inject_file.get('psr_global', None)
+        self.seed = global_list.pop('global_seed', 'random')
+        if self.seed == 'random':
+            self.seed = np.random.randint(1e11, 1e12)
+        self.inj_ID = global_list.pop('injection_id', f'inj_{self.seed}')
 
+        pulsar_list = read_inject_file.get('pulsars', None)
         pulsar_list, ID_list = self.resolve_ID(pulsar_list, pulsar_data_path)
 
         pulsar_clean_list = []
@@ -82,26 +90,29 @@ class SetupManager:
         if len(non_dict_elements) != len(set(non_dict_elements)):
             sys.exit('Pulsar IDs must be unique.')
 
+        pulsar_list_resolved = []
         for i, ID in enumerate(ID_list):
             if type(ID) == dict:
-                rng = np.random.default_rng(ID.get('seed', 0))
-                seeds = rng.integers(0, 1e12, size=int(ID['replicate']))
-                rng_pars = pulsar_list.pop(i)
+                rng = np.random.default_rng(self.seed)
+                seeds = rng.integers(1e11, 1e12, size=int(ID['replicate']))
+                pulsar_prefix = ID.get('prefix', '')
+                rng_pars = pulsar_list[i]
                 for j, seed in enumerate(seeds):
                     psr_pars = rng_pars.copy()
-                    psr_pars['ID'] = f'pulsar_{j}'
+                    psr_pars['ID'] = f'{pulsar_prefix}_replicate_{j}'
                     psr_pars['seed'] = seed
                     psr_pars = self.resolve_random(psr_pars)
-                    pulsar_list.append(psr_pars)
+                    pulsar_list_resolved.append(psr_pars)
             else:
-                psr_pars = pulsar_list.pop(i)
+                psr_pars = pulsar_list[i]
                 psr_pars = self.resolve_random(psr_pars)
-                pulsar_list.append(psr_pars)
+                pulsar_list_resolved.append(psr_pars)
 
-        return pulsar_list, ID_list
+        return pulsar_list_resolved, ID_list
 
     def resolve_random(self, pulsar_pars):
-        seed = pulsar_pars.get('seed', 0)
+        seed = pulsar_pars.get('seed', self.seed)
+        pulsar_pars['seed'] = seed
         for key, value in pulsar_pars.items():
             rng = np.random.default_rng(seed)
             if type(value) == dict:
@@ -223,6 +234,14 @@ class SetupManager:
                 parfile_paths.append(par_file_path)
 
         return parfile_paths
+    
+    def create_injection_report(self):
+        report_path = os.path.join(self.output_path, f'{self.inj_ID}.json')
+        report = {'injection': {'ID': self.inj_ID, 'global_seed': self.seed, 'datetime': str(datetime.now()),
+                                'fb': self.fb.path, 'fb_mean': self.fb.fb_mean, 'fb_sigma': self.fb.fb_std}, 
+                  'pulsars': self.pulsars}
+        with open(report_path, 'w') as report_file:
+            json.dump(report, report_file, indent=4)
     
     def mode_resolver(self):
         for i, pulsar_pars in enumerate(self.pulsars):

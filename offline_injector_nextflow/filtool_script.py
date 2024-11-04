@@ -63,7 +63,7 @@ class FiltoolExec:
                             "dataout_std": self.pars['outstd'],
                             "dataout_nbits": self.pars['nbits'],
                             "rfi_flags": ""})
-            json.dump(plans, filplan)
+            json.dump(plans, filplan, indent=4)
         return filplan_file
 
     def run_cmd(self):
@@ -84,11 +84,12 @@ class FiltoolExec:
 if __name__=='__main__':
     parser = argparse.ArgumentParser(prog='filtool for offline injection pipeline',
                                      epilog='Feel free to contact me if you have questions - rsenzel@mpifr-bonn.mpg.de')
-    parser.add_argument('--fb', metavar='file', required=True, help='Injected filterbank file')
+    parser.add_argument('--fb', metavar='file', required=True, help='injected filterbank file')
     parser.add_argument('--search_args', metavar='file', required=True, help='JSON file with search parameters')
     parser.add_argument('--output', metavar='dir', required=True, help='output directory')
+    parser.add_argument('--n_threads', metavar='int', type=int, required=True, help='number of threads to use')
     args = parser.parse_args()
 
-    fil_exec = FiltoolExec(args['fb'], args['search_args'], args['output'])
+    fil_exec = FiltoolExec(args.fb, args.search_args, args.output, args.n_threads)
     fil_exec.run_cmd()
 

@@ -32,7 +32,7 @@ class PropagationEffects:
     def ISM_scattering(self, intrinsic_pulse):
         ref_scattering_time = self.pulsar_pars['scattering_time']
 
-        if (ref_scattering_time == np.inf) or (ref_scattering_time == 0):
+        if (ref_scattering_time == 0):
             return intrinsic_pulse
         else:
             if ref_scattering_time == 12321:

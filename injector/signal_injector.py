@@ -19,11 +19,12 @@ class InjectSignal:
         self.compute_plan = self.create_parallel_plan()
 
         self.fb_path = setup_manager.fb.path
+        self.seed = setup_manager.seed
         self.ephem = setup_manager.ephem
         self.out_path = setup_manager.output_path
         self.pulsars = setup_manager.pulsars
         self.parfile_paths = setup_manager.parfile_paths
-        self.injected_path = self.out_path + '/' + Path(self.fb_path).stem + '_' + setup_manager.pulsar_models[0].ID
+        self.injected_path = self.out_path + '/' + Path(self.fb_path).stem + '_' + setup_manager.inj_ID
 
     def create_parallel_plan(self):
         block_size = 2**11 # optimise?
@@ -77,15 +78,14 @@ class InjectSignal:
 
         return pulsar_models
 
-    @staticmethod
-    def de_digitize(fb, data_block):
+    def de_digitize(self, fb, data_block):
 
         def get_rvs(val):
             centre = (val-fb.fb_mean)/fb.fb_std
             deviation = 0.5/fb.fb_std
             d_plus = centre + deviation
             d_minus = centre - deviation
-            return truncnorm(a=min(d_plus, d_minus), b=max(d_plus, d_minus), loc=fb.fb_mean, scale=fb.fb_std).rvs
+            return truncnorm(a=min(d_plus, d_minus), b=max(d_plus, d_minus), loc=fb.fb_mean, scale=fb.fb_std, random_state=self.seed).rvs
 
         def de_digitizing(val):
             inds = np.where(data_block == val)

@@ -40,7 +40,7 @@ class PulsarParParser:
         parser.add_argument('--duty_cycle', metavar='(phase)', required=False, default=0.1, type=float, help='Duty cycle of default gaussian pulse profile')
         parser.add_argument('--profile', metavar='(file)', required=False, type=str, default='default', help='NumPy .npy or EPN .txt file containing a custom pulsar pulse profile (1D or 2D)')
         parser.add_argument('--micro_structure', metavar='(microsec)', required=False, default=0, type=float, help='Mean timescale of pulse microstructure')
-        parser.add_argument('--scattering_time', metavar='(millisec)', required=False, default=np.inf, type=float, help='Scattering timescale due to ISM')
+        parser.add_argument('--scattering_time', metavar='(millisec)', required=False, default=0, type=float, help='Scattering timescale due to ISM')
         parser.add_argument('--scattering_index', required=False, default=-4, type=float, help='Scattering index to describe frequency evolution')
         parser.add_argument('--DM_smear', metavar='(0 or 1)', required=False, default=0, type=int, help='Smear the pulse profile due to intra-channel DM smearing')
 

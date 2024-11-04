@@ -157,15 +157,23 @@ class PulsarModel:
             sys.exit(f'SNR value is required for pulsar {self.ID}.')
 
         if generate:
-            integrated_profile = 0
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", IntegrationWarning)
-                for chan in range(self.obs.n_chan):
-                    integrated_profile += quad(self.observed_profile_chan, args=(chan,), a=0, b=1, epsabs=1e-5)[0]
-
-            profile_bin = self.period / self.obs.dt
             beam_scale = self.obs.get_beam_snr()
-            self.SNR_scale = SNR_obs * self.obs.fb_std * np.sqrt(self.period * self.obs.n_chan / self.obs.obs_len) * beam_scale / (integrated_profile * profile_bin)
+            if pulsar_pars['period'] == 'default':
+                sigma_pt = self.obs.fb_std
+                n_sample = self.obs.n_samples
+                Weq_t = pulsar_pars['duty_cycle']/(2*np.sqrt(2*np.log(2)))*np.sqrt(2*np.pi)
+                Amp = SNR_obs * sigma_pt / (np.sqrt(Weq_t) * np.sqrt(self.obs.n_chan) * np.sqrt(n_sample))
+                self.SNR_scale =  Amp * beam_scale
+
+            else:
+                integrated_profile = 0
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", IntegrationWarning)
+                    for chan in range(self.obs.n_chan):
+                        integrated_profile += quad(self.observed_profile_chan, args=(chan,), a=0, b=1, epsabs=1e-5)[0]
+
+                profile_bin = self.period / self.obs.dt
+                self.SNR_scale = SNR_obs * self.obs.fb_std * np.sqrt(self.period * self.obs.n_chan / self.obs.obs_len) * beam_scale / (integrated_profile * profile_bin)
      
     def vectorise_observed_profile(self):
         phases = self.prop_effect.phase

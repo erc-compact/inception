@@ -168,7 +168,7 @@ if __name__=='__main__':
     parser.add_argument('--tscrunch', metavar='int', type=int, required=True, help='tscrunch value of filterbnak to search')
     args = parser.parse_args()
 
-    peasoup_exec = PeasoupExec(args['fb'], args['search_args'], args['injection_report'], args['output'], args['ram_limit'], args['n_nearest'], args['tscrunch'])
+    peasoup_exec = PeasoupExec(args.fb, args.search_args, args.injection_report, args.output, args.ram_limit, args.n_nearest, args.tscrunch)
     peasoup_exec.run_cmd()
 
     
