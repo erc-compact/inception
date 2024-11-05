@@ -1,4 +1,3 @@
-import os
 import sys
 import json
 import argparse
@@ -25,7 +24,7 @@ class CandExec:
         
     def run_cmd(self):
 
-        cmd = f"candidate_filter.py -i {self.candidate_files} -o {self.out}/{self.ID} --threshold {self.multi_beam['snr_cutoff']}" \
+        cmd = f"candidate_filter.py -i {self.candidate_files} -o {self.out} --threshold {self.multi_beam['snr_cutoff']}" \
               f"--p_tol {self.multi_beam['p_tol']} --dm_tol {self.multi_beam['dm_tol']} " \
               "-c /home/psr/software/candidate_filter/candidate_filter/default_config.json" \
               "--rfi /home/psr/software/candidate_filter/candidate_filter/known_rfi.txt"
@@ -36,10 +35,12 @@ class CandExec:
 if __name__=='__main__':
     parser = argparse.ArgumentParser(prog='candidate filter for offline injection pipeline',
                                      epilog='Feel free to contact me if you have questions - rsenzel@mpifr-bonn.mpg.de')
-    parser.add_argument('--fb', metavar='file', required=True, help='Injected filterbank file')
+    parser.add_argument('--candidate_files', metavar='file', required=True, help='file containing peasoup candidates ')
     parser.add_argument('--search_args', metavar='file', required=True, help='JSON file with search parameters')
     parser.add_argument('--output', metavar='dir', required=True, help='output directory')
     args = parser.parse_args()
 
     cand_exec = CandExec(args.fb, args.search_args, args.output)
     cand_exec.run_cmd()
+
+    ### check to see if pulsar is in xml files before and .cvs files after. read in injection report.
