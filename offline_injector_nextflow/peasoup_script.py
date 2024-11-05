@@ -4,27 +4,28 @@ import json
 import argparse
 import subprocess
 import numpy as np
+from pathlib import Path
 from collections import namedtuple
 
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).absolute().parent.parent))
 
-from injector.io_tools import FilterbankReader
+from inception.injector.io_tools import FilterbankReader
 
 
 class PeasoupExec:
-    def __init__(self, fb, search_args, injection_report, output_dir, ram_limit_gb, n_nearest, tscrunch):
+    def __init__(self, fb, search_args, injection_report, output_dir, ram_limit_gb, n_nearest):
         self.fb = fb
         self.out = output_dir
         self.ram_limit_gb = ram_limit_gb
         self.n_nearest = n_nearest
-        self.tscrunch = tscrunch
 
         args = self.parse_JSON(search_args)
         self.processing_args, self.ID  = args['processing_args'], args['processing_id']
         self.inj_report = self.parse_JSON(injection_report)
 
         self.gulp_size = self.get_gulp_size()
+        self.tscrunch = self.get_tscrunch()
     
     def parse_JSON(self, json_file):
         try:
@@ -44,6 +45,12 @@ class PeasoupExec:
         default_gulp_size = int((2048.0 / (fb_reader.nchans / fscrunch)) * 1e6)
         del fb_reader
         return self.processing_args.get('gulp_size', default_gulp_size)
+    
+    def get_tscrunch(self):
+        tscrunch_index = int(Path(self.fb).stem[-1]) - 1
+        DD_plan = self.create_DDplan()
+        
+        return [dm_range.tscrunch for dm_range in DD_plan][tscrunch_index]
     
     def generate_chan_mask(self, chan_mask_csv, outfile):
         fb_reader = FilterbankReader(self.fb)
@@ -102,12 +109,15 @@ class PeasoupExec:
     
     @staticmethod
     def find_n_nearest(dm_arr, tscrunch_arr, target, n):
-        nearest_indices = np.argsort(np.abs(dm_arr - target))[:n]
-        dm_values = dm_arr[nearest_indices]
-        tscrunch_values = tscrunch_arr[nearest_indices]
-        return dm_values, tscrunch_values
+        if n == -1:
+            return dm_arr, tscrunch_arr
+        else:
+            nearest_indices = np.argsort(np.abs(dm_arr - target))[:n]
+            dm_values = dm_arr[nearest_indices]
+            tscrunch_values = tscrunch_arr[nearest_indices]
+            return dm_values, tscrunch_values
     
-    def create_dm_list(self, tscrunch):
+    def create_dm_list(self):
         DM_values = [pulsar['DM'] for pulsar in self.inj_report['pulsars']]
         DD_plan = self.create_DDplan()
 
@@ -123,32 +133,26 @@ class PeasoupExec:
             dm_trials_list.append(dm_list_i)
             tscrunch_list.append(tscrunch_i)
         
-        dm_trials_arr = np.concat(dm_trials_list)
-        tscrunch_arr = np.concat(tscrunch_list)
+        dm_trials_arr = np.concatenate(dm_trials_list)
+        tscrunch_arr = np.concatenate(tscrunch_list)
 
         dm_search_values = []
         for DM_i in DM_values:
             dm_nearest, tscrunch_nearest = self.find_n_nearest(dm_trials_arr, tscrunch_arr, DM_i, self.n_nearest)
-            dm_search_values.append(dm_nearest[np.where(tscrunch_nearest == tscrunch)])
+            dm_search_values.append(dm_nearest[np.where(tscrunch_nearest == self.tscrunch)])
 
-        dm_search_arr = np.concat(dm_search_values)
-        dm_search_arr.sort()
+        dm_search_arr = np.concatenate(dm_search_values)
+        dm_search_arr = np.unique(dm_search_arr)
 
-        outfile = os.path.join(self.out, f"dm_list_t:{tscrunch}.ascii")
+        outfile = os.path.join(self.out, f"dm_list_t{int(self.tscrunch)}.ascii")
         np.savetxt(outfile, dm_search_arr, fmt='%.3f')
         return outfile
     
     def run_cmd(self):
         chan_mask_file, birdie_list_file = self.generate_files()
+        dm_list = self.create_dm_list()
 
-        DD_plan = self.create_DDplan()
-        tscrunch_list = np.array([dm_range.tscrunch for dm_range in DD_plan])
-
-        tscrunch_index = np.where(tscrunch_list == self.tscrunch)[0][0]
-        search_file = os.path.join(self.out, f"temp_merge_p_id_{self.ID}_{tscrunch_index+1:02d}.fil")
-        dm_list = self.create_dm_list(self.tscrunch)
-
-        cmd = f"peasoup -k {chan_mask_file} -z {birdie_list_file} -i {search_file} --dm_file {dm_list} " \
+        cmd = f"peasoup -k {chan_mask_file} -z {birdie_list_file} -i {self.fb} --dm_file {dm_list} " \
               f"--limit {self.processing_args['candidate_limit']} -n {self.processing_args['nharmonics']}  -m {self.processing_args['snr_threshold']} " \
               f"--acc_start {self.processing_args['start_accel']} --acc_end {self.processing_args['end_accel']} --fft_size {self.processing_args['fft_length']}" \
               f" -o {self.out} --ram_limit_gb {self.ram_limit_gb} --dedisp_gulp {self.gulp_size}"
@@ -165,10 +169,8 @@ if __name__=='__main__':
     parser.add_argument('--output', metavar='dir', required=True, help='output directory')
     parser.add_argument('--ram_limit', metavar='GB', required=True, help='limit the ram used by a single peasoup search')
     parser.add_argument('--n_nearest', metavar='int', type=int, required=True, help='number of DM trials to search around injected pulsar DM')
-    parser.add_argument('--tscrunch', metavar='int', type=int, required=True, help='tscrunch value of filterbnak to search')
     args = parser.parse_args()
 
-    peasoup_exec = PeasoupExec(args.fb, args.search_args, args.injection_report, args.output, args.ram_limit, args.n_nearest, args.tscrunch)
+    peasoup_exec = PeasoupExec(args.fb, args.search_args, args.injection_report, args.output, args.ram_limit, args.n_nearest)
     peasoup_exec.run_cmd()
-
     

@@ -10,7 +10,7 @@ class CandExec:
         self.out = output_dir
         self.candidate_files = candidate_files
         args = self.parse_JSON(search_args)
-        self.processing_args, self.ID  = args['processing_args'], args['processing_id']
+        self.multi_beam, self.ID = args['multi_beam_args'], args['processing_id']
 
     def parse_JSON(self, json_file):
         try:
@@ -25,8 +25,8 @@ class CandExec:
         
     def run_cmd(self):
 
-        cmd = f"candidate_filter.py -i {self.candidate_files} -o {self.out}/{self.ID} --threshold {self.processing_args['snr_threshold']}" \
-              f"--p_tol {self.processing_args['p_tol']} --dm_tol {self.processing_args['dm_tol']} " \
+        cmd = f"candidate_filter.py -i {self.candidate_files} -o {self.out}/{self.ID} --threshold {self.multi_beam['snr_cutoff']}" \
+              f"--p_tol {self.multi_beam['p_tol']} --dm_tol {self.multi_beam['dm_tol']} " \
               "-c /home/psr/software/candidate_filter/candidate_filter/default_config.json" \
               "--rfi /home/psr/software/candidate_filter/candidate_filter/known_rfi.txt"
 

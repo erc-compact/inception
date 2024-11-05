@@ -157,13 +157,13 @@ class PulsarModel:
             sys.exit(f'SNR value is required for pulsar {self.ID}.')
 
         if generate:
-            beam_scale = self.obs.get_beam_snr()
+            beam_scale = self.obs.get_beam_snr() 
             if pulsar_pars['period'] == 'default':
                 sigma_pt = self.obs.fb_std
                 n_sample = self.obs.n_samples
                 Weq_t = pulsar_pars['duty_cycle']/(2*np.sqrt(2*np.log(2)))*np.sqrt(2*np.pi)
                 Amp = SNR_obs * sigma_pt / (np.sqrt(Weq_t) * np.sqrt(self.obs.n_chan) * np.sqrt(n_sample))
-                self.SNR_scale =  Amp * beam_scale
+                self.SNR_scale = Amp * beam_scale
 
             else:
                 integrated_profile = 0
