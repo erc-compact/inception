@@ -125,7 +125,7 @@ class FilterbankReader:
 
 
 class FilterbankWriter: 
-    def __init__(self, read_filterbank, write_filterbank):
+    def __init__(self, read_filterbank, write_filterbank_name):
         self.fb_reader = FilterbankReader(read_filterbank) if type(read_filterbank) == str else read_filterbank
 
         self.nbits = self.fb_reader.nbits
@@ -133,7 +133,7 @@ class FilterbankWriter:
         self.write_header_pos = 0 
         self.write_data_pos = 0
 
-        self.create_filterbank(write_filterbank)
+        self.create_filterbank(write_filterbank_name)
     
     def create_filterbank(self, filename):
         def write_string(file, string):
@@ -185,6 +185,22 @@ class FilterbankWriter:
 
         self.write_file.write(out.tobytes())
 
+
+def merge_filterbanks(filterbanks, output_file, gulp_size=2**11):
+    fb_list = [FilterbankReader(fb) for fb in filterbanks]
+    writer = FilterbankWriter(fb_list[0], output_file)
+
+    for fb in fb_list:
+        n_blocks, remainder = divmod(fb.n_samples)
+
+        for _ in range(n_blocks):
+            read_block = fb.read_block(gulp_size)
+            writer.write_block(read_block)
+
+        read_block = fb.read_block(remainder)
+        writer.write_block(read_block)
+
+    del fb_list, writer
 
 def execute(cmd):
     os.system(cmd)

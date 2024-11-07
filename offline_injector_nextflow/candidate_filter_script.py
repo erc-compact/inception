@@ -35,12 +35,12 @@ class CandExec:
 if __name__=='__main__':
     parser = argparse.ArgumentParser(prog='candidate filter for offline injection pipeline',
                                      epilog='Feel free to contact me if you have questions - rsenzel@mpifr-bonn.mpg.de')
-    parser.add_argument('--candidate_files', metavar='file', required=True, help='file containing peasoup candidates ')
+    parser.add_argument('--candidates_file', metavar='file', required=True, help='file containing peasoup candidates ')
     parser.add_argument('--search_args', metavar='file', required=True, help='JSON file with search parameters')
     parser.add_argument('--output', metavar='dir', required=True, help='output directory')
     args = parser.parse_args()
 
-    cand_exec = CandExec(args.fb, args.search_args, args.output)
+    cand_exec = CandExec(args.candidates_file, args.search_args, args.output)
     cand_exec.run_cmd()
 
     ### check to see if pulsar is in xml files before and .cvs files after. read in injection report.

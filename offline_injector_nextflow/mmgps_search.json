@@ -1,5 +1,5 @@
 {
-    "processing_id": "offline_injector",
+    "processing_id": "data_aaaaaa",
     "processing_args": {
         "rfi_flags": "kadaneF 8 4 zdot",
         "temp_filesystem": "/beegfs/",
@@ -36,6 +36,8 @@
         "snr_cutoff": 8.5
     },
     "data": {
+        "n_cbeams": 479,
+        "n_ibeams": 1,
         "pointings": [
             {
                 "id": "MMGPS_U_0004",

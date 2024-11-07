@@ -1,7 +1,9 @@
 {
 
     "psr_global":
-    {
+    {   
+        "injection_id": "inj_aaaaaa",
+        "global_seed": "random",
         "create_parfile": 0,
         "DM_smear": 0,
         "M1": 1.4       
@@ -10,7 +12,6 @@
     "pulsars": [
         {   
             "ID": "pulsar_slow",
-            "seed": 0,
             "P0": {"rng": "uniform",  "low": 0.5, "high": 10},
             "SNR": {"rng": "uniform", "low": 8, "high": 40},
             "DM": {"rng": "uniform", "low": 5, "high": 500},
@@ -19,7 +20,7 @@
             "phase_offset": {"rng": "uniform", "low": 0, "high": 1}
         },
         {   
-            "ID": {"replicate": 9, "seed": 0, "algorithm": "DM_P0"},
+            "ID": {"replicate": 9, "prefix": "binary_milli"},
             "P0": {"rng": "uniform",  "low": 0.001, "high": 0.03},
             "SNR": {"rng": "uniform", "low": 8, "high": 40},
             "DM": {"rng": "uniform", "low": 5, "high": 500},
