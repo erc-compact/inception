@@ -73,6 +73,9 @@ class InjectorSetup:
             for xml_name in xml_file_names:
                 xml_file_paths.append(f'{self.xml_dir}/{pointing_id}/XML_FILES/ifbf00000/{xml_name}')
 
+        for xml_name in xml_file_names:
+            xml_file_paths.append(f'{self.out}/{self.injection_ID}_{self.data_ID}_{xml_name}')
+
         outfile = f'{self.out}/candidates_{self.injection_ID}_{self.data_ID}.ascii'
         np.savetxt(outfile, xml_file_paths)
 
@@ -90,7 +93,7 @@ class InjectorSetup:
         inputs = f"--signal={self.inject_file} --fb={fb_path} --ephem={ephem} --output={self.out} --ncpu={ncpus}"
         cmd = f"python3 {script_path}/SCRIPT_inject_pulsars.py {inputs}"
 
-        subprocess.run(cmd)
+        subprocess.run(cmd, shell=True)
 
 
 if __name__=='__main__':
