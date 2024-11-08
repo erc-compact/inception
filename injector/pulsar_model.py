@@ -158,7 +158,7 @@ class PulsarModel:
 
         if generate:
             beam_scale = self.obs.get_beam_snr() 
-            if pulsar_pars['period'] == 'default':
+            if pulsar_pars['profile'] == 'default':
                 sigma_pt = self.obs.fb_std
                 n_sample = self.obs.n_samples
                 Weq_t = pulsar_pars['duty_cycle']/(2*np.sqrt(2*np.log(2)))*np.sqrt(2*np.pi)
