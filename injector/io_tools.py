@@ -191,7 +191,7 @@ def merge_filterbanks(filterbanks, output_file, gulp_size=2**11):
     writer = FilterbankWriter(fb_list[0], output_file)
 
     for fb in fb_list:
-        n_blocks, remainder = divmod(fb.n_samples)
+        n_blocks, remainder = divmod(fb.n_samples, gulp_size)
 
         for _ in range(n_blocks):
             read_block = fb.read_block(gulp_size)

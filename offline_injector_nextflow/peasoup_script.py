@@ -156,7 +156,7 @@ class PeasoupExec:
         inj_ID = self.inj_report['injection']['ID']
         xml_name_new = f'{self.out}/{inj_ID}_{self.ID}_{xml_name}'
 
-        os.rename('overview.xml', xml_name_new)
+        os.rename(f'{self.out}/overview.xml', xml_name_new)
     
     def run_cmd(self):
         chan_mask_file, birdie_list_file = self.generate_files()
