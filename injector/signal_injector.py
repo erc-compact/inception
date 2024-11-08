@@ -85,12 +85,12 @@ class InjectSignal:
             deviation = 0.5/fb.fb_std
             d_plus = centre + deviation
             d_minus = centre - deviation
-            return truncnorm(a=min(d_plus, d_minus), b=max(d_plus, d_minus), loc=fb.fb_mean, scale=fb.fb_std, random_state=self.seed).rvs
+            return truncnorm(a=min(d_plus, d_minus), b=max(d_plus, d_minus), loc=fb.fb_mean, scale=fb.fb_std).rvs
 
         def de_digitizing(val):
             inds = np.where(data_block == val)
             sampler = get_rvs(val)
-            data_block[inds] = sampler(size=len(inds[0]))
+            data_block[inds] = sampler(size=len(inds[0]), random_state=self.seed)
         
         for data in range(int(data_block.min()), int(data_block.max())+1):
             de_digitizing(data)
