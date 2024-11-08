@@ -90,7 +90,7 @@ class InjectSignal:
         def de_digitizing(val):
             inds = np.where(data_block == val)
             sampler = get_rvs(val)
-            data_block[inds] = sampler(size=len(inds[0]), random_state=self.seed)
+            data_block[inds] = sampler(size=len(inds[0]), random_state=(self.seed) % (2**32 - 1))
         
         for data in range(int(data_block.min()), int(data_block.max())+1):
             de_digitizing(data)
