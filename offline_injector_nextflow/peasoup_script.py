@@ -148,6 +148,16 @@ class PeasoupExec:
         np.savetxt(outfile, dm_search_arr, fmt='%.3f')
         return outfile
     
+    def rename_outputs(self):
+        DD_plan = self.create_DDplan()
+        tscrunch_index = int(Path(self.fb).stem[-1]) - 1
+        xml_name = [f'overview_dm_{dm_range.low_dm:.6f}_{dm_range.high_dm:.6f}.xml' for dm_range in DD_plan][tscrunch_index]
+
+        inj_ID = self.inj_report['injection']['ID']
+        xml_name_new = f'{self.out}/{inj_ID}_{self.ID}_{xml_name}'
+
+        os.rename('overview.xml', xml_name_new)
+    
     def run_cmd(self):
         chan_mask_file, birdie_list_file = self.generate_files()
         dm_list = self.create_dm_list()
@@ -158,6 +168,8 @@ class PeasoupExec:
               f" -o {self.out} --ram_limit_gb {self.ram_limit_gb} --dedisp_gulp {self.gulp_size}"
         
         subprocess.run(cmd, shell=True)
+
+        self.rename_outputs()
 
 
 if __name__=='__main__':

@@ -4,6 +4,7 @@ import json
 import argparse
 import subprocess
 import numpy as np
+from pathlib import Path
 from collections import namedtuple
 
 from injector.io_tools import merge_filterbanks
@@ -82,7 +83,7 @@ class InjectorSetup:
     def merge_data_products(self):
         pointing_id, inj_beam_name, *fb_names = self.beam_data
         output_name = f'{self.out}/{pointing_id}_{inj_beam_name}_{self.injection_ID}_{self.data_ID}.fil'
-
+        ### change fb_names path with output dir Path(...)
         merge_filterbanks(fb_names, output_name)
         return output_name
 
