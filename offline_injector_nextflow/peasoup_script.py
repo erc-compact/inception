@@ -185,4 +185,3 @@ if __name__=='__main__':
 
     peasoup_exec = PeasoupExec(args.fb, args.search_args, args.injection_report, args.output, args.ram_limit, args.n_nearest)
     peasoup_exec.run_cmd()
-    

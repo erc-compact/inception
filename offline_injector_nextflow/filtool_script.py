@@ -23,7 +23,7 @@ class FiltoolExec:
             sys.exit(f'Unable to find {search_flags}.')
         except json.JSONDecodeError:
             sys.exit(f'Unable to parse {search_flags} using JSON.')
-        
+
         return flags['processing_args'], flags['processing_id']
     
     def define_defaults(self):
@@ -70,16 +70,14 @@ class FiltoolExec:
         ddplan = self.create_DDplan()
         filplan_file = self.create_filplan(ddplan)
 
-        fscrunch = self.processing_args.get('fscrunch', 1)
+        # fscrunch = self.processing_args.get('fscrunch', 1) # -fd {fscrunch} 
         rfi_flags = self.processing_args.get('rfi_flags', 'zdot')
-        rootname = f"temp_merge_p_id_{self.ID}"
+        rootname = f"temp_merge_p_id_{self.ID}" 
 
         cmd = f"filtool -v -t {self.num_threads} --zapthre {self.pars['zapping_threshold']} --baseline {self.pars['baseline']} -l {self.pars['segment_length']} \
-                --fillPatch {self.pars['fillPatch']} -fd {fscrunch} --filplan {filplan_file} -z {rfi_flags} -o {self.out}/{rootname} -f {self.fb}"
+                 --filplan {filplan_file} --fillPatch {self.pars['fillPatch']} -z {rfi_flags} -o {self.out}/{rootname} -f {self.fb}"
         
         subprocess.run(cmd, shell=True)
-
-    
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(prog='filtool for offline injection pipeline',

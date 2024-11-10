@@ -4,23 +4,24 @@ import json
 import argparse
 import subprocess
 import numpy as np
-from pathlib import Path
 from collections import namedtuple
 
-from injector.io_tools import merge_filterbanks
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).absolute().parent.parent))
+from inception.injector.io_tools import merge_filterbanks
 
 
 class InjectorSetup:
-    def __init__(self, search_args, inject_file, xml_dir, work_dir):
+    def __init__(self, search_args, inject_file, data_dir, work_dir):
         self.out = work_dir
-        self.xml_dir = xml_dir
+        self.data_dir = data_dir
 
         args = self.parse_JSON(search_args)
         self.inject_file = self.parse_JSON(inject_file)
         self.processing_args, self.ID  = args['processing_args'], args['processing_id']
         self.beam_data = self.get_beam(args['data']['pointings'])
         
-        self.injection_ID = self.inject_file['injection_id']
+        self.injection_ID = self.inject_file['psr_global']['injection_id']
         self.data_ID = args['processing_id']
 
         self.create_XML_list(args['data']['n_cbeams'], args['data']['n_ibeams'])
@@ -45,7 +46,7 @@ class InjectorSetup:
                     beam_data.append(filterbank['filename'])
                 beams.append(beam_data)
 
-        selected_beam = np.random.choice(beams)
+        selected_beam = beams[np.random.randint(0,len(beams))]
         return selected_beam
     
     def create_DDplan(self):
@@ -69,29 +70,36 @@ class InjectorSetup:
             for xml_name in xml_file_names:
                 beam_i = f'cfbf{nbeam:05g}'
                 if beam_i != inj_beam_name:
-                    xml_file_paths.append(f'{self.xml_dir}/{pointing_id}/XML_FILES/{beam_i}/{xml_name}')
+                    xml_file_paths.append(f'{self.data_dir}/{pointing_id}/XML_FILES/{beam_i}/{xml_name}')
         if n_ibeams:
             for xml_name in xml_file_names:
-                xml_file_paths.append(f'{self.xml_dir}/{pointing_id}/XML_FILES/ifbf00000/{xml_name}')
+                xml_file_paths.append(f'{self.data_dir}/{pointing_id}/XML_FILES/ifbf00000/{xml_name}')
 
         for xml_name in xml_file_names:
-            xml_file_paths.append(f'{self.out}/{self.injection_ID}_{self.data_ID}_{xml_name}')
+            xml_file_paths.append(f'{self.out}/{self.data_ID}_{self.injection_ID}_{xml_name}')
 
-        outfile = f'{self.out}/candidates_{self.injection_ID}_{self.data_ID}.ascii'
-        np.savetxt(outfile, xml_file_paths)
+        outfile = f'{self.out}/candidates_{self.data_ID}_{self.injection_ID}.ascii'
+        with open(outfile, 'w') as file:
+            file.writelines(line + '\n' for line in xml_file_paths)
 
-    def merge_data_products(self):
+    def rsync_merge_data_products(self):
         pointing_id, inj_beam_name, *fb_names = self.beam_data
-        output_name = f'{self.out}/{pointing_id}_{inj_beam_name}_{self.injection_ID}_{self.data_ID}.fil'
-        ### change fb_names path with output dir Path(...)
-        merge_filterbanks(fb_names, output_name)
+        output_name = f'{self.out}/{pointing_id}_{inj_beam_name}_{self.data_ID}_merged.fil'
+
+        data_paths = [f'{self.data_dir}/{pointing_id}/{inj_beam_name}/{fb_name}' for fb_name in fb_names]
+        for data_product in data_paths:
+            cmd = f"rsync -Pav {data_product} {self.out}"
+            subprocess.run(cmd, shell=True)
+
+        new_data_paths = [f'{self.out}/{fb_name}' for fb_name in fb_names]
+        merge_filterbanks(new_data_paths, output_name)
         return output_name
 
-    def run_injector(self, ephem, ncpus):
-        fb_path = self.merge_data_products()
+    def run_injector(self, injection_file, ephem, ncpus):
+        fb_path = self.rsync_merge_data_products()
 
-        script_path = './inception/injector'
-        inputs = f"--signal={self.inject_file} --fb={fb_path} --ephem={ephem} --output={self.out} --ncpu={ncpus}"
+        script_path = '/hercules/u/rsenzel/pulsar_inject/inception/injector'
+        inputs = f"--signal={injection_file} --fb={fb_path} --ephem={ephem} --output={self.out} --ncpu={ncpus}"
         cmd = f"python3 {script_path}/SCRIPT_inject_pulsars.py {inputs}"
 
         subprocess.run(cmd, shell=True)
@@ -102,12 +110,13 @@ if __name__=='__main__':
                                      epilog='Feel free to contact me if you have questions - rsenzel@mpifr-bonn.mpg.de')
     parser.add_argument('--search_args', metavar='file', required=True, help='JSON file with search parameters')
     parser.add_argument('--injection_file', metavar='file', required=True, help='JSON file with injection plan')
-    parser.add_argument('--xml_dir', metavar='dir', required=True, help='directory of xml files')
+    parser.add_argument('--data_dir', metavar='dir', required=True, help='directory of xml files')
     parser.add_argument('--work_dir', metavar='dir', required=True, help='work directory')
     parser.add_argument('--ephem', metavar='file', required=False, default='builtin', help='solar system ephemeris file')
     parser.add_argument('--ncpus', metavar='int', required=False, default=1, type=int, help='number of threads for injection')
     args = parser.parse_args()
 
     inj_setup = InjectorSetup(args.search_args, args.injection_file, args.data_dir, args.work_dir)
-    inj_setup.run_injector(args.ephem, args.ncpus)
+    inj_setup.run_injector(args.injection_file, args.ephem, args.ncpus)
+
 
