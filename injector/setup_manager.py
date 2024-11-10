@@ -117,8 +117,8 @@ class SetupManager:
             rng = np.random.default_rng(seed)
             if type(value) == dict:
                 units = value.get('units', 1)
-                if units == 'T_obs':
-                    units = self.fb.header['tsamp'] * self.fb.n_samples
+                if units == 'T_obs_hour':
+                    units = self.fb.header['tsamp'] * self.fb.n_samples / 3600
                 elif units == 'dt':
                     units = self.fb.header['tsamp']
 

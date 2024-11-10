@@ -26,9 +26,9 @@ class FoldExec:
     def run_cmd(self):
         TEMPLATE = "/home/psr/software/PulsarX/include/template/meerkat_fold.template"
 
-        cmd = f"psrfold_fil2 --dmboost 250 --plotx -v -t 12 --candfile {} -n {} {} {} --template {TEMPLATE}" \
-                f"--clfd 8 -L {self.fold_args['subint_length']} --fillPatch rand -f {self.fb} --rfi zdot {}" \
-                f"--fd {self.fold_args['fscrunch']} --td {self.fold_args['tscrunch']}"
+        cmd = f"psrfold_fil2 --dmboost 250 --plotx -v -t 12 --candfile {} -n {} {} {} --template {TEMPLATE} " \
+              f"--clfd 8 -L {self.fold_args['subint_length']} --fillPatch rand -f {self.fb} --rfi zdot {} " \
+              f"--fd {self.fold_args['fscrunch']} --td {self.fold_args['tscrunch']}"
 
         subprocess.run(cmd, shell=True)
         """
@@ -38,7 +38,7 @@ class FoldExec:
 
 
 if __name__=='__main__':
-    parser = argparse.ArgumentParser(prog='candidate filter for offline injection pipeline',
+    parser = argparse.ArgumentParser(prog='candidate folder for offline injection pipeline',
                                      epilog='Feel free to contact me if you have questions - rsenzel@mpifr-bonn.mpg.de')
     parser.add_argument('--candidates_file', metavar='file', required=True, help='file containing peasoup candidates ')
     parser.add_argument('--search_args', metavar='file', required=True, help='JSON file with search parameters')

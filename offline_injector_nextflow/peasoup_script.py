@@ -154,7 +154,7 @@ class PeasoupExec:
         xml_name = [f'overview_dm_{dm_range.low_dm:.6f}_{dm_range.high_dm:.6f}.xml' for dm_range in DD_plan][tscrunch_index]
 
         inj_ID = self.inj_report['injection']['ID']
-        xml_name_new = f'{self.out}/{inj_ID}_{self.ID}_{xml_name}'
+        xml_name_new = f'{self.out}/{self.ID}_{inj_ID}_{xml_name}'
 
         os.rename(f'{self.out}/overview.xml', xml_name_new)
     
@@ -164,8 +164,8 @@ class PeasoupExec:
 
         cmd = f"peasoup -k {chan_mask_file} -z {birdie_list_file} -i {self.fb} --dm_file {dm_list} " \
               f"--limit {self.processing_args['candidate_limit']} -n {self.processing_args['nharmonics']}  -m {self.processing_args['snr_threshold']} " \
-              f"--acc_start {self.processing_args['start_accel']} --acc_end {self.processing_args['end_accel']} --fft_size {self.processing_args['fft_length']}" \
-              f" -o {self.out} --ram_limit_gb {self.ram_limit_gb} --dedisp_gulp {self.gulp_size}"
+              f"--acc_start {self.processing_args['start_accel']} --acc_end {self.processing_args['end_accel']} --fft_size {self.processing_args['fft_length']} " \
+              f"-o {self.out} --ram_limit_gb {self.ram_limit_gb} --dedisp_gulp {self.gulp_size}"
         
         subprocess.run(cmd, shell=True)
 
@@ -180,7 +180,7 @@ if __name__=='__main__':
     parser.add_argument('--injection_report', metavar='file', required=True, help='JSON file with inject pulsar records')
     parser.add_argument('--output', metavar='dir', required=True, help='output directory')
     parser.add_argument('--ram_limit', metavar='GB', required=True, help='limit the ram used by a single peasoup search')
-    parser.add_argument('--n_nearest', metavar='int', type=int, required=True, help='number of DM trials to search around injected pulsar DM')
+    parser.add_argument('--n_nearest', metavar='int', type=int, required=False, default=-1, help='number of DM trials to search around injected pulsar DM')
     args = parser.parse_args()
 
     peasoup_exec = PeasoupExec(args.fb, args.search_args, args.injection_report, args.output, args.ram_limit, args.n_nearest)
