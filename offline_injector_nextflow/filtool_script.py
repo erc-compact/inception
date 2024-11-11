@@ -8,12 +8,19 @@ from collections import namedtuple
 
 class FiltoolExec:
     def __init__(self, fb, search_args, output_dir, num_threads):
-        self.fb = fb
+        self.fb = self.parse_fb(fb)
         self.num_threads = num_threads
         self.out = output_dir
 
         self.processing_args, self.ID = self.parse_search_args(search_args)
         self.define_defaults()
+    
+    @staticmethod
+    def parse_fb(fb):
+        if type(fb) == list:
+            return ' '.join(fb)
+        else:
+            return fb
 
     def parse_search_args(self, search_flags):
         try:
@@ -82,7 +89,7 @@ class FiltoolExec:
 if __name__=='__main__':
     parser = argparse.ArgumentParser(prog='filtool for offline injection pipeline',
                                      epilog='Feel free to contact me if you have questions - rsenzel@mpifr-bonn.mpg.de')
-    parser.add_argument('--fb', metavar='file', required=True, help='injected filterbank file')
+    parser.add_argument('--fb', metavar='file', required=True, nargs='+', help='injected filterbank file(s)')
     parser.add_argument('--search_args', metavar='file', required=True, help='JSON file with search parameters')
     parser.add_argument('--output', metavar='dir', required=True, help='output directory')
     parser.add_argument('--n_threads', metavar='int', type=int, required=True, help='number of threads to use')

@@ -161,10 +161,11 @@ class PeasoupExec:
     def run_cmd(self):
         chan_mask_file, birdie_list_file = self.generate_files()
         dm_list = self.create_dm_list()
+        fft_size = self.processing_args['fft_length'] // self.tscrunch
 
         cmd = f"peasoup -k {chan_mask_file} -z {birdie_list_file} -i {self.fb} --dm_file {dm_list} " \
               f"--limit {self.processing_args['candidate_limit']} -n {self.processing_args['nharmonics']}  -m {self.processing_args['snr_threshold']} " \
-              f"--acc_start {self.processing_args['start_accel']} --acc_end {self.processing_args['end_accel']} --fft_size {self.processing_args['fft_length']} " \
+              f"--acc_start {self.processing_args['start_accel']} --acc_end {self.processing_args['end_accel']} --fft_size {fft_size} " \
               f"-o {self.out} --ram_limit_gb {self.ram_limit_gb} --dedisp_gulp {self.gulp_size}"
         
         subprocess.run(cmd, shell=True)
