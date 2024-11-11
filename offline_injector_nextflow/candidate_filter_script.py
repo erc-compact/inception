@@ -24,7 +24,7 @@ class CandExec:
         
     def run_cmd(self):
 
-        cmd = f"candidate_filter.py -i {self.candidate_files} -o {self.out} --threshold {self.multi_beam['snr_cutoff']} " \
+        cmd = f"candidate_filter.py -i {self.candidate_files} -o {self.out}/ --threshold {self.multi_beam['snr_cutoff']} " \
               f"--p_tol {self.multi_beam['p_tol']} --dm_tol {self.multi_beam['dm_tol']} " \
               "-c /home/psr/software/candidate_filter/candidate_filter/default_config.json " \
               "--rfi /home/psr/software/candidate_filter/candidate_filter/known_rfi.txt"

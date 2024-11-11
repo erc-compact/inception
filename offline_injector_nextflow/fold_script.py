@@ -81,13 +81,13 @@ if __name__=='__main__':
 
 
 
-"pred_file = generate_pulsarX_cand_file(
-                        tmp_dir,
-                        beam_name,
-                        utc_start,
-                        cand_mod_periods,
-                        cand_dms,
-                        cand_accs,
-                        cand_snrs,
-                        batch_start,
-                        batch_stop)"
+# "pred_file = generate_pulsarX_cand_file(
+#                         tmp_dir,
+#                         beam_name,
+#                         utc_start,
+#                         cand_mod_periods,
+#                         cand_dms,
+#                         cand_accs,
+#                         cand_snrs,
+#                         batch_start,
+#                         batch_stop)"
