@@ -124,7 +124,7 @@ class PeasoupExec:
         dm_trials_list = []
         tscrunch_list = []
         for i, dm_range in enumerate(DD_plan):
-            n_trial = int((dm_range.high_dm-dm_range.low_dm)/dm_range.dm_step)
+            n_trial = int(round((dm_range.high_dm-dm_range.low_dm)/dm_range.dm_step))
             n_trial, endpoint = (n_trial + 1, True) if (i == len(DD_plan)-1) else (n_trial, False)
 
             dm_list_i = np.linspace(dm_range.low_dm, dm_range.high_dm, n_trial, endpoint=endpoint)
@@ -161,7 +161,7 @@ class PeasoupExec:
     def run_cmd(self):
         chan_mask_file, birdie_list_file = self.generate_files()
         dm_list = self.create_dm_list()
-        fft_size = self.processing_args['fft_length'] // self.tscrunch
+        fft_size = int(self.processing_args['fft_length'] // self.tscrunch)
 
         cmd = f"peasoup -k {chan_mask_file} -z {birdie_list_file} -i {self.fb} --dm_file {dm_list} " \
               f"--limit {self.processing_args['candidate_limit']} -n {self.processing_args['nharmonics']}  -m {self.processing_args['snr_threshold']} " \
