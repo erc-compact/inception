@@ -14,7 +14,7 @@ from inception.injector.io_tools import FilterbankReader
 
 
 class PeasoupExec:
-    def __init__(self, fb, search_args, injection_report, output_dir, ram_limit_gb, n_nearest):
+    def __init__(self, fb, search_args, injection_report, output_dir, ram_limit_gb, n_nearest=-1):
         self.fb = fb
         self.out = output_dir
         self.ram_limit_gb = ram_limit_gb
@@ -107,15 +107,16 @@ class PeasoupExec:
         self.generate_birdie_list(birdie_list_csv, birdie_list_file)
         return chan_mask_file, birdie_list_file
     
-    @staticmethod
-    def find_n_nearest(dm_arr, tscrunch_arr, target, n):
+    def find_n_nearest(self, dm_arr, tscrunch_arr, target, n):
         if n == -1:
-            return dm_arr, tscrunch_arr
+            dm_nearest, tscrunch_nearest =  dm_arr, tscrunch_arr
         else:
             nearest_indices = np.argsort(np.abs(dm_arr - target))[:n]
             dm_values = dm_arr[nearest_indices]
             tscrunch_values = tscrunch_arr[nearest_indices]
-            return dm_values, tscrunch_values
+            dm_nearest, tscrunch_nearest = dm_values, tscrunch_values
+        
+        return dm_nearest[np.where(tscrunch_nearest == self.tscrunch)]
     
     def create_dm_list(self):
         DM_values = [pulsar['DM'] for pulsar in self.inj_report['pulsars']]
@@ -135,14 +136,8 @@ class PeasoupExec:
         
         dm_trials_arr = np.concatenate(dm_trials_list)
         tscrunch_arr = np.concatenate(tscrunch_list)
-
-        dm_search_values = []
-        for DM_i in DM_values:
-            dm_nearest, tscrunch_nearest = self.find_n_nearest(dm_trials_arr, tscrunch_arr, DM_i, self.n_nearest)
-            dm_search_values.append(dm_nearest[np.where(tscrunch_nearest == self.tscrunch)])
-
-        dm_search_arr = np.concatenate(dm_search_values)
-        dm_search_arr = np.unique(dm_search_arr)
+        dm_search_values = [self.find_n_nearest(dm_trials_arr, tscrunch_arr, DM_i, self.n_nearest) for DM_i in DM_values]
+        dm_search_arr = np.unique(np.concatenate(dm_search_values))
 
         outfile = os.path.join(self.out, f"dm_list_t{int(self.tscrunch)}.ascii")
         np.savetxt(outfile, dm_search_arr, fmt='%.3f')

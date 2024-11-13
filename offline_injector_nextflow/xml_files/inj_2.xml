@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='ISO-8859-1'?>
 <peasoup_search>
   <misc_info>
-    <local_datetime>2024-11-11-20:07</local_datetime>
-    <utc_datetime>2024-11-11-19:07</utc_datetime>
+    <local_datetime>2024-11-13-12:00</local_datetime>
+    <utc_datetime>2024-11-13-11:00</utc_datetime>
   </misc_info>
   <header_parameters>
     <source_name>J0000-00</source_name>
@@ -3556,10 +3556,10 @@
     </candidate>
   </candidates>
   <execution_times>
-    <dedispersion>22.4358978271484</dedispersion>
+    <dedispersion>22.3373908996582</dedispersion>
     <folding>0</folding>
-    <reading>5.19999994139653e-05</reading>
-    <searching>21.0383586883545</searching>
-    <total>43.7582397460938</total>
+    <reading>5.60000007681083e-05</reading>
+    <searching>22.8308486938477</searching>
+    <total>45.7355003356934</total>
   </execution_times>
 </peasoup_search>

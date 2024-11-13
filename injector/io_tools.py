@@ -20,6 +20,7 @@ class FilterbankReader:
         self.output_dtype = np.float64
 
         self.read_header(filterbank)
+        self.dt = self.header['tsamp']
         self.nchans = self.header['nchans']
         self.nbits = self.header['nbits']
         self.bandwidth = abs(self.header['foff']) * self.header['nchans']
