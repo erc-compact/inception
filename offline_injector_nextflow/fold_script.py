@@ -91,7 +91,7 @@ class FoldScoreExec:
     def add_adjusted_periods(self):
 
         def period_obs_centre(p0, pdot, tsamp, n_samples, fft_size):
-            return p0 - pdot * fft_size - n_samples * tsamp / 2
+            return p0 - pdot * (fft_size - n_samples) * tsamp / 2
             
         period, acc, tscrunch = self.fold_cands['period'], self.fold_cands['acc'], self.fold_cands['tscrunch']
         pdot = period * acc / 2.99792458e8
