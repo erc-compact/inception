@@ -16,7 +16,7 @@ from inception.injector.io_tools import FilterbankReader
 class FoldScoreExec:
     def __init__(self, fb, search_args, injection_report, fold_cands, output, num_threads):
         self.out = output
-        self.fb = self.parse_fb(fb)
+        self.fb = fb
         self.num_threads = num_threads
 
         args = self.parse_JSON(search_args)
@@ -68,7 +68,7 @@ class FoldScoreExec:
                 else:
                     return 0.0
                 
-        fbreader = FilterbankReader(self.fb.split(' ')[0])
+        fbreader = FilterbankReader(self.fb)
         period, dm, snr = self.fold_cands['period'], self.fold_cands['dm'], self.fold_cands['snr']
 
         tobs = fbreader.n_samples * fbreader.dt
@@ -91,37 +91,21 @@ class FoldScoreExec:
     def add_adjusted_periods(self):
 
         def period_obs_centre(p0, pdot, tsamp, n_samples, fft_size):
-            return p0 - pdot * float(fft_size - n_samples) * tsamp / 2
+            return p0 - pdot * fft_size - n_samples * tsamp / 2
             
         period, acc, tscrunch = self.fold_cands['period'], self.fold_cands['acc'], self.fold_cands['tscrunch']
         pdot = period * acc / 2.99792458e8
 
-        fbreader1 = FilterbankReader(self.fb.split(' ')[0])
-        fbreader2 = FilterbankReader(self.fb.split(' ')[1])
-        tsamp = fbreader1.dt
-        n_samples = fbreader1.n_samples + fbreader2.n_samples
-        fftsize = self.processing_args['fft_length']
-
-        self.fold_cands['adj_period'] = period_obs_centre(period, pdot, tsamp, n_samples//tscrunch, fftsize//tscrunch)
-
-    def get_injected_cands(self):
-        psr = self.inj_report['pulsars']
-        ptol, dmtol = 0.01, 0.01
-
-        pulsar_cands = [[] for _ in range(len(psr))]
-        for i, psr_i in enumerate(psr):
-            p0_i = psr_i['PX'][0]
-            dm_i = psr_i['DM']
-            p_cond = (self.fold_cands['period'] > p0_i*(1-ptol)) & (self.fold_cands['period'] < p0_i*(1+ptol))
-            dm_cond = (self.fold_cands['dm'] > dm_i*(1-dmtol)) & (self.fold_cands['dm'] < dm_i*(1+dmtol))
-            psr_cands = self.fold_cands[p_cond & dm_cond]
-            pulsar_cands[i].extend(psr_cands.index.values)
-
-        return self.fold_cands.iloc[np.concatenate(pulsar_cands).astype(int)]
+        fbreader = FilterbankReader(self.fb)
+        tsamp = float(fbreader.dt)
+        n_samples = int(fbreader.n_samples)
+        fftsize = int(self.processing_args['fft_length'])
+        self.fold_cands['adj_period'] = period_obs_centre(period, pdot, float(tsamp), n_samples//tscrunch, fftsize//tscrunch)
 
     def filter_cands(self):
         cands_cut = self.fold_cands[self.cand_cutoffs()]
         cands_list = cands_cut.sort_values(by='snr', ascending=False)
+        cands_list.index = np.arange(len(cands_list))
 
         max_cands = self.fold_args['cand_limit_per_beam']
         beams = cands_list['beam_id'].unique()
@@ -133,15 +117,32 @@ class FoldScoreExec:
             if beam_counts[beam_index] != max_cands:
                 keep_cands_index.append(i)
                 beam_counts[beam_index] += 1
-            
-        self.fold_cands = cands_list.iloc[keep_cands_index]
+
+        filtered_cands = cands_list.iloc[keep_cands_index]
+        filtered_cands.index = np.arange(len(filtered_cands))
+        return filtered_cands
+    
+    def get_injected_cands(self, filtered_cands):
+        psr = self.inj_report['pulsars']
+        ptol, dmtol = 0.01, 0.01
+
+        pulsar_cands = [[] for _ in range(len(psr))]
+        for i, psr_i in enumerate(psr):
+            p0_i = psr_i['PX'][0]
+            dm_i = psr_i['DM']
+            p_cond = (filtered_cands['period'] > p0_i*(1-ptol)) & (filtered_cands['period'] < p0_i*(1+ptol))
+            dm_cond = (filtered_cands['dm'] > dm_i*(1-dmtol)) & (filtered_cands['dm'] < dm_i*(1+dmtol))
+            psr_cands = filtered_cands[p_cond & dm_cond]
+            pulsar_cands[i].extend(psr_cands.index.values)
+
+        return filtered_cands.iloc[np.concatenate(pulsar_cands).astype(int)]
 
     def create_cand_file(self):
         self.add_tscrunch()
         self.add_adjusted_periods()
-        self.filter_cands()
+        filtered_cands = self.filter_cands()
 
-        cands_data = self.get_injected_cands()
+        cands_data = self.get_injected_cands(filtered_cands)
 
         cand_file_path = f'{self.out}/candidates.candfile'
         with open(cand_file_path, 'w') as file:
@@ -178,15 +179,15 @@ class FoldScoreExec:
         
         cmd = f"psrfold_fil2 --dmboost 250 --plotx -v -t {self.num_threads} --candfile {cand_file} -n {nsubband} {beam_tag} " \
               f"-b {fast_nbins} --nbinplan 0.1 {slow_nbins} --template {TEMPLATE} --clfd 8 -L {self.fold_args['subint_length']} --fillPatch rand " \
-              f"-f {self.fb} --rfi zdot {zap_string} --fd {self.fold_args['fscrunch']} --td {self.fold_args['tscrunch']}"
-
+              f"-f {self.fb} --rfi zdot {zap_string} --fd {self.fold_args['fscrunch']} --td {self.fold_args['tscrunch']} -o {self.out}/"
+    
         subprocess.run(cmd, shell=True)
 
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(prog='candidate folder for offline injection pipeline',
                                      epilog='Feel free to contact me if you have questions - rsenzel@mpifr-bonn.mpg.de')
-    parser.add_argument('--fb', metavar='file', required=True, nargs='+', help='filterbank(s) to fold')
+    parser.add_argument('--fb', metavar='file', required=True,  help='filterbank(s) to fold')
     parser.add_argument('--search_args', metavar='file', required=True, help='JSON file with search parameters')
     parser.add_argument('--injection_report', metavar='file', required=True, help='JSON file with inject pulsar records')
     parser.add_argument('--fold_cands', metavar='file', required=True, help='csv file with good_cands_to_fold_with_beam')
@@ -196,4 +197,5 @@ if __name__=='__main__':
 
     fold_exec = FoldScoreExec(args.fb, args.search_args, args.injection_report, args.fold_cands, args.output, args.n_threads)
     fold_exec.run_cmd()
+
 
