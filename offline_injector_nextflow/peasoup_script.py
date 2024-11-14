@@ -14,10 +14,9 @@ from inception.injector.io_tools import FilterbankReader
 
 
 class PeasoupExec:
-    def __init__(self, fb, search_args, injection_report, output_dir, ram_limit_gb, n_nearest=-1):
+    def __init__(self, fb, search_args, injection_report, output_dir, n_nearest=-1):
         self.fb = fb
         self.out = output_dir
-        self.ram_limit_gb = ram_limit_gb
         self.n_nearest = n_nearest
 
         args = self.parse_JSON(search_args)
@@ -126,7 +125,12 @@ class PeasoupExec:
         tscrunch_list = []
         for i, dm_range in enumerate(DD_plan):
             n_trial = int(round((dm_range.high_dm-dm_range.low_dm)/dm_range.dm_step))
-            n_trial, endpoint = (n_trial + 1, True) if (i == len(DD_plan)-1) else (n_trial, False)
+            # n_trial, endpoint = (n_trial + 1, True) if (i == len(DD_plan)-1) else (n_trial, False)
+            if (i == 2) or (i == 0):
+                n_trial, endpoint = (n_trial, False)
+            else:
+                n_trial, endpoint = (n_trial + 1, True) 
+
 
             dm_list_i = np.linspace(dm_range.low_dm, dm_range.high_dm, n_trial, endpoint=endpoint)
             tscrunch_i = np.ones_like(dm_list_i) * dm_range.tscrunch
@@ -156,13 +160,14 @@ class PeasoupExec:
     def run_cmd(self):
         chan_mask_file, birdie_list_file = self.generate_files()
         dm_list = self.create_dm_list()
-        fft_size = int(self.processing_args['fft_length'] // self.tscrunch)
+        fft_size = int(round(self.processing_args['fft_length'] // self.tscrunch))
+        ram_limit = self.processing_args['ram_limit']
 
         cmd = f"peasoup -k {chan_mask_file} -z {birdie_list_file} -i {self.fb} --dm_file {dm_list} " \
               f"--limit {self.processing_args['candidate_limit']} -n {self.processing_args['nharmonics']}  -m {self.processing_args['snr_threshold']} " \
               f"--acc_start {self.processing_args['start_accel']} --acc_end {self.processing_args['end_accel']} --fft_size {fft_size} " \
-              f"-o {self.out} --ram_limit_gb {self.ram_limit_gb} --dedisp_gulp {self.gulp_size}"
-        
+              f"-o {self.out} --ram_limit_gb {ram_limit} --dedisp_gulp {self.gulp_size}"
+
         subprocess.run(cmd, shell=True)
 
         self.rename_outputs()
@@ -175,9 +180,8 @@ if __name__=='__main__':
     parser.add_argument('--search_args', metavar='file', required=True, help='JSON file with search parameters')
     parser.add_argument('--injection_report', metavar='file', required=True, help='JSON file with inject pulsar records')
     parser.add_argument('--output', metavar='dir', required=True, help='output directory')
-    parser.add_argument('--ram_limit', metavar='GB', required=True, help='limit the ram used by a single peasoup search')
     parser.add_argument('--n_nearest', metavar='int', type=int, required=False, default=-1, help='number of DM trials to search around injected pulsar DM')
     args = parser.parse_args()
 
-    peasoup_exec = PeasoupExec(args.fb, args.search_args, args.injection_report, args.output, args.ram_limit, args.n_nearest)
+    peasoup_exec = PeasoupExec(args.fb, args.search_args, args.injection_report, args.output, args.n_nearest)
     peasoup_exec.run_cmd()

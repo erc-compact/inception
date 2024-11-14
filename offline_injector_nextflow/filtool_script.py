@@ -82,7 +82,7 @@ class FiltoolExec:
         rootname = f"temp_merge_p_id_{self.ID}" 
 
         cmd = f"filtool -v -t {self.num_threads} --zapthre {self.pars['zapping_threshold']} --baseline {self.pars['baseline']} -l {self.pars['segment_length']} \
-                 --filplan {filplan_file} -fd {fscrunch} --fillPatch {self.pars['fillPatch']} -z {rfi_flags} -o {self.out}/{rootname} -f {self.fb}"
+                 --filplan {filplan_file} --fd {fscrunch} --fillPatch {self.pars['fillPatch']} -z {rfi_flags} -o {self.out}/{rootname} -f {self.fb}"
         
         subprocess.run(cmd, shell=True)
 

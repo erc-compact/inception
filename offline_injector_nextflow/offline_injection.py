@@ -4,7 +4,6 @@ import json
 import argparse
 import subprocess
 import numpy as np
-from collections import namedtuple
 
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).absolute().parent.parent))
@@ -24,8 +23,6 @@ class InjectorSetup:
         self.injection_ID = self.inject_file['psr_global']['injection_id']
         self.data_ID = args['processing_id']
 
-        self.create_XML_list(args['data']['n_cbeams'], args['data']['n_ibeams'])
-
     def parse_JSON(self, json_file):
         try:
             with open(json_file, 'r') as file:
@@ -36,7 +33,7 @@ class InjectorSetup:
             sys.exit(f'Unable to parse {json_file} using JSON.')
         else:
             return pars
-
+    
     def get_beam(self, pointings):
         beams = []
         for pointing in pointings:
@@ -49,38 +46,6 @@ class InjectorSetup:
         selected_beam = beams[np.random.randint(0,len(beams))]
         return selected_beam
     
-    def create_DDplan(self):
-        DMRange = namedtuple("DMRange", ["low_dm", "high_dm", "dm_step", "tscrunch"])
-
-        segments = []
-        plan = self.processing_args['ddplan']
-        for line in plan.splitlines():
-            low_dm, high_dm, dm_step, tscrunch = list(map(float, line.split()[:4]))
-            segments.append(DMRange(low_dm, high_dm, dm_step, tscrunch))
-
-        return list(sorted(segments, key=lambda x: x.tscrunch))
-
-    def create_XML_list(self, n_cbeams, n_ibeams):
-        ddplan = self.create_DDplan()
-        xml_file_names = [f'overview_dm_{dm_range.low_dm:.6f}_{dm_range.high_dm:.6f}.xml' for dm_range in ddplan]
-
-        pointing_id, inj_beam_name, *_ = self.beam_data
-        xml_file_paths = []
-        for nbeam in range(n_cbeams):
-            for xml_name in xml_file_names:
-                beam_i = f'cfbf{nbeam:05g}'
-                if beam_i != inj_beam_name:
-                    xml_file_paths.append(f'{self.data_dir}/{pointing_id}/XML_FILES/{beam_i}/{xml_name}')
-        if n_ibeams:
-            for xml_name in xml_file_names:
-                xml_file_paths.append(f'{self.data_dir}/{pointing_id}/XML_FILES/ifbf00000/{xml_name}')
-
-        for xml_name in xml_file_names:
-            xml_file_paths.append(f'{self.out}/{self.data_ID}_{self.injection_ID}_{xml_name}')
-
-        outfile = f'{self.out}/candidates_{self.data_ID}_{self.injection_ID}.ascii'
-        with open(outfile, 'w') as file:
-            file.writelines(line + '\n' for line in xml_file_paths)
 
     def rsync_merge_data_products(self):
         pointing_id, inj_beam_name, *fb_names = self.beam_data

@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='ISO-8859-1'?>
 <peasoup_search>
   <misc_info>
-    <local_datetime>2024-11-13-12:01</local_datetime>
-    <utc_datetime>2024-11-13-11:01</utc_datetime>
+    <local_datetime>2024-11-14-19:17</local_datetime>
+    <utc_datetime>2024-11-14-18:17</utc_datetime>
   </misc_info>
   <header_parameters>
     <source_name>J0000-00</source_name>
@@ -60,7 +60,7 @@
     <verbose>0</verbose>
     <progress_bar>0</progress_bar>
   </search_parameters>
-  <dedispersion_trials count='1270'>
+  <dedispersion_trials count='1271'>
     <trial id='0'>103.800003051758</trial>
     <trial id='1'>103.849998474121</trial>
     <trial id='2'>103.900001525879</trial>
@@ -1331,6 +1331,7 @@
     <trial id='1267'>167.149993896484</trial>
     <trial id='1268'>167.199996948242</trial>
     <trial id='1269'>167.25</trial>
+    <trial id='1270'>167.300003051758</trial>
   </dedispersion_trials>
   <acceleration_trials DM='0' count='35'>
     <trial id='0'>-105</trial>
@@ -1385,44 +1386,44 @@
       <dm>166.550003051758</dm>
       <acc>-30.5183792114258</acc>
       <nh>3</nh>
-      <snr>48.8953666687012</snr>
+      <snr>48.8839225769043</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>13129</nassoc>
+      <nassoc>13139</nassoc>
       <byte_offset>0</byte_offset>
     </candidate>
     <candidate id='1'>
       <period>0.247448702068106</period>
       <opt_period>0</opt_period>
-      <dm>167</dm>
-      <acc>0</acc>
+      <dm>166.850006103516</dm>
+      <acc>6.89961242675781</acc>
       <nh>2</nh>
-      <snr>30.4157447814941</snr>
+      <snr>30.4072418212891</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>5573</nassoc>
-      <byte_offset>315124</byte_offset>
+      <nassoc>5579</nassoc>
+      <byte_offset>315364</byte_offset>
     </candidate>
     <candidate id='2'>
       <period>0.741982779604984</period>
       <opt_period>0</opt_period>
-      <dm>164.100006103516</dm>
-      <acc>-105</acc>
+      <dm>163.899993896484</dm>
+      <acc>-68.2803802490234</acc>
       <nh>1</nh>
-      <snr>26.3965396881104</snr>
+      <snr>26.4004306793213</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>20132</nassoc>
-      <byte_offset>448904</byte_offset>
+      <nassoc>20150</nassoc>
+      <byte_offset>449288</byte_offset>
     </candidate>
     <candidate id='3'>
       <period>2.22656141962996</period>
@@ -1430,14 +1431,14 @@
       <dm>167.050003051758</dm>
       <acc>25.6873779296875</acc>
       <nh>4</nh>
-      <snr>22.8806858062744</snr>
+      <snr>22.8792667388916</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>569</nassoc>
-      <byte_offset>932100</byte_offset>
+      <nassoc>578</nassoc>
+      <byte_offset>932916</byte_offset>
     </candidate>
     <candidate id='4'>
       <period>1.48505593738999</period>
@@ -1445,14 +1446,14 @@
       <dm>159.600006103516</dm>
       <acc>92.3187866210938</acc>
       <nh>2</nh>
-      <snr>18.0239658355713</snr>
+      <snr>18.0228424072266</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>15831</nassoc>
-      <byte_offset>945784</byte_offset>
+      <nassoc>15839</nassoc>
+      <byte_offset>946816</byte_offset>
     </candidate>
     <candidate id='5'>
       <period>0.106053158466019</period>
@@ -1460,29 +1461,29 @@
       <dm>166.350006103516</dm>
       <acc>99.6078796386719</acc>
       <nh>1</nh>
-      <snr>13.8693733215332</snr>
+      <snr>13.8681974411011</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>1391</nassoc>
-      <byte_offset>1325756</byte_offset>
+      <nassoc>1390</nassoc>
+      <byte_offset>1326980</byte_offset>
     </candidate>
     <candidate id='6'>
       <period>2.97011187477998</period>
       <opt_period>0</opt_period>
-      <dm>164.100006103516</dm>
-      <acc>-68.2410888671875</acc>
+      <dm>163.949996948242</dm>
+      <acc>-68.2705688476562</acc>
       <nh>3</nh>
-      <snr>13.8110122680664</snr>
+      <snr>13.8183193206787</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>409</nassoc>
-      <byte_offset>1359168</byte_offset>
+      <nassoc>417</nassoc>
+      <byte_offset>1360368</byte_offset>
     </candidate>
     <candidate id='7'>
       <period>0.247479012421437</period>
@@ -1490,29 +1491,29 @@
       <dm>160.600006103516</dm>
       <acc>39.2881851196289</acc>
       <nh>2</nh>
-      <snr>13.6829872131348</snr>
+      <snr>13.6851463317871</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>463</nassoc>
-      <byte_offset>1369012</byte_offset>
+      <byte_offset>1370404</byte_offset>
     </candidate>
     <candidate id='8'>
       <period>1.48423797078963</period>
       <opt_period>0</opt_period>
-      <dm>150.75</dm>
+      <dm>150.699996948242</dm>
       <acc>-105</acc>
       <nh>4</nh>
-      <snr>11.9394760131836</snr>
+      <snr>11.9349822998047</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>434</nassoc>
-      <byte_offset>1380152</byte_offset>
+      <nassoc>436</nassoc>
+      <byte_offset>1381544</byte_offset>
     </candidate>
     <candidate id='9'>
       <period>1.73229996230228</period>
@@ -1520,14 +1521,14 @@
       <dm>167.050003051758</dm>
       <acc>0</acc>
       <nh>4</nh>
-      <snr>10.9497423171997</snr>
+      <snr>10.948766708374</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>164</nassoc>
-      <byte_offset>1390596</byte_offset>
+      <nassoc>172</nassoc>
+      <byte_offset>1392036</byte_offset>
     </candidate>
     <candidate id='10'>
       <period>0.55679368492514</period>
@@ -1535,14 +1536,14 @@
       <dm>165.800003051758</dm>
       <acc>-30.8136005401611</acc>
       <nh>2</nh>
-      <snr>10.9127426147461</snr>
+      <snr>10.9130382537842</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>1435</nassoc>
-      <byte_offset>1394560</byte_offset>
+      <nassoc>1444</nassoc>
+      <byte_offset>1396192</byte_offset>
     </candidate>
     <candidate id='11'>
       <period>1.48478322550201</period>
@@ -1550,14 +1551,14 @@
       <dm>146.399993896484</dm>
       <acc>105</acc>
       <nh>4</nh>
-      <snr>10.0946645736694</snr>
+      <snr>10.0962152481079</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>0</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>923</nassoc>
-      <byte_offset>1429028</byte_offset>
+      <nassoc>929</nassoc>
+      <byte_offset>1430876</byte_offset>
     </candidate>
     <candidate id='12'>
       <period>0.00115052721729993</period>
@@ -1565,14 +1566,14 @@
       <dm>111.349998474121</dm>
       <acc>55.0571594238281</acc>
       <nh>1</nh>
-      <snr>9.55993556976318</snr>
+      <snr>9.55791282653809</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1451208</byte_offset>
+      <byte_offset>1453200</byte_offset>
     </candidate>
     <candidate id='13'>
       <period>0.00137191946136084</period>
@@ -1580,14 +1581,14 @@
       <dm>148.699996948242</dm>
       <acc>-71.2483825683594</acc>
       <nh>0</nh>
-      <snr>9.35463428497314</snr>
+      <snr>9.36065196990967</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1451236</byte_offset>
+      <byte_offset>1453228</byte_offset>
     </candidate>
     <candidate id='14'>
       <period>0.00133392365534161</period>
@@ -1595,14 +1596,14 @@
       <dm>121.800003051758</dm>
       <acc>-105</acc>
       <nh>0</nh>
-      <snr>9.31271076202393</snr>
+      <snr>9.31710624694824</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>1</nassoc>
-      <byte_offset>1451264</byte_offset>
+      <byte_offset>1453256</byte_offset>
     </candidate>
     <candidate id='15'>
       <period>0.00737650023693135</period>
@@ -1610,44 +1611,44 @@
       <dm>155.899993896484</dm>
       <acc>18.0343971252441</acc>
       <nh>0</nh>
-      <snr>9.27628898620605</snr>
+      <snr>9.28302383422852</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>0.833333313465118</ddm_count_ratio>
-      <ddm_snr_ratio>0.842576205730438</ddm_snr_ratio>
+      <ddm_snr_ratio>0.842637836933136</ddm_snr_ratio>
       <nassoc>10</nassoc>
-      <byte_offset>1451316</byte_offset>
+      <byte_offset>1453308</byte_offset>
     </candidate>
     <candidate id='16'>
-      <period>0.00217022978288033</period>
-      <opt_period>0</opt_period>
-      <dm>159.699996948242</dm>
-      <acc>-105</acc>
-      <nh>0</nh>
-      <snr>9.23974514007568</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>1</nassoc>
-      <byte_offset>1451584</byte_offset>
-    </candidate>
-    <candidate id='17'>
       <period>0.00305721435599492</period>
       <opt_period>0</opt_period>
       <dm>147.25</dm>
       <acc>-38.0587692260742</acc>
       <nh>0</nh>
-      <snr>9.22501468658447</snr>
+      <snr>9.24308109283447</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>3</nassoc>
-      <byte_offset>1451636</byte_offset>
+      <byte_offset>1453576</byte_offset>
+    </candidate>
+    <candidate id='17'>
+      <period>0.00217022978288033</period>
+      <opt_period>0</opt_period>
+      <dm>159.699996948242</dm>
+      <acc>-105</acc>
+      <nh>0</nh>
+      <snr>9.23150539398193</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>1</nassoc>
+      <byte_offset>1453676</byte_offset>
     </candidate>
     <candidate id='18'>
       <period>0.00119008032025247</period>
@@ -1655,14 +1656,14 @@
       <dm>145.149993896484</dm>
       <acc>-71.9356384277344</acc>
       <nh>0</nh>
-      <snr>9.05723667144775</snr>
+      <snr>9.04524517059326</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1451736</byte_offset>
+      <byte_offset>1453728</byte_offset>
     </candidate>
     <candidate id='19'>
       <period>3.71195781737389</period>
@@ -1670,14 +1671,14 @@
       <dm>148.5</dm>
       <acc>105</acc>
       <nh>4</nh>
-      <snr>9.0027379989624</snr>
+      <snr>9.00212669372559</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>691</nassoc>
-      <byte_offset>1451764</byte_offset>
+      <nassoc>690</nassoc>
+      <byte_offset>1453756</byte_offset>
     </candidate>
     <candidate id='20'>
       <period>0.00183715191218988</period>
@@ -1685,14 +1686,14 @@
       <dm>130.899993896484</dm>
       <acc>46.6652221679688</acc>
       <nh>0</nh>
-      <snr>8.93496417999268</snr>
+      <snr>8.93669986724854</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1468376</byte_offset>
+      <byte_offset>1470344</byte_offset>
     </candidate>
     <candidate id='21'>
       <period>0.00529360287930123</period>
@@ -1700,14 +1701,14 @@
       <dm>154.25</dm>
       <acc>0</acc>
       <nh>0</nh>
-      <snr>8.90350246429443</snr>
+      <snr>8.90647602081299</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>4</nassoc>
-      <byte_offset>1468404</byte_offset>
+      <byte_offset>1470372</byte_offset>
     </candidate>
     <candidate id='22'>
       <period>0.00786162550647391</period>
@@ -1715,14 +1716,14 @@
       <dm>146.100006103516</dm>
       <acc>-71.751953125</acc>
       <nh>0</nh>
-      <snr>8.85919284820557</snr>
+      <snr>8.86153221130371</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>4</nassoc>
-      <byte_offset>1468528</byte_offset>
+      <byte_offset>1470496</byte_offset>
     </candidate>
     <candidate id='23'>
       <period>0.00127938109939317</period>
@@ -1730,14 +1731,14 @@
       <dm>114.949996948242</dm>
       <acc>4.36039161682129</acc>
       <nh>0</nh>
-      <snr>8.81250953674316</snr>
+      <snr>8.79746246337891</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1468652</byte_offset>
+      <byte_offset>1470620</byte_offset>
     </candidate>
     <candidate id='24'>
       <period>0.00342147501826221</period>
@@ -1745,14 +1746,14 @@
       <dm>150.699996948242</dm>
       <acc>99.8392028808594</acc>
       <nh>0</nh>
-      <snr>8.75198650360107</snr>
+      <snr>8.756760597229</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>1</nassoc>
-      <byte_offset>1468680</byte_offset>
+      <byte_offset>1470648</byte_offset>
     </candidate>
     <candidate id='25'>
       <period>0.00266554626086935</period>
@@ -1760,14 +1761,14 @@
       <dm>104.25</dm>
       <acc>72.6726837158203</acc>
       <nh>2</nh>
-      <snr>8.69076156616211</snr>
+      <snr>8.6947660446167</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1468732</byte_offset>
+      <byte_offset>1470700</byte_offset>
     </candidate>
     <candidate id='26'>
       <period>0.00143582630252555</period>
@@ -1775,14 +1776,14 @@
       <dm>124.400001525879</dm>
       <acc>11.4162368774414</acc>
       <nh>0</nh>
-      <snr>8.67913913726807</snr>
+      <snr>8.67192840576172</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1468760</byte_offset>
+      <byte_offset>1470728</byte_offset>
     </candidate>
     <candidate id='27'>
       <period>0.00519493202420032</period>
@@ -1790,14 +1791,14 @@
       <dm>122.050003051758</dm>
       <acc>66.9763793945312</acc>
       <nh>0</nh>
-      <snr>8.64448928833008</snr>
+      <snr>8.64659976959229</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>1</nassoc>
-      <byte_offset>1468788</byte_offset>
+      <byte_offset>1470756</byte_offset>
     </candidate>
     <candidate id='28'>
       <period>0.00175851010917918</period>
@@ -1805,14 +1806,14 @@
       <dm>152.600006103516</dm>
       <acc>-70.4906158447266</acc>
       <nh>0</nh>
-      <snr>8.61370372772217</snr>
+      <snr>8.63388729095459</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1468840</byte_offset>
+      <byte_offset>1470808</byte_offset>
     </candidate>
     <candidate id='29'>
       <period>0.00512158328945909</period>
@@ -1820,44 +1821,44 @@
       <dm>157.449996948242</dm>
       <acc>0</acc>
       <nh>0</nh>
-      <snr>8.58659172058105</snr>
+      <snr>8.60016250610352</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>2</nassoc>
-      <byte_offset>1468868</byte_offset>
+      <byte_offset>1470836</byte_offset>
     </candidate>
     <candidate id='30'>
-      <period>0.00106186883081203</period>
-      <opt_period>0</opt_period>
-      <dm>112.650001525879</dm>
-      <acc>-10.7961730957031</acc>
-      <nh>1</nh>
-      <snr>8.55313968658447</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1468944</byte_offset>
-    </candidate>
-    <candidate id='31'>
       <period>0.00335393376881521</period>
       <opt_period>0</opt_period>
       <dm>142.899993896484</dm>
       <acc>74.4655303955078</acc>
       <nh>0</nh>
-      <snr>8.54218006134033</snr>
+      <snr>8.55564975738525</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1468972</byte_offset>
+      <byte_offset>1470912</byte_offset>
+    </candidate>
+    <candidate id='31'>
+      <period>0.00106186883081203</period>
+      <opt_period>0</opt_period>
+      <dm>112.650001525879</dm>
+      <acc>-10.7961730957031</acc>
+      <nh>1</nh>
+      <snr>8.55357837677002</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1470940</byte_offset>
     </candidate>
     <candidate id='32'>
       <period>0.000951218801341228</period>
@@ -1865,44 +1866,44 @@
       <dm>115.75</dm>
       <acc>59.929630279541</acc>
       <nh>0</nh>
-      <snr>8.51873111724854</snr>
+      <snr>8.51971817016602</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1469000</byte_offset>
+      <byte_offset>1470968</byte_offset>
     </candidate>
     <candidate id='33'>
-      <period>0.00351183782356937</period>
-      <opt_period>0</opt_period>
-      <dm>136.850006103516</dm>
-      <acc>83.8067245483398</acc>
-      <nh>0</nh>
-      <snr>8.51197719573975</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1469028</byte_offset>
-    </candidate>
-    <candidate id='34'>
       <period>0.00255766772674168</period>
       <opt_period>0</opt_period>
       <dm>120.949996948242</dm>
       <acc>51.5120277404785</acc>
       <nh>0</nh>
-      <snr>8.50248527526855</snr>
+      <snr>8.502197265625</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1469056</byte_offset>
+      <byte_offset>1470996</byte_offset>
+    </candidate>
+    <candidate id='34'>
+      <period>0.00351183782356937</period>
+      <opt_period>0</opt_period>
+      <dm>136.850006103516</dm>
+      <acc>83.8067245483398</acc>
+      <nh>0</nh>
+      <snr>8.48540782928467</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1471024</byte_offset>
     </candidate>
     <candidate id='35'>
       <period>2.22717473970056</period>
@@ -1910,14 +1911,14 @@
       <dm>142.050003051758</dm>
       <acc>105</acc>
       <nh>3</nh>
-      <snr>8.48657512664795</snr>
+      <snr>8.48471260070801</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>246</nassoc>
-      <byte_offset>1469084</byte_offset>
+      <nassoc>252</nassoc>
+      <byte_offset>1471052</byte_offset>
     </candidate>
     <candidate id='36'>
       <period>0.00131306976460516</period>
@@ -1925,14 +1926,14 @@
       <dm>160.949996948242</dm>
       <acc>-32.7187194824219</acc>
       <nh>0</nh>
-      <snr>8.47757816314697</snr>
+      <snr>8.48206996917725</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1475016</byte_offset>
+      <byte_offset>1477128</byte_offset>
     </candidate>
     <candidate id='37'>
       <period>0.00195046086542653</period>
@@ -1940,14 +1941,14 @@
       <dm>129.550003051758</dm>
       <acc>15.3073654174805</acc>
       <nh>1</nh>
-      <snr>8.47728061676025</snr>
+      <snr>8.47754096984863</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1475044</byte_offset>
+      <byte_offset>1477156</byte_offset>
     </candidate>
     <candidate id='38'>
       <period>0.000937632662946582</period>
@@ -1955,14 +1956,14 @@
       <dm>107.150001525879</dm>
       <acc>-105</acc>
       <nh>0</nh>
-      <snr>8.45595359802246</snr>
+      <snr>8.4722146987915</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1475072</byte_offset>
+      <byte_offset>1477184</byte_offset>
     </candidate>
     <candidate id='39'>
       <period>0.00111319238286697</period>
@@ -1970,59 +1971,59 @@
       <dm>119.099998474121</dm>
       <acc>-48.7776794433594</acc>
       <nh>0</nh>
-      <snr>8.45583820343018</snr>
+      <snr>8.45590209960938</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1475100</byte_offset>
+      <byte_offset>1477212</byte_offset>
     </candidate>
     <candidate id='40'>
-      <period>0.0020351055711015</period>
-      <opt_period>0</opt_period>
-      <dm>160.100006103516</dm>
-      <acc>74.8703689575195</acc>
-      <nh>0</nh>
-      <snr>8.4250373840332</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1475128</byte_offset>
-    </candidate>
-    <candidate id='41'>
       <period>0.0037328535425712</period>
       <opt_period>0</opt_period>
       <dm>125.849998474121</dm>
       <acc>-16.8684501647949</acc>
       <nh>0</nh>
-      <snr>8.42170333862305</snr>
+      <snr>8.42905902862549</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1475156</byte_offset>
+      <byte_offset>1477240</byte_offset>
+    </candidate>
+    <candidate id='41'>
+      <period>0.00119280258956976</period>
+      <opt_period>0</opt_period>
+      <dm>162.449996948242</dm>
+      <acc>-86.7825622558594</acc>
+      <nh>0</nh>
+      <snr>8.42044448852539</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1477268</byte_offset>
     </candidate>
     <candidate id='42'>
-      <period>0.00235008895310451</period>
+      <period>0.0020351055711015</period>
       <opt_period>0</opt_period>
-      <dm>106.050003051758</dm>
-      <acc>10.6858491897583</acc>
+      <dm>160.100006103516</dm>
+      <acc>74.8703689575195</acc>
       <nh>0</nh>
-      <snr>8.40703773498535</snr>
+      <snr>8.41735935211182</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1475184</byte_offset>
+      <byte_offset>1477296</byte_offset>
     </candidate>
     <candidate id='43'>
       <period>0.0022322517321614</period>
@@ -2030,14 +2031,14 @@
       <dm>106.5</dm>
       <acc>-27.6308326721191</acc>
       <nh>0</nh>
-      <snr>8.4068717956543</snr>
+      <snr>8.40553951263428</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1475212</byte_offset>
+      <byte_offset>1477324</byte_offset>
     </candidate>
     <candidate id='44'>
       <period>0.00709149484828912</period>
@@ -2045,29 +2046,29 @@
       <dm>139.350006103516</dm>
       <acc>-105</acc>
       <nh>0</nh>
-      <snr>8.404953956604</snr>
+      <snr>8.40544605255127</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>0</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>2</nassoc>
-      <byte_offset>1475240</byte_offset>
+      <byte_offset>1477352</byte_offset>
     </candidate>
     <candidate id='45'>
-      <period>0.00119280258956976</period>
+      <period>0.00235008895310451</period>
       <opt_period>0</opt_period>
-      <dm>162.449996948242</dm>
-      <acc>-86.7825622558594</acc>
+      <dm>106.050003051758</dm>
+      <acc>10.6858491897583</acc>
       <nh>0</nh>
-      <snr>8.40454483032227</snr>
+      <snr>8.4025297164917</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1475316</byte_offset>
+      <byte_offset>1477428</byte_offset>
     </candidate>
     <candidate id='46'>
       <period>0.0012048448824721</period>
@@ -2075,14 +2076,14 @@
       <dm>105.050003051758</dm>
       <acc>-15.6569128036499</acc>
       <nh>0</nh>
-      <snr>8.40400409698486</snr>
+      <snr>8.3977222442627</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1475344</byte_offset>
+      <byte_offset>1477456</byte_offset>
     </candidate>
     <candidate id='47'>
       <period>0.000982225636724592</period>
@@ -2090,14 +2091,14 @@
       <dm>106.050003051758</dm>
       <acc>-27.8761024475098</acc>
       <nh>0</nh>
-      <snr>8.39424896240234</snr>
+      <snr>8.39211082458496</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1475372</byte_offset>
+      <byte_offset>1477484</byte_offset>
     </candidate>
     <candidate id='48'>
       <period>0.00471313291011793</period>
@@ -2105,14 +2106,14 @@
       <dm>165.5</dm>
       <acc>105</acc>
       <nh>0</nh>
-      <snr>8.39172554016113</snr>
+      <snr>8.39104652404785</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>1</nassoc>
-      <byte_offset>1475400</byte_offset>
+      <byte_offset>1477512</byte_offset>
     </candidate>
     <candidate id='49'>
       <period>0.001125430786041</period>
@@ -2120,14 +2121,14 @@
       <dm>118.349998474121</dm>
       <acc>6.885498046875</acc>
       <nh>0</nh>
-      <snr>8.37765789031982</snr>
+      <snr>8.38071918487549</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1475452</byte_offset>
+      <byte_offset>1477564</byte_offset>
     </candidate>
     <candidate id='50'>
       <period>0.00104942716098632</period>
@@ -2135,14 +2136,14 @@
       <dm>151.75</dm>
       <acc>-105</acc>
       <nh>1</nh>
-      <snr>8.36909198760986</snr>
+      <snr>8.3664722442627</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1475480</byte_offset>
+      <byte_offset>1477592</byte_offset>
     </candidate>
     <candidate id='51'>
       <period>0.00373199901005446</period>
@@ -2150,44 +2151,44 @@
       <dm>120.550003051758</dm>
       <acc>-90.8090362548828</acc>
       <nh>0</nh>
-      <snr>8.36197948455811</snr>
+      <snr>8.35997581481934</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>1</nassoc>
-      <byte_offset>1475508</byte_offset>
+      <byte_offset>1477620</byte_offset>
     </candidate>
     <candidate id='52'>
-      <period>0.00165310402972359</period>
-      <opt_period>0</opt_period>
-      <dm>151.449996948242</dm>
-      <acc>-2.14305114746094</acc>
-      <nh>1</nh>
-      <snr>8.3559103012085</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1475560</byte_offset>
-    </candidate>
-    <candidate id='53'>
       <period>0.00150183760610899</period>
       <opt_period>0</opt_period>
       <dm>151.649993896484</dm>
       <acc>100.947296142578</acc>
       <nh>0</nh>
-      <snr>8.34662818908691</snr>
+      <snr>8.34850215911865</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1475588</byte_offset>
+      <byte_offset>1477672</byte_offset>
+    </candidate>
+    <candidate id='53'>
+      <period>0.00165310402972359</period>
+      <opt_period>0</opt_period>
+      <dm>151.449996948242</dm>
+      <acc>-2.14305114746094</acc>
+      <nh>1</nh>
+      <snr>8.34600353240967</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1477700</byte_offset>
     </candidate>
     <candidate id='54'>
       <period>0.000915477162856705</period>
@@ -2195,104 +2196,104 @@
       <dm>127.800003051758</dm>
       <acc>28.854528427124</acc>
       <nh>0</nh>
-      <snr>8.34020519256592</snr>
+      <snr>8.34230422973633</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1475616</byte_offset>
+      <byte_offset>1477728</byte_offset>
     </candidate>
     <candidate id='55'>
+      <period>0.00158174077987235</period>
+      <opt_period>0</opt_period>
+      <dm>143.75</dm>
+      <acc>9.77912330627441</acc>
+      <nh>0</nh>
+      <snr>8.33952140808105</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1477756</byte_offset>
+    </candidate>
+    <candidate id='56'>
       <period>0.00238541380028274</period>
       <opt_period>0</opt_period>
       <dm>120.349998474121</dm>
       <acc>-34.1386795043945</acc>
       <nh>0</nh>
-      <snr>8.3388671875</snr>
+      <snr>8.33779144287109</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1475644</byte_offset>
+      <byte_offset>1477784</byte_offset>
     </candidate>
-    <candidate id='56'>
+    <candidate id='57'>
+      <period>0.00169081614593196</period>
+      <opt_period>0</opt_period>
+      <dm>142.050003051758</dm>
+      <acc>-23.8342266082764</acc>
+      <nh>0</nh>
+      <snr>8.33489418029785</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1477812</byte_offset>
+    </candidate>
+    <candidate id='58'>
+      <period>0.00128187694826284</period>
+      <opt_period>0</opt_period>
+      <dm>120.349998474121</dm>
+      <acc>0</acc>
+      <nh>0</nh>
+      <snr>8.33411026000977</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1477840</byte_offset>
+    </candidate>
+    <candidate id='59'>
       <period>0.0017962747690821</period>
       <opt_period>0</opt_period>
       <dm>140.199996948242</dm>
       <acc>-72.8896179199219</acc>
       <nh>0</nh>
-      <snr>8.33842849731445</snr>
+      <snr>8.32900142669678</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>1</nassoc>
-      <byte_offset>1475672</byte_offset>
+      <byte_offset>1477868</byte_offset>
     </candidate>
-    <candidate id='57'>
-      <period>0.00158174077987235</period>
-      <opt_period>0</opt_period>
-      <dm>143.75</dm>
-      <acc>9.77912330627441</acc>
-      <nh>0</nh>
-      <snr>8.33758163452148</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1475724</byte_offset>
-    </candidate>
-    <candidate id='58'>
+    <candidate id='60'>
       <period>0.00524279695409625</period>
       <opt_period>0</opt_period>
       <dm>140.449996948242</dm>
       <acc>23.6337280273438</acc>
       <nh>0</nh>
-      <snr>8.33602523803711</snr>
+      <snr>8.32687473297119</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>2</nassoc>
-      <byte_offset>1475752</byte_offset>
-    </candidate>
-    <candidate id='59'>
-      <period>0.00128187694826284</period>
-      <opt_period>0</opt_period>
-      <dm>120.349998474121</dm>
-      <acc>0</acc>
-      <nh>0</nh>
-      <snr>8.3340015411377</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1475828</byte_offset>
-    </candidate>
-    <candidate id='60'>
-      <period>0.00169081614593196</period>
-      <opt_period>0</opt_period>
-      <dm>142.050003051758</dm>
-      <acc>-23.8342266082764</acc>
-      <nh>0</nh>
-      <snr>8.33136749267578</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1475856</byte_offset>
+      <byte_offset>1477920</byte_offset>
     </candidate>
     <candidate id='61'>
       <period>0.00126061305157688</period>
@@ -2300,14 +2301,14 @@
       <dm>119.400001525879</dm>
       <acc>21.7520408630371</acc>
       <nh>0</nh>
-      <snr>8.33133983612061</snr>
+      <snr>8.3264627456665</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1475884</byte_offset>
+      <byte_offset>1477996</byte_offset>
     </candidate>
     <candidate id='62'>
       <period>0.00120996022359155</period>
@@ -2315,14 +2316,14 @@
       <dm>109.900001525879</dm>
       <acc>93.0763549804688</acc>
       <nh>0</nh>
-      <snr>8.33078384399414</snr>
+      <snr>8.32350158691406</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1475912</byte_offset>
+      <byte_offset>1478024</byte_offset>
     </candidate>
     <candidate id='63'>
       <period>0.00163954669896125</period>
@@ -2330,14 +2331,14 @@
       <dm>113.800003051758</dm>
       <acc>17.0737533569336</acc>
       <nh>1</nh>
-      <snr>8.33069705963135</snr>
+      <snr>8.32014274597168</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1475940</byte_offset>
+      <byte_offset>1478052</byte_offset>
     </candidate>
     <candidate id='64'>
       <period>0.000920034388980701</period>
@@ -2345,14 +2346,14 @@
       <dm>106.599998474121</dm>
       <acc>0</acc>
       <nh>0</nh>
-      <snr>8.31966114044189</snr>
+      <snr>8.31928539276123</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1475968</byte_offset>
+      <byte_offset>1478080</byte_offset>
     </candidate>
     <candidate id='65'>
       <period>0.0012508578461593</period>
@@ -2360,104 +2361,104 @@
       <dm>116.849998474121</dm>
       <acc>5.7695255279541</acc>
       <nh>0</nh>
-      <snr>8.31750202178955</snr>
+      <snr>8.31488132476807</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1475996</byte_offset>
+      <byte_offset>1478108</byte_offset>
     </candidate>
     <candidate id='66'>
+      <period>0.00105000178482359</period>
+      <opt_period>0</opt_period>
+      <dm>160.449996948242</dm>
+      <acc>21.149263381958</acc>
+      <nh>0</nh>
+      <snr>8.2978515625</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1478136</byte_offset>
+    </candidate>
+    <candidate id='67'>
       <period>0.00710535574212078</period>
       <opt_period>0</opt_period>
       <dm>158.649993896484</dm>
       <acc>37.7606887817383</acc>
       <nh>0</nh>
-      <snr>8.2965784072876</snr>
+      <snr>8.29585552215576</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>1</nassoc>
-      <byte_offset>1476024</byte_offset>
+      <byte_offset>1478164</byte_offset>
     </candidate>
-    <candidate id='67'>
+    <candidate id='68'>
       <period>0.370889265921505</period>
       <opt_period>0</opt_period>
       <dm>151.449996948242</dm>
       <acc>-70.71435546875</acc>
       <nh>3</nh>
-      <snr>8.29471588134766</snr>
+      <snr>8.28981113433838</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>19</nassoc>
-      <byte_offset>1476076</byte_offset>
+      <byte_offset>1478216</byte_offset>
     </candidate>
-    <candidate id='68'>
+    <candidate id='69'>
       <period>0.00183782681466048</period>
       <opt_period>0</opt_period>
       <dm>155.149993896484</dm>
       <acc>-105</acc>
       <nh>0</nh>
-      <snr>8.28905296325684</snr>
+      <snr>8.2889518737793</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1476560</byte_offset>
-    </candidate>
-    <candidate id='69'>
-      <period>0.00105000178482359</period>
-      <opt_period>0</opt_period>
-      <dm>160.449996948242</dm>
-      <acc>21.149263381958</acc>
-      <nh>0</nh>
-      <snr>8.2808780670166</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1476588</byte_offset>
+      <byte_offset>1478700</byte_offset>
     </candidate>
     <candidate id='70'>
-      <period>0.00425694000219291</period>
-      <opt_period>0</opt_period>
-      <dm>134</dm>
-      <acc>-27.6921062469482</acc>
-      <nh>0</nh>
-      <snr>8.26490306854248</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1476616</byte_offset>
-    </candidate>
-    <candidate id='71'>
       <period>0.00102612221313468</period>
       <opt_period>0</opt_period>
       <dm>137.800003051758</dm>
       <acc>-105</acc>
       <nh>0</nh>
-      <snr>8.26448535919189</snr>
+      <snr>8.26895236968994</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1476644</byte_offset>
+      <byte_offset>1478728</byte_offset>
+    </candidate>
+    <candidate id='71'>
+      <period>0.00425694000219291</period>
+      <opt_period>0</opt_period>
+      <dm>134</dm>
+      <acc>-27.6921062469482</acc>
+      <nh>0</nh>
+      <snr>8.26384449005127</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1478756</byte_offset>
     </candidate>
     <candidate id='72'>
       <period>0.00185249507930995</period>
@@ -2465,14 +2466,14 @@
       <dm>164.300003051758</dm>
       <acc>0</acc>
       <nh>0</nh>
-      <snr>8.26211643218994</snr>
+      <snr>8.26229953765869</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1476672</byte_offset>
+      <byte_offset>1478784</byte_offset>
     </candidate>
     <candidate id='73'>
       <period>0.00110691050225929</period>
@@ -2480,29 +2481,29 @@
       <dm>141.050003051758</dm>
       <acc>-8.17853927612305</acc>
       <nh>0</nh>
-      <snr>8.25814342498779</snr>
+      <snr>8.25756359100342</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1476700</byte_offset>
+      <byte_offset>1478812</byte_offset>
     </candidate>
     <candidate id='74'>
-      <period>0.00161332537436652</period>
+      <period>0.00107985545596903</period>
       <opt_period>0</opt_period>
-      <dm>145.649993896484</dm>
-      <acc>-55.2584800720215</acc>
+      <dm>148.25</dm>
+      <acc>0</acc>
       <nh>0</nh>
-      <snr>8.25064945220947</snr>
+      <snr>8.25414085388184</snr>
       <folded_snr>0</folded_snr>
-      <is_adjacent>0</is_adjacent>
+      <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
-      <ddm_count_ratio>0.5</ddm_count_ratio>
-      <ddm_snr_ratio>0.506715893745422</ddm_snr_ratio>
-      <nassoc>1</nassoc>
-      <byte_offset>1476728</byte_offset>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1478840</byte_offset>
     </candidate>
     <candidate id='75'>
       <period>0.00161526966150123</period>
@@ -2510,74 +2511,74 @@
       <dm>137.850006103516</dm>
       <acc>37.4669990539551</acc>
       <nh>0</nh>
-      <snr>8.24569797515869</snr>
+      <snr>8.25184154510498</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1476780</byte_offset>
+      <byte_offset>1478868</byte_offset>
     </candidate>
     <candidate id='76'>
-      <period>0.00107985545596903</period>
+      <period>0.00161332537436652</period>
       <opt_period>0</opt_period>
-      <dm>148.25</dm>
-      <acc>0</acc>
+      <dm>145.649993896484</dm>
+      <acc>-55.2584800720215</acc>
       <nh>0</nh>
-      <snr>8.24544143676758</snr>
+      <snr>8.24641895294189</snr>
       <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
+      <is_adjacent>0</is_adjacent>
       <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1476808</byte_offset>
+      <ddm_count_ratio>0.5</ddm_count_ratio>
+      <ddm_snr_ratio>0.50657731294632</ddm_snr_ratio>
+      <nassoc>1</nassoc>
+      <byte_offset>1478896</byte_offset>
     </candidate>
     <candidate id='77'>
-      <period>0.00325953230167863</period>
-      <opt_period>0</opt_period>
-      <dm>126.650001525879</dm>
-      <acc>72.1688385009766</acc>
-      <nh>2</nh>
-      <snr>8.23597717285156</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1476836</byte_offset>
-    </candidate>
-    <candidate id='78'>
-      <period>0.00143445267453106</period>
-      <opt_period>0</opt_period>
-      <dm>111.650001525879</dm>
-      <acc>-91.6343307495117</acc>
-      <nh>0</nh>
-      <snr>8.22951030731201</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1476864</byte_offset>
-    </candidate>
-    <candidate id='79'>
       <period>0.00160653643824478</period>
       <opt_period>0</opt_period>
       <dm>115.050003051758</dm>
       <acc>-9.24487590789795</acc>
       <nh>1</nh>
-      <snr>8.22915172576904</snr>
+      <snr>8.23808002471924</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1476892</byte_offset>
+      <byte_offset>1478948</byte_offset>
+    </candidate>
+    <candidate id='78'>
+      <period>0.00325953230167863</period>
+      <opt_period>0</opt_period>
+      <dm>126.650001525879</dm>
+      <acc>72.1688385009766</acc>
+      <nh>2</nh>
+      <snr>8.23568916320801</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1478976</byte_offset>
+    </candidate>
+    <candidate id='79'>
+      <period>0.00143445267453106</period>
+      <opt_period>0</opt_period>
+      <dm>111.650001525879</dm>
+      <acc>-91.6343307495117</acc>
+      <nh>0</nh>
+      <snr>8.23024082183838</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1479004</byte_offset>
     </candidate>
     <candidate id='80'>
       <period>0.00225191978085566</period>
@@ -2585,89 +2586,89 @@
       <dm>128.25</dm>
       <acc>103.814086914062</acc>
       <nh>0</nh>
-      <snr>8.22891235351562</snr>
+      <snr>8.22730445861816</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1476920</byte_offset>
+      <byte_offset>1479032</byte_offset>
     </candidate>
     <candidate id='81'>
+      <period>0.00341433095816017</period>
+      <opt_period>0</opt_period>
+      <dm>157.449996948242</dm>
+      <acc>72.2774047851562</acc>
+      <nh>0</nh>
+      <snr>8.21753883361816</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1479060</byte_offset>
+    </candidate>
+    <candidate id='82'>
+      <period>0.00156860582498097</period>
+      <opt_period>0</opt_period>
+      <dm>156.300003051758</dm>
+      <acc>18.307767868042</acc>
+      <nh>0</nh>
+      <snr>8.21511268615723</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1479088</byte_offset>
+    </candidate>
+    <candidate id='83'>
+      <period>0.00178075246138705</period>
+      <opt_period>0</opt_period>
+      <dm>131.199996948242</dm>
+      <acc>105</acc>
+      <nh>0</nh>
+      <snr>8.21426296234131</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1479116</byte_offset>
+    </candidate>
+    <candidate id='84'>
+      <period>0.00290296591903128</period>
+      <opt_period>0</opt_period>
+      <dm>121.099998474121</dm>
+      <acc>51.6664085388184</acc>
+      <nh>0</nh>
+      <snr>8.2121467590332</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1479144</byte_offset>
+    </candidate>
+    <candidate id='85'>
       <period>0.00455569432942711</period>
       <opt_period>0</opt_period>
       <dm>106.849998474121</dm>
       <acc>11.3401947021484</acc>
       <nh>0</nh>
-      <snr>8.21834564208984</snr>
+      <snr>8.21193695068359</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>1</nassoc>
-      <byte_offset>1476948</byte_offset>
-    </candidate>
-    <candidate id='82'>
-      <period>0.00178075246138705</period>
-      <opt_period>0</opt_period>
-      <dm>131.199996948242</dm>
-      <acc>105</acc>
-      <nh>0</nh>
-      <snr>8.2138843536377</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1477000</byte_offset>
-    </candidate>
-    <candidate id='83'>
-      <period>0.00156860582498097</period>
-      <opt_period>0</opt_period>
-      <dm>156.300003051758</dm>
-      <acc>18.307767868042</acc>
-      <nh>0</nh>
-      <snr>8.21371746063232</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1477028</byte_offset>
-    </candidate>
-    <candidate id='84'>
-      <period>0.00341433095816017</period>
-      <opt_period>0</opt_period>
-      <dm>157.449996948242</dm>
-      <acc>72.2774047851562</acc>
-      <nh>0</nh>
-      <snr>8.20375347137451</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1477056</byte_offset>
-    </candidate>
-    <candidate id='85'>
-      <period>0.00290296591903128</period>
-      <opt_period>0</opt_period>
-      <dm>121.099998474121</dm>
-      <acc>51.6664085388184</acc>
-      <nh>0</nh>
-      <snr>8.20346736907959</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1477084</byte_offset>
+      <byte_offset>1479172</byte_offset>
     </candidate>
     <candidate id='86'>
       <period>0.00108616689818869</period>
@@ -2675,44 +2676,44 @@
       <dm>163.649993896484</dm>
       <acc>23.3467483520508</acc>
       <nh>0</nh>
-      <snr>8.20113658905029</snr>
+      <snr>8.20871162414551</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1477112</byte_offset>
+      <byte_offset>1479224</byte_offset>
     </candidate>
     <candidate id='87'>
+      <period>0.00298906975420447</period>
+      <opt_period>0</opt_period>
+      <dm>161.350006103516</dm>
+      <acc>94.2048950195312</acc>
+      <nh>0</nh>
+      <snr>8.19574069976807</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1479252</byte_offset>
+    </candidate>
+    <candidate id='88'>
       <period>0.00300483618333352</period>
       <opt_period>0</opt_period>
       <dm>111.349998474121</dm>
       <acc>1.70477294921875</acc>
       <nh>0</nh>
-      <snr>8.20064640045166</snr>
+      <snr>8.19533634185791</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1477140</byte_offset>
-    </candidate>
-    <candidate id='88'>
-      <period>0.00161013789360864</period>
-      <opt_period>0</opt_period>
-      <dm>127.900001525879</dm>
-      <acc>14.0574541091919</acc>
-      <nh>0</nh>
-      <snr>8.19844532012939</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1477168</byte_offset>
+      <byte_offset>1479280</byte_offset>
     </candidate>
     <candidate id='89'>
       <period>0.00416143915082664</period>
@@ -2720,44 +2721,44 @@
       <dm>109.150001525879</dm>
       <acc>-91.8635482788086</acc>
       <nh>0</nh>
-      <snr>8.19406414031982</snr>
+      <snr>8.19510078430176</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>0</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>2</nassoc>
-      <byte_offset>1477196</byte_offset>
+      <byte_offset>1479308</byte_offset>
     </candidate>
     <candidate id='90'>
-      <period>0.00298906975420447</period>
+      <period>0.00200764557115274</period>
       <opt_period>0</opt_period>
-      <dm>161.350006103516</dm>
-      <acc>94.2048950195312</acc>
+      <dm>158.350006103516</dm>
+      <acc>1.89445114135742</acc>
       <nh>0</nh>
-      <snr>8.19254684448242</snr>
+      <snr>8.19266128540039</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1477272</byte_offset>
+      <nassoc>1</nassoc>
+      <byte_offset>1479384</byte_offset>
     </candidate>
     <candidate id='91'>
-      <period>0.00225654588026465</period>
+      <period>0.00161013789360864</period>
       <opt_period>0</opt_period>
-      <dm>133.649993896484</dm>
-      <acc>80.1384811401367</acc>
+      <dm>127.900001525879</dm>
+      <acc>14.0574541091919</acc>
       <nh>0</nh>
-      <snr>8.19243431091309</snr>
+      <snr>8.19247245788574</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1477300</byte_offset>
+      <byte_offset>1479436</byte_offset>
     </candidate>
     <candidate id='92'>
       <period>0.00107372184404649</period>
@@ -2765,74 +2766,74 @@
       <dm>114.550003051758</dm>
       <acc>-105</acc>
       <nh>0</nh>
-      <snr>8.18951416015625</snr>
+      <snr>8.19154357910156</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1477328</byte_offset>
+      <byte_offset>1479464</byte_offset>
     </candidate>
     <candidate id='93'>
+      <period>0.00225654588026465</period>
+      <opt_period>0</opt_period>
+      <dm>133.649993896484</dm>
+      <acc>80.1384811401367</acc>
+      <nh>0</nh>
+      <snr>8.19100475311279</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1479492</byte_offset>
+    </candidate>
+    <candidate id='94'>
       <period>0.0014052782504972</period>
       <opt_period>0</opt_period>
       <dm>140.350006103516</dm>
       <acc>-105</acc>
       <nh>0</nh>
-      <snr>8.18844890594482</snr>
+      <snr>8.18984317779541</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1477356</byte_offset>
-    </candidate>
-    <candidate id='94'>
-      <period>0.00200764557115274</period>
-      <opt_period>0</opt_period>
-      <dm>158.350006103516</dm>
-      <acc>1.89445114135742</acc>
-      <nh>0</nh>
-      <snr>8.18496227264404</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>1</nassoc>
-      <byte_offset>1477384</byte_offset>
+      <byte_offset>1479520</byte_offset>
     </candidate>
     <candidate id='95'>
-      <period>0.00171108214980177</period>
-      <opt_period>0</opt_period>
-      <dm>162.800003051758</dm>
-      <acc>0</acc>
-      <nh>1</nh>
-      <snr>8.18412113189697</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1477436</byte_offset>
-    </candidate>
-    <candidate id='96'>
       <period>0.00110909353806796</period>
       <opt_period>0</opt_period>
       <dm>114.599998474121</dm>
       <acc>17.7390441894531</acc>
       <nh>1</nh>
-      <snr>8.18397235870361</snr>
+      <snr>8.18257236480713</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1477464</byte_offset>
+      <byte_offset>1479548</byte_offset>
+    </candidate>
+    <candidate id='96'>
+      <period>0.00171108214980177</period>
+      <opt_period>0</opt_period>
+      <dm>162.800003051758</dm>
+      <acc>0</acc>
+      <nh>1</nh>
+      <snr>8.17967987060547</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1479576</byte_offset>
     </candidate>
     <candidate id='97'>
       <period>0.00186122259058919</period>
@@ -2840,14 +2841,14 @@
       <dm>143.649993896484</dm>
       <acc>-39.4505310058594</acc>
       <nh>1</nh>
-      <snr>8.17558193206787</snr>
+      <snr>8.17550849914551</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1477492</byte_offset>
+      <byte_offset>1479604</byte_offset>
     </candidate>
     <candidate id='98'>
       <period>0.00221274016482645</period>
@@ -2855,14 +2856,14 @@
       <dm>144.25</dm>
       <acc>-55.6641998291016</acc>
       <nh>0</nh>
-      <snr>8.17471694946289</snr>
+      <snr>8.17532348632812</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1477520</byte_offset>
+      <byte_offset>1479632</byte_offset>
     </candidate>
     <candidate id='99'>
       <period>0.00341045966580867</period>
@@ -2870,14 +2871,14 @@
       <dm>146.300003051758</dm>
       <acc>28.1469192504883</acc>
       <nh>0</nh>
-      <snr>8.17450428009033</snr>
+      <snr>8.17398738861084</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1477548</byte_offset>
+      <byte_offset>1479660</byte_offset>
     </candidate>
     <candidate id='100'>
       <period>0.00132641960860097</period>
@@ -2885,89 +2886,89 @@
       <dm>161.350006103516</dm>
       <acc>21.766752243042</acc>
       <nh>0</nh>
-      <snr>8.17236423492432</snr>
+      <snr>8.16591930389404</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1477576</byte_offset>
+      <byte_offset>1479688</byte_offset>
     </candidate>
     <candidate id='101'>
-      <period>0.0015296992643364</period>
-      <opt_period>0</opt_period>
-      <dm>116.599998474121</dm>
-      <acc>-91.1770248413086</acc>
-      <nh>0</nh>
-      <snr>8.16314029693604</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1477604</byte_offset>
-    </candidate>
-    <candidate id='102'>
       <period>0.00533406086311903</period>
       <opt_period>0</opt_period>
       <dm>165.550003051758</dm>
       <acc>-12.3899803161621</acc>
       <nh>0</nh>
-      <snr>8.16307830810547</snr>
+      <snr>8.16038799285889</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1477632</byte_offset>
+      <byte_offset>1479716</byte_offset>
+    </candidate>
+    <candidate id='102'>
+      <period>0.00232009082679787</period>
+      <opt_period>0</opt_period>
+      <dm>108</dm>
+      <acc>90.4715042114258</acc>
+      <nh>0</nh>
+      <snr>8.15832901000977</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1479744</byte_offset>
     </candidate>
     <candidate id='103'>
-      <period>0.00235491910966407</period>
-      <opt_period>0</opt_period>
-      <dm>162.050003051758</dm>
-      <acc>-86.8218078613281</acc>
-      <nh>0</nh>
-      <snr>8.15453243255615</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>1</nassoc>
-      <byte_offset>1477660</byte_offset>
-    </candidate>
-    <candidate id='104'>
-      <period>0.00237334666795686</period>
-      <opt_period>0</opt_period>
-      <dm>162.149993896484</dm>
-      <acc>95.0680084228516</acc>
-      <nh>0</nh>
-      <snr>8.15417289733887</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1477712</byte_offset>
-    </candidate>
-    <candidate id='105'>
       <period>0.00110775747332312</period>
       <opt_period>0</opt_period>
       <dm>120.400001525879</dm>
       <acc>8.41552543640137</acc>
       <nh>0</nh>
-      <snr>8.15226364135742</snr>
+      <snr>8.15641593933105</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1477740</byte_offset>
+      <byte_offset>1479772</byte_offset>
+    </candidate>
+    <candidate id='104'>
+      <period>0.00107220211952318</period>
+      <opt_period>0</opt_period>
+      <dm>142.800003051758</dm>
+      <acc>90.6649398803711</acc>
+      <nh>0</nh>
+      <snr>8.15575885772705</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1479800</byte_offset>
+    </candidate>
+    <candidate id='105'>
+      <period>0.00237334666795686</period>
+      <opt_period>0</opt_period>
+      <dm>162.149993896484</dm>
+      <acc>95.0680084228516</acc>
+      <nh>0</nh>
+      <snr>8.15537929534912</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1479828</byte_offset>
     </candidate>
     <candidate id='106'>
       <period>0.00244474789917534</period>
@@ -2975,29 +2976,29 @@
       <dm>139.850006103516</dm>
       <acc>23.1724853515625</acc>
       <nh>0</nh>
-      <snr>8.15079402923584</snr>
+      <snr>8.15312099456787</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1477768</byte_offset>
+      <byte_offset>1479856</byte_offset>
     </candidate>
     <candidate id='107'>
-      <period>0.00107220211952318</period>
+      <period>0.00235491910966407</period>
       <opt_period>0</opt_period>
-      <dm>142.800003051758</dm>
-      <acc>90.6649398803711</acc>
+      <dm>162.050003051758</dm>
+      <acc>-86.8218078613281</acc>
       <nh>0</nh>
-      <snr>8.14509868621826</snr>
+      <snr>8.15225982666016</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1477796</byte_offset>
+      <nassoc>1</nassoc>
+      <byte_offset>1479884</byte_offset>
     </candidate>
     <candidate id='108'>
       <period>0.00423719937259243</period>
@@ -3005,134 +3006,134 @@
       <dm>116.349998474121</dm>
       <acc>101.996620178223</acc>
       <nh>0</nh>
-      <snr>8.14493656158447</snr>
+      <snr>8.14916706085205</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1477824</byte_offset>
+      <byte_offset>1479936</byte_offset>
     </candidate>
     <candidate id='109'>
-      <period>0.0010169650173717</period>
-      <opt_period>0</opt_period>
-      <dm>131.050003051758</dm>
-      <acc>-105</acc>
-      <nh>0</nh>
-      <snr>8.14468765258789</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1477852</byte_offset>
-    </candidate>
-    <candidate id='110'>
       <period>0.00704149005906338</period>
       <opt_period>0</opt_period>
       <dm>108.599998474121</dm>
       <acc>-105</acc>
       <nh>0</nh>
-      <snr>8.14412689208984</snr>
+      <snr>8.14102554321289</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1477880</byte_offset>
+      <byte_offset>1479964</byte_offset>
+    </candidate>
+    <candidate id='110'>
+      <period>0.0010169650173717</period>
+      <opt_period>0</opt_period>
+      <dm>131.050003051758</dm>
+      <acc>-105</acc>
+      <nh>0</nh>
+      <snr>8.13908290863037</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1479992</byte_offset>
     </candidate>
     <candidate id='111'>
-      <period>0.00294901572280404</period>
-      <opt_period>0</opt_period>
-      <dm>110.949996948242</dm>
-      <acc>54.6163673400879</acc>
-      <nh>0</nh>
-      <snr>8.14093494415283</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1477908</byte_offset>
-    </candidate>
-    <candidate id='112'>
-      <period>0.00205470617570008</period>
-      <opt_period>0</opt_period>
-      <dm>104.650001525879</dm>
-      <acc>-79.5458221435547</acc>
-      <nh>1</nh>
-      <snr>8.13923168182373</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1477936</byte_offset>
-    </candidate>
-    <candidate id='113'>
       <period>0.00563864523150917</period>
       <opt_period>0</opt_period>
       <dm>108.400001525879</dm>
       <acc>-52.728271484375</acc>
       <nh>0</nh>
-      <snr>8.1380090713501</snr>
+      <snr>8.13889503479004</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1477964</byte_offset>
+      <byte_offset>1480020</byte_offset>
+    </candidate>
+    <candidate id='112'>
+      <period>0.0015296992643364</period>
+      <opt_period>0</opt_period>
+      <dm>116.599998474121</dm>
+      <acc>-91.1770248413086</acc>
+      <nh>0</nh>
+      <snr>8.13734912872314</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1480048</byte_offset>
+    </candidate>
+    <candidate id='113'>
+      <period>0.00294901572280404</period>
+      <opt_period>0</opt_period>
+      <dm>110.949996948242</dm>
+      <acc>54.6163673400879</acc>
+      <nh>0</nh>
+      <snr>8.1328125</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1480076</byte_offset>
     </candidate>
     <candidate id='114'>
+      <period>0.00135130008198195</period>
+      <opt_period>0</opt_period>
+      <dm>154.100006103516</dm>
+      <acc>16.8054637908936</acc>
+      <nh>0</nh>
+      <snr>8.12979507446289</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1480104</byte_offset>
+    </candidate>
+    <candidate id='115'>
       <period>0.00155751882611905</period>
       <opt_period>0</opt_period>
       <dm>114</dm>
       <acc>85.1510467529297</acc>
       <nh>0</nh>
-      <snr>8.13490104675293</snr>
+      <snr>8.12835884094238</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1477992</byte_offset>
-    </candidate>
-    <candidate id='115'>
-      <period>0.00454058829773112</period>
-      <opt_period>0</opt_period>
-      <dm>104.75</dm>
-      <acc>22.3613700866699</acc>
-      <nh>0</nh>
-      <snr>8.1335563659668</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1478020</byte_offset>
+      <byte_offset>1480132</byte_offset>
     </candidate>
     <candidate id='116'>
-      <period>0.00232009082679787</period>
+      <period>0.00205470617570008</period>
       <opt_period>0</opt_period>
-      <dm>108</dm>
-      <acc>90.4715042114258</acc>
-      <nh>0</nh>
-      <snr>8.13015651702881</snr>
+      <dm>104.650001525879</dm>
+      <acc>-79.5458221435547</acc>
+      <nh>1</nh>
+      <snr>8.12817287445068</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1478048</byte_offset>
+      <byte_offset>1480160</byte_offset>
     </candidate>
     <candidate id='117'>
       <period>0.00132117919436293</period>
@@ -3140,14 +3141,14 @@
       <dm>137.899993896484</dm>
       <acc>69.1790313720703</acc>
       <nh>0</nh>
-      <snr>8.12282276153564</snr>
+      <snr>8.12716102600098</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1478076</byte_offset>
+      <byte_offset>1480188</byte_offset>
     </candidate>
     <candidate id='118'>
       <period>0.00135178807883637</period>
@@ -3155,59 +3156,59 @@
       <dm>145.350006103516</dm>
       <acc>-88.448486328125</acc>
       <nh>0</nh>
-      <snr>8.12022304534912</snr>
+      <snr>8.12283039093018</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1478104</byte_offset>
+      <byte_offset>1480216</byte_offset>
     </candidate>
     <candidate id='119'>
-      <period>0.00174586590270826</period>
-      <opt_period>0</opt_period>
-      <dm>113.599998474121</dm>
-      <acc>30.4528713226318</acc>
-      <nh>0</nh>
-      <snr>8.11920928955078</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1478132</byte_offset>
-    </candidate>
-    <candidate id='120'>
-      <period>0.00135130008198195</period>
-      <opt_period>0</opt_period>
-      <dm>154.100006103516</dm>
-      <acc>16.8054637908936</acc>
-      <nh>0</nh>
-      <snr>8.11746311187744</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1478160</byte_offset>
-    </candidate>
-    <candidate id='121'>
       <period>0.00448600607872442</period>
       <opt_period>0</opt_period>
       <dm>136.300003051758</dm>
       <acc>36.1313781738281</acc>
       <nh>0</nh>
-      <snr>8.11598491668701</snr>
+      <snr>8.11609172821045</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>0</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>0.5</ddm_count_ratio>
-      <ddm_snr_ratio>0.500678181648254</ddm_snr_ratio>
+      <ddm_snr_ratio>0.500458538532257</ddm_snr_ratio>
       <nassoc>1</nassoc>
-      <byte_offset>1478188</byte_offset>
+      <byte_offset>1480244</byte_offset>
+    </candidate>
+    <candidate id='120'>
+      <period>0.00174586590270826</period>
+      <opt_period>0</opt_period>
+      <dm>113.599998474121</dm>
+      <acc>30.4528713226318</acc>
+      <nh>0</nh>
+      <snr>8.11591243743896</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1480296</byte_offset>
+    </candidate>
+    <candidate id='121'>
+      <period>0.00454058829773112</period>
+      <opt_period>0</opt_period>
+      <dm>104.75</dm>
+      <acc>22.3613700866699</acc>
+      <nh>0</nh>
+      <snr>8.1139965057373</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1480324</byte_offset>
     </candidate>
     <candidate id='122'>
       <period>0.00126575403719837</period>
@@ -3215,14 +3216,14 @@
       <dm>159.5</dm>
       <acc>0</acc>
       <nh>0</nh>
-      <snr>8.1059455871582</snr>
+      <snr>8.10754871368408</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1478240</byte_offset>
+      <byte_offset>1480352</byte_offset>
     </candidate>
     <candidate id='123'>
       <period>0.00240849529682639</period>
@@ -3230,44 +3231,44 @@
       <dm>115.900001525879</dm>
       <acc>0</acc>
       <nh>0</nh>
-      <snr>8.0896167755127</snr>
+      <snr>8.10662746429443</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1478268</byte_offset>
+      <byte_offset>1480380</byte_offset>
     </candidate>
     <candidate id='124'>
-      <period>0.00190047337840926</period>
-      <opt_period>0</opt_period>
-      <dm>146.449996948242</dm>
-      <acc>-38.3684997558594</acc>
-      <nh>0</nh>
-      <snr>8.08820247650146</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1478296</byte_offset>
-    </candidate>
-    <candidate id='125'>
       <period>0.00169318170896641</period>
       <opt_period>0</opt_period>
       <dm>152.25</dm>
       <acc>15.5444412231445</acc>
       <nh>1</nh>
-      <snr>8.08658504486084</snr>
+      <snr>8.09048461914062</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1478324</byte_offset>
+      <byte_offset>1480408</byte_offset>
+    </candidate>
+    <candidate id='125'>
+      <period>0.00190047337840926</period>
+      <opt_period>0</opt_period>
+      <dm>146.449996948242</dm>
+      <acc>-38.3684997558594</acc>
+      <nh>0</nh>
+      <snr>8.08799839019775</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1480436</byte_offset>
     </candidate>
     <candidate id='126'>
       <period>0.00105429367921854</period>
@@ -3275,29 +3276,29 @@
       <dm>104.5</dm>
       <acc>9.42163848876953</acc>
       <nh>0</nh>
-      <snr>8.08105373382568</snr>
+      <snr>8.08615970611572</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1478352</byte_offset>
+      <byte_offset>1480464</byte_offset>
     </candidate>
     <candidate id='127'>
-      <period>0.000945178057377569</period>
+      <period>0.00182948249451903</period>
       <opt_period>0</opt_period>
-      <dm>148.550003051758</dm>
-      <acc>46.7514114379883</acc>
+      <dm>109.949996948242</dm>
+      <acc>-91.7903289794922</acc>
       <nh>0</nh>
-      <snr>8.07498645782471</snr>
+      <snr>8.07926940917969</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1478380</byte_offset>
+      <byte_offset>1480492</byte_offset>
     </candidate>
     <candidate id='128'>
       <period>0.0101252461555243</period>
@@ -3305,59 +3306,59 @@
       <dm>145.899993896484</dm>
       <acc>27.8374252319336</acc>
       <nh>0</nh>
-      <snr>8.07329750061035</snr>
+      <snr>8.07691097259521</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>2</nassoc>
-      <byte_offset>1478408</byte_offset>
+      <byte_offset>1480520</byte_offset>
     </candidate>
     <candidate id='129'>
+      <period>0.000945178057377569</period>
+      <opt_period>0</opt_period>
+      <dm>148.550003051758</dm>
+      <acc>46.7514114379883</acc>
+      <nh>0</nh>
+      <snr>8.07398796081543</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1480596</byte_offset>
+    </candidate>
+    <candidate id='130'>
+      <period>0.00141107448878263</period>
+      <opt_period>0</opt_period>
+      <dm>164.449996948242</dm>
+      <acc>-12.9307441711426</acc>
+      <nh>0</nh>
+      <snr>8.06149101257324</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1480624</byte_offset>
+    </candidate>
+    <candidate id='131'>
       <period>0.00098758175020776</period>
       <opt_period>0</opt_period>
       <dm>133.800003051758</dm>
       <acc>-89.5574951171875</acc>
       <nh>0</nh>
-      <snr>8.06936264038086</snr>
+      <snr>8.06037330627441</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1478484</byte_offset>
-    </candidate>
-    <candidate id='130'>
-      <period>0.00182948249451903</period>
-      <opt_period>0</opt_period>
-      <dm>109.949996948242</dm>
-      <acc>-91.7903289794922</acc>
-      <nh>0</nh>
-      <snr>8.06719875335693</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1478512</byte_offset>
-    </candidate>
-    <candidate id='131'>
-      <period>0.00971973738793033</period>
-      <opt_period>0</opt_period>
-      <dm>130.350006103516</dm>
-      <acc>61.2573432922363</acc>
-      <nh>0</nh>
-      <snr>8.06693649291992</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1478540</byte_offset>
+      <byte_offset>1480652</byte_offset>
     </candidate>
     <candidate id='132'>
       <period>0.00111096999465603</period>
@@ -3365,74 +3366,74 @@
       <dm>158.949996948242</dm>
       <acc>73.7444305419922</acc>
       <nh>0</nh>
-      <snr>8.06110668182373</snr>
+      <snr>8.05635452270508</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1478568</byte_offset>
+      <byte_offset>1480680</byte_offset>
     </candidate>
     <candidate id='133'>
-      <period>0.00141107448878263</period>
+      <period>0.00971973738793033</period>
       <opt_period>0</opt_period>
-      <dm>164.449996948242</dm>
-      <acc>-12.9307441711426</acc>
+      <dm>130.350006103516</dm>
+      <acc>61.2573432922363</acc>
       <nh>0</nh>
-      <snr>8.05885124206543</snr>
+      <snr>8.04911613464355</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1478596</byte_offset>
+      <byte_offset>1480708</byte_offset>
     </candidate>
     <candidate id='134'>
-      <period>0.00191777021755759</period>
-      <opt_period>0</opt_period>
-      <dm>117.449996948242</dm>
-      <acc>89.6271896362305</acc>
-      <nh>0</nh>
-      <snr>8.04655647277832</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1478624</byte_offset>
-    </candidate>
-    <candidate id='135'>
       <period>0.000957431577594091</period>
       <opt_period>0</opt_period>
       <dm>130.899993896484</dm>
       <acc>1.16565322875977</acc>
       <nh>0</nh>
-      <snr>8.04583644866943</snr>
+      <snr>8.04673480987549</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1478652</byte_offset>
+      <byte_offset>1480736</byte_offset>
+    </candidate>
+    <candidate id='135'>
+      <period>0.00191777021755759</period>
+      <opt_period>0</opt_period>
+      <dm>117.449996948242</dm>
+      <acc>89.6271896362305</acc>
+      <nh>0</nh>
+      <snr>8.04431533813477</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1480764</byte_offset>
     </candidate>
     <candidate id='136'>
-      <period>0.00243423632149808</period>
+      <period>0.00316328366761735</period>
       <opt_period>0</opt_period>
-      <dm>162.800003051758</dm>
-      <acc>59.2660942077637</acc>
-      <nh>1</nh>
-      <snr>8.03887367248535</snr>
+      <dm>108.099998474121</dm>
+      <acc>-105</acc>
+      <nh>0</nh>
+      <snr>8.03961849212646</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1478680</byte_offset>
+      <byte_offset>1480792</byte_offset>
     </candidate>
     <candidate id='137'>
       <period>0.00126382598942749</period>
@@ -3440,89 +3441,89 @@
       <dm>130.600006103516</dm>
       <acc>31.242338180542</acc>
       <nh>0</nh>
-      <snr>8.03844738006592</snr>
+      <snr>8.03910255432129</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1478708</byte_offset>
+      <byte_offset>1480820</byte_offset>
     </candidate>
     <candidate id='138'>
-      <period>0.00316328366761735</period>
-      <opt_period>0</opt_period>
-      <dm>108.099998474121</dm>
-      <acc>-105</acc>
-      <nh>0</nh>
-      <snr>8.03277969360352</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1478736</byte_offset>
-    </candidate>
-    <candidate id='139'>
-      <period>0.00101521395770479</period>
-      <opt_period>0</opt_period>
-      <dm>136.5</dm>
-      <acc>4.90277481079102</acc>
-      <nh>0</nh>
-      <snr>8.02989768981934</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1478764</byte_offset>
-    </candidate>
-    <candidate id='140'>
       <period>0.00140396242343932</period>
       <opt_period>0</opt_period>
       <dm>137.149993896484</dm>
       <acc>-73.4747772216797</acc>
       <nh>0</nh>
-      <snr>8.02838706970215</snr>
+      <snr>8.0373592376709</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1478792</byte_offset>
+      <byte_offset>1480848</byte_offset>
     </candidate>
-    <candidate id='141'>
+    <candidate id='139'>
+      <period>0.00243423632149808</period>
+      <opt_period>0</opt_period>
+      <dm>162.800003051758</dm>
+      <acc>59.2660942077637</acc>
+      <nh>1</nh>
+      <snr>8.03718185424805</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1480876</byte_offset>
+    </candidate>
+    <candidate id='140'>
       <period>0.00208760539721936</period>
       <opt_period>0</opt_period>
       <dm>105</dm>
       <acc>-53.9649085998535</acc>
       <nh>0</nh>
-      <snr>8.0249080657959</snr>
+      <snr>8.02889823913574</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1478820</byte_offset>
+      <byte_offset>1480904</byte_offset>
     </candidate>
-    <candidate id='142'>
+    <candidate id='141'>
       <period>0.0010509802392109</period>
       <opt_period>0</opt_period>
       <dm>145.5</dm>
       <acc>60.6600952148438</acc>
       <nh>0</nh>
-      <snr>8.02431488037109</snr>
+      <snr>8.02454853057861</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1478848</byte_offset>
+      <byte_offset>1480932</byte_offset>
+    </candidate>
+    <candidate id='142'>
+      <period>0.00101521395770479</period>
+      <opt_period>0</opt_period>
+      <dm>136.5</dm>
+      <acc>4.90277481079102</acc>
+      <nh>0</nh>
+      <snr>8.02338695526123</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1480960</byte_offset>
     </candidate>
     <candidate id='143'>
       <period>0.00299651470443938</period>
@@ -3530,14 +3531,14 @@
       <dm>115.650001525879</dm>
       <acc>-8.8559045791626</acc>
       <nh>0</nh>
-      <snr>8.02335166931152</snr>
+      <snr>8.02289581298828</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1478876</byte_offset>
+      <byte_offset>1480988</byte_offset>
     </candidate>
     <candidate id='144'>
       <period>0.00158069178806304</period>
@@ -3545,14 +3546,14 @@
       <dm>105.800003051758</dm>
       <acc>87.4693832397461</acc>
       <nh>0</nh>
-      <snr>8.01771354675293</snr>
+      <snr>8.02107715606689</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1478904</byte_offset>
+      <byte_offset>1481016</byte_offset>
     </candidate>
     <candidate id='145'>
       <period>2.59622497623859</period>
@@ -3560,81 +3561,96 @@
       <dm>159.149993896484</dm>
       <acc>56.0461387634277</acc>
       <nh>3</nh>
-      <snr>8.01555347442627</snr>
+      <snr>8.01805019378662</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>17</nassoc>
-      <byte_offset>1478932</byte_offset>
+      <nassoc>18</nassoc>
+      <byte_offset>1481044</byte_offset>
     </candidate>
     <candidate id='146'>
-      <period>0.00336288480672495</period>
-      <opt_period>0</opt_period>
-      <dm>166.75</dm>
-      <acc>62.7608184814453</acc>
-      <nh>0</nh>
-      <snr>8.01542663574219</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1479368</byte_offset>
-    </candidate>
-    <candidate id='147'>
-      <period>0.00125580235645364</period>
-      <opt_period>0</opt_period>
-      <dm>161.899993896484</dm>
-      <acc>-105</acc>
-      <nh>1</nh>
-      <snr>8.01462554931641</snr>
-      <folded_snr>0</folded_snr>
-      <is_adjacent>1</is_adjacent>
-      <is_physical>1</is_physical>
-      <ddm_count_ratio>1</ddm_count_ratio>
-      <ddm_snr_ratio>1</ddm_snr_ratio>
-      <nassoc>0</nassoc>
-      <byte_offset>1479396</byte_offset>
-    </candidate>
-    <candidate id='148'>
       <period>0.00133775178988805</period>
       <opt_period>0</opt_period>
       <dm>166.050003051758</dm>
       <acc>62.1407699584961</acc>
       <nh>0</nh>
-      <snr>8.00794219970703</snr>
+      <snr>8.01179695129395</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1479424</byte_offset>
+      <byte_offset>1481504</byte_offset>
+    </candidate>
+    <candidate id='147'>
+      <period>0.00336288480672495</period>
+      <opt_period>0</opt_period>
+      <dm>166.75</dm>
+      <acc>62.7608184814453</acc>
+      <nh>0</nh>
+      <snr>8.01114559173584</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1481532</byte_offset>
+    </candidate>
+    <candidate id='148'>
+      <period>0.00125580235645364</period>
+      <opt_period>0</opt_period>
+      <dm>161.899993896484</dm>
+      <acc>-105</acc>
+      <nh>1</nh>
+      <snr>8.00816249847412</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1481560</byte_offset>
     </candidate>
     <candidate id='149'>
-      <period>0.00413234109898103</period>
+      <period>0.00266104702390378</period>
       <opt_period>0</opt_period>
-      <dm>143</dm>
-      <acc>0</acc>
+      <dm>107.5</dm>
+      <acc>-105</acc>
       <nh>0</nh>
-      <snr>8.00670146942139</snr>
+      <snr>8.00652408599854</snr>
       <folded_snr>0</folded_snr>
       <is_adjacent>1</is_adjacent>
       <is_physical>1</is_physical>
       <ddm_count_ratio>1</ddm_count_ratio>
       <ddm_snr_ratio>1</ddm_snr_ratio>
       <nassoc>0</nassoc>
-      <byte_offset>1479452</byte_offset>
+      <byte_offset>1481588</byte_offset>
+    </candidate>
+    <candidate id='150'>
+      <period>0.00107693017582804</period>
+      <opt_period>0</opt_period>
+      <dm>104.349998474121</dm>
+      <acc>98.1991806030273</acc>
+      <nh>0</nh>
+      <snr>8.00558853149414</snr>
+      <folded_snr>0</folded_snr>
+      <is_adjacent>1</is_adjacent>
+      <is_physical>1</is_physical>
+      <ddm_count_ratio>1</ddm_count_ratio>
+      <ddm_snr_ratio>1</ddm_snr_ratio>
+      <nassoc>0</nassoc>
+      <byte_offset>1481616</byte_offset>
     </candidate>
   </candidates>
   <execution_times>
-    <dedispersion>22.2739925384521</dedispersion>
+    <dedispersion>22.4893074035645</dedispersion>
     <folding>0</folding>
     <reading>4.8999998398358e-05</reading>
-    <searching>20.496072769165</searching>
-    <total>42.9509620666504</total>
+    <searching>21.003942489624</searching>
+    <total>43.6688461303711</total>
   </execution_times>
 </peasoup_search>
