@@ -43,23 +43,12 @@ class CandExec:
 
         return list(sorted(segments, key=lambda x: x.tscrunch))
     
-    def get_beam(self):
-        beams = []
-        for pointing in self.data['pointings']:
-            for beam in pointing['beams']:
-                beam_data = [pointing['id'], beam['name']]
-                for filterbank in beam['data_products']:
-                    beam_data.append(filterbank['filename'])
-                beams.append(beam_data)
-
-        selected_beam = beams[np.random.randint(0,len(beams))]
-        return selected_beam
-    
     def create_XML_list(self):
         ddplan = self.create_DDplan()
         xml_file_names = [f'overview_dm_{dm_range.low_dm:.6f}_{dm_range.high_dm:.6f}.xml' for dm_range in ddplan]
 
-        pointing_id, inj_beam_name, *_ = self.get_beam()
+        pointing_id =  re.search(r'MMGPS_U_\d{4}', self.inj_report['injection']['fb']).group()
+        inj_beam_name = re.search(r'[ci]fbf\d{5}', self.inj_report['injection']['fb']).group()
         xml_file_paths = []
         for nbeam in range(self.data['n_cbeams']):
             for xml_name in xml_file_names:

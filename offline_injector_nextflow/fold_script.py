@@ -104,9 +104,20 @@ class FoldScoreExec:
 
         self.fold_cands['adj_period'] = period_obs_centre(period, pdot, tsamp, n_samples//tscrunch, fftsize//tscrunch)
 
-    def add_injected_cands(self):
+    def get_injected_cands(self):
+        psr = self.inj_report['pulsars']
+        ptol, dmtol = 0.01, 0.01
 
-        self.fold_cands['injected'] = []
+        pulsar_cands = [[] for _ in range(len(psr))]
+        for i, psr_i in enumerate(psr):
+            p0_i = psr_i['PX'][0]
+            dm_i = psr_i['DM']
+            p_cond = (self.fold_cands['period'] > p0_i*(1-ptol)) & (self.fold_cands['period'] < p0_i*(1+ptol))
+            dm_cond = (self.fold_cands['dm'] > dm_i*(1-dmtol)) & (self.fold_cands['dm'] < dm_i*(1+dmtol))
+            psr_cands = self.fold_cands[p_cond & dm_cond]
+            pulsar_cands[i].extend(psr_cands.index.values)
+
+        return self.fold_cands.iloc[np.concatenate(pulsar_cands).astype(int)]
 
     def filter_cands(self):
         cands_cut = self.fold_cands[self.cand_cutoffs()]
@@ -123,15 +134,14 @@ class FoldScoreExec:
                 keep_cands_index.append(i)
                 beam_counts[beam_index] += 1
             
-        keep_cands = cands_list.iloc[keep_cands_index]
-        return keep_cands[keep_cands['injected'] == True]
+        self.fold_cands = cands_list.iloc[keep_cands_index]
 
     def create_cand_file(self):
         self.add_tscrunch()
         self.add_adjusted_periods()
-        self.add_injected_cands()
+        self.filter_cands()
 
-        cands_data = self.filter_cands()
+        cands_data = self.get_injected_cands()
 
         cand_file_path = f'{self.out}/candidates.candfile'
         with open(cand_file_path, 'w') as file:
