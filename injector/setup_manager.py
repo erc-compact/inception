@@ -205,8 +205,9 @@ class SetupManager:
                     if freq_deriv != 0:
                         parfile_params[f'F{i}'] = str(freq_deriv).replace('e', 'D')
                     
-                ephem = Path(pulsar_model.obs.ephem).stem.upper()
-                parfile_params['EPHEM'] = ephem if (ephem != 'BUILTIN') else 'DE440'
+                # ephem = Path(pulsar_model.obs.ephem).stem.upper()
+                # parfile_params['EPHEM'] = ephem if (ephem != 'BUILTIN') else 'DE440'
+                parfile_params['EPHEM'] = 'DE421' # some singularities seg fault with DE440
 
                 parfile_params['TZRMJD'] = pulsar_model.obs.obs_start_bary
                 parfile_params['TZRFRQ'] = 0
