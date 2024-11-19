@@ -5,6 +5,7 @@ import argparse
 import subprocess
 import numpy as np
 import pandas as pd
+from multiprocessing import Pool
 from collections import namedtuple
 
 from pathlib import Path
@@ -14,8 +15,9 @@ from inception.injector.io_tools import FilterbankReader
 
 
 class FoldScoreExec:
-    def __init__(self, fb, search_args, injection_report, fold_cands, output, num_threads):
+    def __init__(self, fb, search_args, injection_report, fold_cands, output, par_dir, num_threads):
         self.out = output
+        self.par_dir = par_dir
         self.fb = fb
         self.num_threads = num_threads
 
@@ -167,8 +169,8 @@ class FoldScoreExec:
             beam_tag = f"-i {int(beam_name.strip('cfbf'))}"
         return beam_tag
 
-    def run_cmd(self):
-        TEMPLATE = '/home/psr/software/PulsarX/include/template/meerkat_fold.template'
+    def fold_inj_cands(self):
+        template="/home/psr/software/PulsarX/include/template/meerkat_fold.template"
         zap_string = self.create_zap_sting()
         beam_tag = self.get_beam_tag()
         cand_file = self.create_cand_file()
@@ -178,10 +180,48 @@ class FoldScoreExec:
         slow_nbins = self.fold_args.get('slow_nbins', 128)
         
         cmd = f"psrfold_fil2 --dmboost 250 --plotx -v -t {self.num_threads} --candfile {cand_file} -n {nsubband} {beam_tag} " \
-              f"-b {fast_nbins} --nbinplan 0.1 {slow_nbins} --template {TEMPLATE} --clfd 8 -L {self.fold_args['subint_length']} --fillPatch rand " \
-              f"-f {self.fb} --rfi zdot {zap_string} --fd {self.fold_args['fscrunch']} --td {self.fold_args['tscrunch']} -o {self.out}/"
+              f"-b {fast_nbins} --nbinplan 0.1 {slow_nbins} --template {template} --clfd 8 -L {self.fold_args['subint_length']} --fillPatch rand " \
+              f"-f {self.fb} --rfi zdot {zap_string} --fd {self.fold_args['fscrunch']} --td {self.fold_args['tscrunch']} -o {self.out}/inj_cand"
     
         subprocess.run(cmd, shell=True)
+
+    def pics_score(self):
+        # pics_code = '/home/psr/software/trapum-pipeline-wrapper/pipelines/trapum_fold_and_score_pipeline/webpage_score.py'
+        pics_code = '/u/rsenzel/pulsar_inject/nextflow/webpage_score_hercules.py'
+        cmd = f"python2 {pics_code} --in_path={self.out}"
+        subprocess.run(cmd, shell=True)
+
+    def fold_pars(self):
+
+        def fold(psr_id):
+            if psr_id:
+                par_file = f"{self.par_dir}/{psr_id}.par"
+
+                cmd = f"psrfold_fil2 --dmboost 250 --plotx -v --parfile {par_file} -n {nsubband} {beam_tag} " \
+                    f"-b {fast_nbins} --nbinplan 0.1 {slow_nbins} --template {template} --clfd 8 -L {self.fold_args['subint_length']} --fillPatch rand " \
+                    f"-f {self.fb} --rfi zdot {zap_string} --fd {self.fold_args['fscrunch']} --td {self.fold_args['tscrunch']} -o {self.out}/{psr_id}"
+
+                subprocess.run(cmd, shell=True)  
+
+        template="/home/psr/software/PulsarX/include/template/meerkat_fold.template"
+        zap_string = self.create_zap_sting()
+        beam_tag = self.get_beam_tag()
+
+        nsubband = self.fold_args.get('nsubband', 64)
+        fast_nbins = self.fold_args.get('fast_nbins', 64)
+        slow_nbins = self.fold_args.get('slow_nbins', 128)
+
+        psr_ids = [psr_id['ID'] for psr_id in self.inj_report['pulsars']]
+
+        args_list = [[] for _ in range(self.num_threads)]
+        for i, file in enumerate(psr_ids):
+            args_list[i % self.num_threads].append(file)
+
+        with Pool(self.num_threads) as p:
+            p.map(fold, args_list)
+
+    def collect_results(self):
+        pass
 
 
 if __name__=='__main__':
@@ -192,10 +232,14 @@ if __name__=='__main__':
     parser.add_argument('--injection_report', metavar='file', required=True, help='JSON file with inject pulsar records')
     parser.add_argument('--fold_cands', metavar='file', required=True, help='csv file with good_cands_to_fold_with_beam')
     parser.add_argument('--output', metavar='dir', required=True, help='output directory')
+    parser.add_argument('--par_dir', metavar='dir', required=True, help='directory with injected pulsar parfiles')
     parser.add_argument('--n_threads', metavar='int', type=int, required=True, help='number of threads to use')
     args = parser.parse_args()
 
-    fold_exec = FoldScoreExec(args.fb, args.search_args, args.injection_report, args.fold_cands, args.output, args.n_threads)
-    fold_exec.run_cmd()
+    fold_exec = FoldScoreExec(args.fb, args.search_args, args.injection_report, args.fold_cands, args.output, args.par_dir, args.n_threads)
+    fold_exec.fold_inj_cands()
+    fold_exec.pics_score()
+    fold_exec.fold_pars()
+
 
 
