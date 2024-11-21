@@ -1,11 +1,12 @@
-import re
+import re, os
 import sys
 import json
+import time
 import argparse
 import subprocess
 import numpy as np
 import pandas as pd
-from multiprocessing import Pool
+from multiprocessing import Pool, Process
 from collections import namedtuple
 
 from pathlib import Path
@@ -81,6 +82,7 @@ class FoldScoreExec:
         smearing_cutoff = np.abs(4.148741601e3 * dm * (1/(fbottom**2) - 1/(ftop**2))/nchans)
 
         snr_cutoff = float(self.fold_args['snr_cutoff'])
+        del fbreader
         return (period > period_cut) & (period > smearing_cutoff) & (snr > snr_cutoff)
     
     def add_tscrunch(self):
@@ -103,6 +105,7 @@ class FoldScoreExec:
         n_samples = int(fbreader.n_samples)
         fftsize = int(self.processing_args['fft_length'])
         self.fold_cands['adj_period'] = period_obs_centre(period, pdot, float(tsamp), n_samples//tscrunch, fftsize//tscrunch)
+        del fbreader
 
     def filter_cands(self):
         cands_cut = self.fold_cands[self.cand_cutoffs()]
@@ -151,7 +154,6 @@ class FoldScoreExec:
             file.write("#id DM accel F0 F1 S/N\n")
             for i, cand in cands_data.iterrows():
                 file.write(f"{i} {cand['dm']} {cand['acc']} {1/cand['adj_period']} 0 {cand['snr']}\n")
-        file.close()
 
         return cand_file_path
         
@@ -191,18 +193,7 @@ class FoldScoreExec:
         cmd = f"python2 {pics_code} --in_path={self.out}"
         subprocess.run(cmd, shell=True)
 
-    def fold_pars(self):
-
-        def fold(psr_id):
-            if psr_id:
-                par_file = f"{self.par_dir}/{psr_id}.par"
-
-                cmd = f"psrfold_fil2 --dmboost 250 --plotx -v --parfile {par_file} -n {nsubband} {beam_tag} " \
-                    f"-b {fast_nbins} --nbinplan 0.1 {slow_nbins} --template {template} --clfd 8 -L {self.fold_args['subint_length']} --fillPatch rand " \
-                    f"-f {self.fb} --rfi zdot {zap_string} --fd {self.fold_args['fscrunch']} --td {self.fold_args['tscrunch']} -o {self.out}/{psr_id}"
-
-                subprocess.run(cmd, shell=True)  
-
+    def fold_par_file(self, psr_id_list):
         template="/home/psr/software/PulsarX/include/template/meerkat_fold.template"
         zap_string = self.create_zap_sting()
         beam_tag = self.get_beam_tag()
@@ -211,14 +202,48 @@ class FoldScoreExec:
         fast_nbins = self.fold_args.get('fast_nbins', 64)
         slow_nbins = self.fold_args.get('slow_nbins', 128)
 
+        for psr_id in psr_id_list:
+            par_file = f"{self.par_dir}/{psr_id}.par"
+
+            cmd = f"psrfold_fil2 --dmboost 250 --plotx -v --parfile {par_file} -n {nsubband} {beam_tag} " \
+                f"-b {fast_nbins} --nbinplan 0.1 {slow_nbins} --template {template} --clfd 8 -L {self.fold_args['subint_length']} --fillPatch rand " \
+                f"-f {self.fb} --rfi zdot {zap_string} --fd {self.fold_args['fscrunch']} --td {self.fold_args['tscrunch']} -o {self.out}/{psr_id}"
+
+            subprocess.run(cmd, shell=True) 
+
+    def check_fold_success(self, psr_id_list):
+        re_proccess = psr_id_list.copy()
+        for psr_id in psr_id_list:
+            found_png, found_ar = False, False
+            for filename in os.listdir(self.out):
+                if re.search(psr_id, filename): 
+                    if filename.endswith('.png'):
+                        found_png = True
+                    elif filename.endswith('.ar'):
+                        found_ar = True
+            if found_png and found_ar:
+                re_proccess.remove(psr_id)
+
+        return re_proccess
+
+    def fold_pars(self):
         psr_ids = [psr_id['ID'] for psr_id in self.inj_report['pulsars']]
 
         args_list = [[] for _ in range(self.num_threads)]
         for i, file in enumerate(psr_ids):
             args_list[i % self.num_threads].append(file)
+        fold_list = [lst for lst in args_list if lst]
 
-        with Pool(self.num_threads) as p:
-            p.map(fold, args_list)
+        max_re_try = 0
+        while (len(fold_list) != 0) and (max_re_try < 3):
+            max_re_try += 1
+
+            for arg in fold_list:
+                time.sleep(10)
+                process = Process(target=self.fold_par_file, args=(arg, ))
+                process.start()
+
+            fold_list = self.check_fold_success(fold_list)
 
     def collect_results(self):
         pass
@@ -240,6 +265,5 @@ if __name__=='__main__':
     fold_exec.fold_inj_cands()
     fold_exec.pics_score()
     fold_exec.fold_pars()
-
 
 
