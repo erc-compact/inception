@@ -12,10 +12,6 @@
 
 /injector/__pycache__
 
-/offline_injector_nextflow/__pycache__
-
-/offline_injector_nextflow/old_examp
-
-/offline_injector_nextflow/*.ipynb
+/offline_injector_pipeline/*.ipynb
 
 /injector/TODO.txt
