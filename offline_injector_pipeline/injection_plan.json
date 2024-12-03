@@ -4,7 +4,7 @@
     {   
         "injection_id": "inj-template-0",
         "global_seed": "random",
-        "create_parfile": 0,
+        "create_parfile": 1,
         "DM_smear": 0,
         "M1": 1.4       
     },

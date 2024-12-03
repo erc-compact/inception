@@ -67,16 +67,17 @@ class InjectorSetup(PipelineTools):
 
     def transfer_products(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
+        par_dir = f'{results_dir}/inj_pulsars'
         inj_ID = self.injected_params['psr_global']['injection_id']
         injected_fb = f'{self.work_dir}/{Path(self.merged_fb).stem}_{inj_ID}.fil'
-        injection_report = f'{self.work_dir}/{inj_ID}_{self.seed}.json'
+        injection_report = f'{self.work_dir}/report_{inj_ID}_{self.seed}.json'
 
         os.mkdir(results_dir)
+        os.mkdir(par_dir)
         subprocess.run(f"rsync -Pav {self.merged_fb} {results_dir}", shell=True)
         subprocess.run(f"rsync -Pav {injected_fb} {results_dir}", shell=True)
         subprocess.run(f"rsync -Pav {injection_report} {results_dir}", shell=True)
-
-
+        subprocess.run(f"rsync -Pav {self.work_dir}/*.par {par_dir}", shell=True)
 
 
 if __name__=='__main__':

@@ -9,16 +9,31 @@ from inception.injector.io_tools import FilterbankReader
 
 
 class PeasoupExec(PipelineTools):
-    def __init__(self, fb, search_args, injection_report, n_nearest=-1):
+    def __init__(self, tscrunch_index, search_args, out_dir, injection_number, n_nearest=-1):
         super().__init__(search_args)
         self.work_dir = os.getcwd()
-        self.fb = fb
+        self.tscrunch = tscrunch_index
+        self.out_dir = out_dir
+        self.injection_number = injection_number
         self.n_nearest = n_nearest
 
+        self.fb, injection_report = self.get_inputs()
         self.inj_report = self.parse_JSON(injection_report)
-
         self.gulp_size = self.get_gulp_size()
-        self.tscrunch = self.get_tscrunch()
+        
+    def get_inputs(self):
+        results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
+        for filename in os.listdir(results_dir):
+            if 'report' in filename:
+                injection_report = filename
+
+        process_dir = f'{results_dir}/processing'
+        for filename in os.listdir(process_dir):
+            if filename.endswith(f'{self.tscrunch+1}.fil'):
+                subprocess.run(f"rsync -Pav {filename} {self.work_dir}", shell=True)
+                filterbank = filename
+        
+        return filterbank, injection_report
         
     def get_gulp_size(self):
         fscrunch = int(self.processing_args.get('fscrunch', 1))
@@ -27,12 +42,6 @@ class PeasoupExec(PipelineTools):
         default_gulp_size = int((2048.0 / (fb_reader.nchans / fscrunch)) * 1e6)
         del fb_reader
         return self.processing_args.get('gulp_size', default_gulp_size)
-    
-    def get_tscrunch(self):
-        tscrunch_index = int(Path(self.fb).stem[-1]) - 1
-        DD_plan = self.create_DDplan()
-        
-        return [dm_range.tscrunch for dm_range in DD_plan][tscrunch_index]
     
     def generate_chan_mask(self, chan_mask_csv, outfile):
         fb_reader = FilterbankReader(self.fb)
@@ -118,16 +127,6 @@ class PeasoupExec(PipelineTools):
         np.savetxt(outfile, dm_search_arr, fmt='%.3f')
         return outfile
     
-    def rename_outputs(self):
-        DD_plan = self.create_DDplan()
-        tscrunch_index = int(Path(self.fb).stem[-1]) - 1
-        xml_name = [f'overview_dm_{dm_range.low_dm:.6f}_{dm_range.high_dm:.6f}.xml' for dm_range in DD_plan][tscrunch_index]
-
-        inj_ID = self.inj_report['injection']['ID']
-        xml_name_new = f'{self.work_dir}/{self.data_ID}_{inj_ID}_{xml_name}'
-
-        os.rename(f'{self.work_dir}/overview.xml', xml_name_new)
-    
     def run_cmd(self):
         chan_mask_file, birdie_list_file = self.generate_files()
         dm_list = self.create_dm_list()
@@ -141,17 +140,26 @@ class PeasoupExec(PipelineTools):
 
         subprocess.run(cmd, shell=True)
 
-        self.rename_outputs()
+    def transfer_products(self):
+        DD_plan = self.create_DDplan()
+        xml_name = [f'overview_dm_{dm_range.low_dm:.6f}_{dm_range.high_dm:.6f}.xml' for dm_range in DD_plan][self.tscrunch]
 
+        inj_ID = self.inj_report['injection']['ID']
+        xml_name_new = f'{self.data_ID}_{inj_ID}_{xml_name}'
+
+        peasoup_dir = f'{self.out_dir}/inj_{self.injection_number:06}/processing'
+        subprocess.run(f"rsync -Pav {self.work_dir}/overview.xml {peasoup_dir}/{xml_name_new}", shell=True)
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(prog='peasoup for offline injection pipeline',
                                      epilog='Feel free to contact me if you have questions - rsenzel@mpifr-bonn.mpg.de')
-    parser.add_argument('--fb', metavar='file', required=True, help='Injected filterbank file')
+    parser.add_argument('--tscrunch_index', metavar='file', required=True, help='tscrucnh of filterbank file to search')
     parser.add_argument('--search_args', metavar='file', required=True, help='JSON file with search parameters')
-    parser.add_argument('--injection_report', metavar='file', required=True, help='JSON file with inject pulsar records')
-    parser.add_argument('--n_nearest', metavar='int', type=int, required=False, default=-1, help='number of DM trials to search around injected pulsar DM')
+    parser.add_argument('--injection_number', metavar='int', required=True, type=int, help='injection process number')
+    parser.add_argument('--out_dir', metavar='dir', required=True, help='output directory')
+
     args = parser.parse_args()
 
-    peasoup_exec = PeasoupExec(args.fb, args.search_args, args.injection_report, args.n_nearest)
+    peasoup_exec = PeasoupExec(args.tscrunch_index, args.search_args, args.out_dir, args.injection_number, -1)
     peasoup_exec.run_cmd()
+    peasoup_exec.transfer_products()

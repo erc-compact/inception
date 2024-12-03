@@ -11,13 +11,17 @@ class FiltoolExec(PipelineTools):
         super().__init__(search_args)
         self.work_dir = os.getcwd()
         self.out_dir = out_dir
-        self.fb = self.get_fb(injection_number)
+        self.injection_number = injection_number
+        self.fb = self.get_fb()
         self.ncpus = ncpus
 
         self.define_defaults()
 
     def get_fb(self):
-        pass
+        results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
+        for filename in os.listdir(results_dir):
+            if f'_{self.data_ID}_' in filename:
+                return f'{self.work_dir}/{Path(filename).name}'
 
     def define_defaults(self):
         self.pars = {
@@ -63,10 +67,20 @@ class FiltoolExec(PipelineTools):
         
         subprocess.run(cmd, shell=True)
 
+    def transfer_products(self):
+        results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
+        filtool_out_dir = f'{results_dir}/processing'
+        os.mkdir(filtool_out_dir)
+
+        for filename in os.listdir(self.work_dir):
+            if 'downsampled' in filename:
+                subprocess.run(f"rsync -Pav {filename} {filtool_out_dir}", shell=True)
+
+
 if __name__=='__main__':
     parser = argparse.ArgumentParser(prog='filtool for offline injection pipeline',
                                      epilog='Feel free to contact me if you have questions - rsenzel@mpifr-bonn.mpg.de')
-    parser.add_argument('--injection_number', metavar='file', required=True, nargs='+', help='injected filterbank file(s)')
+    parser.add_argument('--injection_number', metavar='int', required=True, type=int, help='injection process number')
     parser.add_argument('--search_args', metavar='file', required=True, help='JSON file with search parameters')
     parser.add_argument('--out_dir', metavar='dir', required=True, help='output directory')
     parser.add_argument('--ncpus', metavar='int', type=int, required=True, help='number of cpus to use')
@@ -74,3 +88,4 @@ if __name__=='__main__':
 
     fil_exec = FiltoolExec(args.injection_number, args.search_args, args.out_dir, args.ncpus)
     fil_exec.run_cmd()
+    fil_exec.transfer_products()

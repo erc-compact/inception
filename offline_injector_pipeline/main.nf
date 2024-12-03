@@ -1,26 +1,27 @@
-process pr1 {
-    label "process_1"
-    container "${params.sing_img}"
-    publishDir "${params.pr1.output_path}", pattern: "*.csv", mode: 'copy'
+#!/usr/bin/env nextflow
+nextflow.enable.dsl=2
 
-    input:
-    val number
+workflow {
 
-    output:
-    path "*.csv" 
+    def instances = Channel.from(1..params.n_injections) 
 
-    scratch "${params.pr1.tmp_dir}"
-
-    script:
-    """
-    python3.6 ${projectDir}/test.py  --file ${params.pr1.inputs} --num $number
-    """
+    instances
+        .map { injection_number -> workflow_instance(injection_number) }
 }
 
+workflow_instance(injection_number) {
 
-workflow{
-    numbers = Channel.from(0..99)
-    pr1_out = pr1(numbers)
+    injection_setup(injection_number)
 
-    pr1_out.view()
+    fold_par(injection_number) &
+
+    def peasoup_channel = Channel
+        .from(0..(params.n_downsamp - 1)) 
+        .map { tscrunch -> [injection_number, tscrunch] } 
+
+    peasoup(peasoup_channel)
+
+    candidate_filter(injection_number)
+
+    fold_cand(injection_number)
 }

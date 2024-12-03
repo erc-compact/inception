@@ -12,22 +12,39 @@ from inception.injector.io_tools import FilterbankReader
 
 
 class FoldScoreExec(PipelineTools):
-    def __init__(self, fb, search_args, injection_report, fold_cands, par_dir, ncpus):
+    def __init__(self, mode, search_args, out_dir, injection_number, ncpus):
         super().__init__(search_args)
         self.work_dir = os.getcwd()
-
-        self.fb = fb
+        self.mode = mode
         self.ncpus = ncpus
-        self.par_dir = par_dir
+        self.out_dir = out_dir
+        self.injection_number = injection_number
 
+        filterbank, injection_report, cand_file = self.get_inputs()
+        self.fb = filterbank
         self.inj_report = self.parse_JSON(injection_report)
-        if fold_cands:
-            self.fold_cands = pd.read_csv(fold_cands)
+        self.fold_cands = cand_file
 
         self.template = "/home/psr/software/PulsarX/include/template/meerkat_fold.template"
         self.zap_string = self.create_zap_sting()
         self.beam_tag = self.get_beam_tag()
-                
+
+    def get_inputs(self):
+        results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
+        for filename in os.listdir(results_dir):
+            if f'_{self.data_ID}_' in filename:
+                subprocess.run(f"rsync -Pav {filename} {self.work_dir}", shell=True)
+                filterbank = f'{self.work_dir}/{Path(filename).name}'
+            elif 'report' in filename:
+                injection_report = filename
+
+        if self.mode == 'cand':
+            cand_file = pd.read_csv(f'{results_dir}/good_cands_to_fold_with_beam.csv')
+        else:
+            cand_file = ''
+        
+        return filterbank, injection_report, cand_file
+            
     def cand_cutoffs(self):
 
         def period_parse_cuts(cuts, tobs):
@@ -159,7 +176,7 @@ class FoldScoreExec(PipelineTools):
         fast_nbins = self.fold_args.get('fast_nbins', 64)
         slow_nbins = self.fold_args.get('slow_nbins', 128)
 
-        par_file = f"{self.par_dir}/{psr_id}.par"
+        par_file =  f'{self.out_dir}/inj_{self.injection_number:06}/inj_pulsars/{psr_id}.par'
 
         cmd = f"psrfold_fil2 --dmboost 250 --plotx -v --nosearch --parfile {par_file} -n {nsubband} {self.beam_tag} " \
             f"-b {fast_nbins} --nbinplan 0.1 {slow_nbins} --template {self.template} --clfd 8 -L {self.fold_args['subint_length']} --fillPatch rand " \
@@ -188,26 +205,43 @@ class FoldScoreExec(PipelineTools):
         cmd = f"python2 {pics_code} --in_path={self.work_dir} --model_dir={model_dir}"
         subprocess.run(cmd, shell=True)        
 
-    def collect_results(self):
-        pass
+    def run_cmd(self):
+        if self.mode == 'par':
+            self.fold_par_pulsars()
+        elif self.mode == 'cand':
+            self.fold_inj_cands()
+
+        self.pics_score()
+
+    def transfer_products(self):
+        results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
+        if self.mode == 'par':
+            par_dir = f'{results_dir}/inj_pulsars'
+            subprocess.run(f"rsync -Pav {self.work_dir}/*.png {par_dir}", shell=True)
+            subprocess.run(f"rsync -Pav {self.work_dir}/*.ar {par_dir}", shell=True)
+            subprocess.run(f"rsync -Pav {self.work_dir}/*.cands {par_dir}", shell=True)
+            subprocess.run(f"rsync -Pav {self.work_dir}/pics_scores.txt {par_dir}", shell=True)
+
+        elif self.mode == 'cand':
+            cand_dir = f'{results_dir}/inj_cands'
+            os.mkdir(cand_dir)
+            subprocess.run(f"rsync -Pav {self.work_dir}/*.png {cand_dir}", shell=True)
+            subprocess.run(f"rsync -Pav {self.work_dir}/*.ar {cand_dir}", shell=True)
+            subprocess.run(f"rsync -Pav {self.work_dir}/*.cands {cand_dir}", shell=True)
+            subprocess.run(f"rsync -Pav {self.work_dir}/*.candfile {cand_dir}", shell=True)
+            subprocess.run(f"rsync -Pav {self.work_dir}/pics_scores.txt {cand_dir}", shell=True)
 
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(prog='candidate folder for offline injection pipeline',
                                      epilog='Feel free to contact me if you have questions - rsenzel@mpifr-bonn.mpg.de')
-    parser.add_argument('--fb', metavar='file', required=True,  help='filterbank(s) to fold')
+    parser.add_argument('--mode', metavar='str', required=True,  help='which mode to fold')
     parser.add_argument('--search_args', metavar='file', required=True, help='JSON file with search parameters')
-    parser.add_argument('--injection_report', metavar='file', required=True, help='JSON file with inject pulsar records')
-    parser.add_argument('--fold_cands', metavar='file', required=False, default='', help='csv file with good_cands_to_fold_with_beam')
-    parser.add_argument('--par_dir', metavar='dir', required=False, default='', help='directory with injected pulsar parfiles')
+    parser.add_argument('--injection_number', metavar='int', required=True, type=int, help='injection process number')
+    parser.add_argument('--out_dir', metavar='dir', required=True, help='output directory')
     parser.add_argument('--ncpus', metavar='int', type=int, required=True, help='number of cpus to use')
     args = parser.parse_args()
 
-    fold_exec = FoldScoreExec(args.fb, args.search_args, args.injection_report, args.fold_cands, args.par_dir, args.ncpus)
-
-    if args.fold_cands:
-        fold_exec.fold_inj_cands()
-    elif args.par_dir:
-        fold_exec.fold_par_pulsars()
-
-    fold_exec.pics_score()
+    fold_exec = FoldScoreExec(args.mode, args.search_args, args.out_dir, args.injection_number, args.ncpus)
+    fold_exec.run_cmd()
+    fold_exec.transfer_products()
