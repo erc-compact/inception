@@ -1,109 +1,226 @@
 nextflow.enable.dsl=2
 
-process injection_setup {
-    label "injection_setup"
+process injection {
+    label "injection"
+    container "${params.injection_image}"
 
     input:
     val injection_number
 
-    scratch "${params.injection_setup.tmp_dir}/inj_${injection_number}"
+    output:
+    val injection_number
+
+    scratch "/tmp/rsenzel"
 
     script:
     """
+    mkdir -p /tmp/rsenzel
 
-    command_inj="python3 ${projectDir}/pipeline_injector.py"
-    inputs_inj="--search_args=${params.search_params} --injection_file=${params.injection_plan} --data_dir=${params.data_dir} --out_dir=${params.output_dir} --injection_number=${injection_number} --ephem=${params.ephem} --ncpus=${task.cpus}"
+    python3 ${projectDir}/pipeline_injector.py --search_args=${params.search_params} --injection_file=${params.injection_plan} --data_dir=${params.data_dir} --out_dir=${params.output_dir} --injection_number=${injection_number} --ephem=${params.ephem} --ncpus=${task.cpus}
     
-    ${params.injection_setup.injection_image} $command_inj $inputs_inj
+    """
+}
 
+process filtool {
+    label "filtool"
+    container "${params.filtool_image}"
 
-    command_fil="python3.6 ${projectDir}/pipeline_filtool.py"
-    inputs_fil="--injection_number=${injection_number} --search_args=${params.search_params} --out_dir=${params.output_dir}  --ncpus=${task.cpus}"
+    input:
+    val injection_number
 
-    ${params.injection_setup.filtool_image} bash -c "
-        export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/software/PulsarX/src/ymw16/.libs;
-        export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda-10.2/targets/x86_64-linux/lib;
-        export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/lib;
-        $command_fil $inputs_fil"
+    output:
+    val injection_number
+
+    scratch "/tmp/rsenzel"
+
+    script:
+    """
+    mkdir -p /tmp/rsenzel
+
+    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/software/PulsarX/src/ymw16/.libs;
+    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda-10.2/targets/x86_64-linux/lib;
+    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/lib;
+    python3.6 ${projectDir}/pipeline_filtool.py --injection_number=${injection_number} --search_args=${params.search_params} --out_dir=${params.output_dir}  --ncpus=${task.cpus}
 
     """
 }
 
 process fold_par {
     label "fold_par"
+    container "${params.fold_par_image}"
 
     input:
     val injection_number
 
-    scratch "${params.fold_par.tmp_dir}/inj_${injection_number}"
+    output:
+    val injection_number
+
+    scratch "/tmp/rsenzel"
 
     script:
     """
+    mkdir -p /tmp/rsenzel
+    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/software/PulsarX/src/ymw16/.libs;
+    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda-10.2/targets/x86_64-linux/lib;
+    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/lib;
 
-    command="python3.6 ${projectDir}/pipeline_fold.py"
-    inputs="--mode=par --search_args=${params.search_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}"
+    python3.6 ${projectDir}/pipeline_fold.py --mode=par --search_args=${params.search_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
 
-    ${params.fold_par.image} $command $inputs
     """
 }
 
-process peasoup {
-    label "peasoup"
+process peasoup0 {
+    label "peasoup0"
+    container "${params.peasoup_image}"
 
     input:
-    tuple val(injection_number), val(tscrunch)
+    val injection_number
+    // tuple val(injection_number), val(tscrunch)
+    // val tscrunch
 
-    scratch "${params.peasoup.tmp_dir}/inj_${injection_number}_${tscrunch}"
+    output:
+    val injection_number
+
+    scratch "/tmp/rsenzel"
 
     script:
     """
+    mkdir -p /tmp/rsenzel
 
-    command="python3.6 ${projectDir}/pipeline_peasoup.py"
-    inputs="--tscrunch_index=${tscrunch} --search_args=${params.search_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}"
+    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/software/PulsarX/src/ymw16/.libs;
+    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda-10.2/targets/x86_64-linux/lib;
+    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/lib;
+    python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=0 --search_args=${params.search_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}
+    inputs=""
 
-    ${params.peasoup.image} bash -c "
-        export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/software/PulsarX/src/ymw16/.libs;
-        export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda-10.2/targets/x86_64-linux/lib;
-        export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/lib;
-        $command $inputs"
+    """
+}
+
+process peasoup1 {
+    label "peasoup1"
+    container "${params.peasoup_image}"
+
+    input:
+    val injection_number
+    // tuple val(injection_number), val(tscrunch)
+    // val tscrunch
+
+    output:
+    val injection_number
+
+    scratch "/tmp/rsenzel"
+
+    script:
+    """
+    mkdir -p /tmp/rsenzel
+
+    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/software/PulsarX/src/ymw16/.libs;
+    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda-10.2/targets/x86_64-linux/lib;
+    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/lib;
+    python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=1 --search_args=${params.search_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}
+    inputs=""
+
+    """
+}
+
+process peasoup2 {
+    label "peasoup2"
+    container "${params.peasoup_image}"
+
+    input:
+    val injection_number
+    // tuple val(injection_number), val(tscrunch)
+    // val tscrunch
+
+    output:
+    val injection_number
+
+    scratch "/tmp/rsenzel"
+
+    script:
+    """
+    mkdir -p /tmp/rsenzel
+
+    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/software/PulsarX/src/ymw16/.libs;
+    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda-10.2/targets/x86_64-linux/lib;
+    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/lib;
+    python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=2 --search_args=${params.search_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}
+    inputs=""
+
+    """
+}
+
+process peasoup3 {
+    label "peasoup3"
+    container "${params.peasoup_image}"
+
+    input:
+    val injection_number
+    // tuple val(injection_number), val(tscrunch)
+    // val tscrunch
+
+    output:
+    val injection_number
+
+    scratch "/tmp/rsenzel"
+
+    script:
+    """
+    mkdir -p /tmp/rsenzel
+
+    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/software/PulsarX/src/ymw16/.libs;
+    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda-10.2/targets/x86_64-linux/lib;
+    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/lib;
+    python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=3 --search_args=${params.search_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}
+    inputs=""
 
     """
 }
 
 process candidate_filter {
     label "candidate_filter"
+    container "${params.candidate_filter_image}"
 
     input:
     val injection_number
 
-    scratch "${params.candidate_filter.tmp_dir}/inj_${injection_number}"
+    output:
+    val injection_number
+    
+    scratch "/tmp/rsenzel"
 
     script:
     """
+    mkdir -p /tmp/rsenzel
 
-    command="python3.6 ${projectDir}/pipeline_candidate_filter.py"
-    inputs="--search_args=${params.search_params} --data_dir=${params.data_dir} --out_dir=${params.output_dir}  --injection_number=${injection_number}"
-
-    ${params.candidate_filter.image} $command $inputs
-
+    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/software/PulsarX/src/ymw16/.libs;
+    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda-10.2/targets/x86_64-linux/lib;
+    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/lib;
+    python3.6 ${projectDir}/pipeline_candidate_filter.py --search_args=${params.search_params} --data_dir=${params.data_dir} --out_dir=${params.output_dir} --injection_number=${injection_number}
+    
     """
 }
 
 process fold_cand {
     label "fold_cand"
+    container "${params.fold_cand_image}"
 
     input:
     val injection_number
 
-    scratch "${params.fold_cand.tmp_dir}/inj_${injection_number}"
+    output:
+    val injection_number
+
+    scratch "/tmp/rsenzel"
 
     script:
     """
+    mkdir -p /tmp/rsenzel
 
-    command="python3.6 ${projectDir}/pipeline_candidate_filter.py"
-    inputs="--mode=cand --search_args=${params.search_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}"
-
-    ${params.fold_cand.image} $command $inputs
+    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/software/PulsarX/src/ymw16/.libs;
+    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda-10.2/targets/x86_64-linux/lib;
+    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/lib;
+    python3.6 ${projectDir}/pipeline_fold.py --mode=cand --search_args=${params.search_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
 
     """
 }

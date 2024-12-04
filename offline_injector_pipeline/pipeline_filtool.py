@@ -6,6 +6,7 @@ from pathlib import Path
 
 from pipeline_tools import PipelineTools
 
+
 class FiltoolExec(PipelineTools):
     def __init__(self, injection_number, search_args, out_dir, ncpus):
         super().__init__(search_args)
@@ -21,6 +22,7 @@ class FiltoolExec(PipelineTools):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
         for filename in os.listdir(results_dir):
             if f'_{self.data_ID}_' in filename:
+                subprocess.run(f"rsync -Pav {results_dir}/{filename} {self.work_dir}", shell=True)
                 return f'{self.work_dir}/{Path(filename).name}'
 
     def define_defaults(self):

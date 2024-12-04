@@ -12,7 +12,8 @@ class PeasoupExec(PipelineTools):
     def __init__(self, tscrunch_index, search_args, out_dir, injection_number, n_nearest=-1):
         super().__init__(search_args)
         self.work_dir = os.getcwd()
-        self.tscrunch = tscrunch_index
+        self.tscrunch_index = int(tscrunch_index)
+        self.tscrunch = self.get_tscrunch()
         self.out_dir = out_dir
         self.injection_number = injection_number
         self.n_nearest = n_nearest
@@ -20,17 +21,21 @@ class PeasoupExec(PipelineTools):
         self.fb, injection_report = self.get_inputs()
         self.inj_report = self.parse_JSON(injection_report)
         self.gulp_size = self.get_gulp_size()
+
+    def get_tscrunch(self):
+        DD_plan = self.create_DDplan()
+        return [dm_range.tscrunch for dm_range in DD_plan][self.tscrunch_index]
         
     def get_inputs(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
         for filename in os.listdir(results_dir):
             if 'report' in filename:
-                injection_report = filename
+                injection_report = f'{results_dir}/{filename}'
 
         process_dir = f'{results_dir}/processing'
         for filename in os.listdir(process_dir):
-            if filename.endswith(f'{self.tscrunch+1}.fil'):
-                subprocess.run(f"rsync -Pav {filename} {self.work_dir}", shell=True)
+            if filename.endswith(f'{self.tscrunch_index+1}.fil'):
+                subprocess.run(f"rsync -Pav {process_dir}/{filename} {self.work_dir}", shell=True)
                 filterbank = filename
         
         return filterbank, injection_report
@@ -142,7 +147,7 @@ class PeasoupExec(PipelineTools):
 
     def transfer_products(self):
         DD_plan = self.create_DDplan()
-        xml_name = [f'overview_dm_{dm_range.low_dm:.6f}_{dm_range.high_dm:.6f}.xml' for dm_range in DD_plan][self.tscrunch]
+        xml_name = [f'overview_dm_{dm_range.low_dm:.6f}_{dm_range.high_dm:.6f}.xml' for dm_range in DD_plan][self.tscrunch_index]
 
         inj_ID = self.inj_report['injection']['ID']
         xml_name_new = f'{self.data_ID}_{inj_ID}_{xml_name}'

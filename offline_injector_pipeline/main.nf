@@ -1,27 +1,37 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl=2
 
-workflow {
+include { injection } from './processes'
+include { filtool } from './processes'
+include { fold_par } from './processes'
+include { peasoup0 } from './processes'
+include { peasoup1 } from './processes'
+include { peasoup2 } from './processes'
+include { peasoup3 } from './processes'
+include { candidate_filter } from './processes'
+include { fold_cand } from './processes'
 
-    def instances = Channel.from(1..params.n_injections) 
 
-    instances
-        .map { injection_number -> workflow_instance(injection_number) }
+workflow injection_pipeline {
+    take:
+    injection_number
+
+    main:
+    c0 = injection(injection_number)
+    c1 = filtool(c0)
+    c2 = fold_par(c1)
+    c3 = peasoup3(c2)
+    c4 = peasoup2(c3)
+    c5 = peasoup1(c4)
+    c6 = peasoup0(c5)
+    c7 = candidate_filter(c6)
+    c8 = fold_cand(c7)
 }
 
-workflow_instance(injection_number) {
+workflow {
 
-    injection_setup(injection_number)
+    injection_range = Channel.from(1..params.n_injections)
 
-    fold_par(injection_number) &
-
-    def peasoup_channel = Channel
-        .from(0..(params.n_downsamp - 1)) 
-        .map { tscrunch -> [injection_number, tscrunch] } 
-
-    peasoup(peasoup_channel)
-
-    candidate_filter(injection_number)
-
-    fold_cand(injection_number)
+    injection_pipeline(injection_range)
+    
 }

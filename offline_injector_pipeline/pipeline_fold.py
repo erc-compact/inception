@@ -33,13 +33,13 @@ class FoldScoreExec(PipelineTools):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
         for filename in os.listdir(results_dir):
             if f'_{self.data_ID}_' in filename:
-                subprocess.run(f"rsync -Pav {filename} {self.work_dir}", shell=True)
+                subprocess.run(f"cp {results_dir}/{filename} {self.work_dir}", shell=True)
                 filterbank = f'{self.work_dir}/{Path(filename).name}'
             elif 'report' in filename:
-                injection_report = filename
+                injection_report = f'{results_dir}/{filename}'
 
         if self.mode == 'cand':
-            cand_file = pd.read_csv(f'{results_dir}/good_cands_to_fold_with_beam.csv')
+            cand_file = pd.read_csv(f'{results_dir}/processing/good_cands_to_fold_with_beam.csv')
         else:
             cand_file = ''
         
@@ -211,25 +211,25 @@ class FoldScoreExec(PipelineTools):
         elif self.mode == 'cand':
             self.fold_inj_cands()
 
-        self.pics_score()
+        # self.pics_score()
 
     def transfer_products(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
         if self.mode == 'par':
             par_dir = f'{results_dir}/inj_pulsars'
-            subprocess.run(f"rsync -Pav {self.work_dir}/*.png {par_dir}", shell=True)
-            subprocess.run(f"rsync -Pav {self.work_dir}/*.ar {par_dir}", shell=True)
-            subprocess.run(f"rsync -Pav {self.work_dir}/*.cands {par_dir}", shell=True)
-            subprocess.run(f"rsync -Pav {self.work_dir}/pics_scores.txt {par_dir}", shell=True)
+            subprocess.run(f"cp {self.work_dir}/*.png {par_dir}", shell=True)
+            subprocess.run(f"cp {self.work_dir}/*.ar {par_dir}", shell=True)
+            subprocess.run(f"cp {self.work_dir}/*.cands {par_dir}", shell=True)
+            # subprocess.run(f"cp {self.work_dir}/pics_scores.txt {par_dir}", shell=True)
 
         elif self.mode == 'cand':
             cand_dir = f'{results_dir}/inj_cands'
             os.mkdir(cand_dir)
-            subprocess.run(f"rsync -Pav {self.work_dir}/*.png {cand_dir}", shell=True)
-            subprocess.run(f"rsync -Pav {self.work_dir}/*.ar {cand_dir}", shell=True)
-            subprocess.run(f"rsync -Pav {self.work_dir}/*.cands {cand_dir}", shell=True)
-            subprocess.run(f"rsync -Pav {self.work_dir}/*.candfile {cand_dir}", shell=True)
-            subprocess.run(f"rsync -Pav {self.work_dir}/pics_scores.txt {cand_dir}", shell=True)
+            subprocess.run(f"cp {self.work_dir}/*.png {cand_dir}", shell=True)
+            subprocess.run(f"cp {self.work_dir}/*.ar {cand_dir}", shell=True)
+            subprocess.run(f"cp {self.work_dir}/*.cands {cand_dir}", shell=True)
+            subprocess.run(f"cp {self.work_dir}/*.candfile {cand_dir}", shell=True)
+            # subprocess.run(f"cp {self.work_dir}/pics_scores.txt {cand_dir}", shell=True)
 
 
 if __name__=='__main__':

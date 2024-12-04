@@ -23,7 +23,7 @@ class CandExec(PipelineTools):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
         for filename in os.listdir(results_dir):
             if 'report' in filename:
-                return self.parse_JSON(filename)
+                return self.parse_JSON(f'{results_dir}/{filename}')
     
     def create_XML_list(self):
         ddplan = self.create_DDplan()
@@ -62,7 +62,7 @@ class CandExec(PipelineTools):
     def transfer_products(self):
         def get_beam_name(file_path):
             path_obj = Path(file_path)
-            if path_obj.stem.split('_')[0] == 'data':
+            if path_obj.stem.split('_')[0] != 'overview':
                 return re.search(r'[ci]fbf\d{5}', self.inj_report['injection']['fb']).group()
             else:
                 return path_obj.parent.stem 

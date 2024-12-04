@@ -6,7 +6,7 @@ import numpy as np
 from pathlib import Path
 
 from pipeline_tools import PipelineTools
-from inception.injector.io_tools import merge_filterbanks
+from inception.injector.io_tools import merge_filterbanks, print_exe
 
 
 class InjectorSetup(PipelineTools):
@@ -28,10 +28,10 @@ class InjectorSetup(PipelineTools):
         self.injected_params = self.parse_JSON(inject_file)
 
     def resolve_seed(self):
-        self.seed = self.rng.integers(1e11, 1e12)
+        self.seed = int(self.rng.integers(1e11, 1e12))
 
-        self.seeded_inject_file = f'{self.work_dir}/{Path(self.inject_file_path)}'
-        self.injected_params['psr_global']['seed'] = self.seed
+        self.seeded_inject_file = f'{self.work_dir}/{Path(self.inject_file_path).name}'
+        self.injected_params['psr_global']['global_seed'] = self.seed
         with open(self.seeded_inject_file, 'w') as file:
             json.dump(self.injected_params, file, indent=4)
         
@@ -59,11 +59,15 @@ class InjectorSetup(PipelineTools):
         merge_filterbanks(new_data_paths, self.merged_fb)
 
     def run_injector(self, ephem, ncpus):
-        script_path = 'inception/injector'
-        inputs = f"--signal={self.seeded_inject_file} --fb={self.merged_fb} --ephem={ephem} --output={self.work_dir} --ncpu={ncpus}"
+        subprocess.run(f"rsync -Pav {ephem} {self.work_dir}", shell=True)
+        
+        script_path = '/hercules/scratch/rsenzel/offline_injections/injection_scripts/inception/injector'
+        inputs = f"--signal={self.seeded_inject_file} --fb={self.merged_fb} --ephem=./de440.bsp --output={self.work_dir} --ncpu={ncpus}"
         cmd = f"python3 {script_path}/SCRIPT_inject_pulsars.py {inputs}"
 
+        print_exe('starting injection')
         subprocess.run(cmd, shell=True)
+        print_exe('injection complete')
 
     def transfer_products(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
@@ -71,10 +75,10 @@ class InjectorSetup(PipelineTools):
         inj_ID = self.injected_params['psr_global']['injection_id']
         injected_fb = f'{self.work_dir}/{Path(self.merged_fb).stem}_{inj_ID}.fil'
         injection_report = f'{self.work_dir}/report_{inj_ID}_{self.seed}.json'
-
+        
         os.mkdir(results_dir)
         os.mkdir(par_dir)
-        subprocess.run(f"rsync -Pav {self.merged_fb} {results_dir}", shell=True)
+        # subprocess.run(f"rsync -Pav {self.merged_fb} {results_dir}", shell=True)
         subprocess.run(f"rsync -Pav {injected_fb} {results_dir}", shell=True)
         subprocess.run(f"rsync -Pav {injection_report} {results_dir}", shell=True)
         subprocess.run(f"rsync -Pav {self.work_dir}/*.par {par_dir}", shell=True)
