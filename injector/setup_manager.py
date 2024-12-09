@@ -113,8 +113,8 @@ class SetupManager:
     def resolve_random(self, pulsar_pars):
         seed = pulsar_pars.get('seed', self.seed)
         pulsar_pars['seed'] = seed
-        for key, value in pulsar_pars.items():
-            rng = np.random.default_rng(seed)
+        for i, (key, value) in enumerate(pulsar_pars.items()):
+            rng = np.random.default_rng(seed+i)
             if type(value) == dict:
                 units = value.get('units', 1)
                 if units == 'T_obs_hour':
