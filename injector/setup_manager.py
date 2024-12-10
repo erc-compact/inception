@@ -113,8 +113,8 @@ class SetupManager:
     def resolve_random(self, pulsar_pars):
         seed = pulsar_pars.get('seed', self.seed)
         pulsar_pars['seed'] = seed
-        for i, (key, value) in enumerate(pulsar_pars.items()):
-            rng = np.random.default_rng(seed+i)
+        for key, value in pulsar_pars.items():
+            
             if type(value) == dict:
                 units = value.get('units', 1)
                 if units == 'T_obs_hour':
@@ -124,16 +124,21 @@ class SetupManager:
 
                 if value['rng'] == 'choice':
                     p = value.get('weights', np.ones_like(value['samples']))
+                    rng = np.random.default_rng(seed+0)
                     pulsar_pars[key] = rng.choice(a=value['samples'], p=p/np.sum(p))
                 elif value['rng'] == 'uniform':
+                    rng = np.random.default_rng(seed+1)
                     pulsar_pars[key] = rng.uniform(low=value['low']*units, high=value['high']*units)
                 elif value['rng'] == 'loguniform':
+                    rng = np.random.default_rng(seed+2)
                     pulsar_pars[key] = np.exp(rng.uniform(low=np.log(value['low']*units), high=np.log(value['high']*units)))
                 elif value['rng'] == 'normal':
+                    rng = np.random.default_rng(seed+3)
                     pulsar_pars[key] = rng.normal(loc=value['mean']*units, scale=value['sigma']*units)
 
                 elif value['rng'] == 'split_uniform':
                     p = value.get('weights', [1, 1])
+                    rng = np.random.default_rng(seed+4)
                     which_range = rng.choice(a=[0, 1], p=p/np.sum(p))
                     val_range = value['lower_range'] if which_range == 0 else value['upper_range']
                     pulsar_pars[key] = rng.uniform(low=val_range[0]*units, high=val_range[1]*units)
