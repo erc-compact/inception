@@ -1,6 +1,7 @@
 read tutorial.ipynb
 
 ## Recently added 
+- inject using acceleration/jerk
 - intra-channel DM smearing
 - double pulsar injector
 - global pulsar parameters
@@ -21,6 +22,5 @@ read tutorial.ipynb
   - single pulse
   - DMX
   - PMRA, PMDEC and parallax
-  - add mask to injected signal in time/frequency
  
 Let me know if you would like any other features, or if you want to move a nonpriority feature into priority.

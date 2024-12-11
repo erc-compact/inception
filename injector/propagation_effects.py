@@ -9,7 +9,7 @@ from scipy.interpolate import interp1d
 
 
 class PropagationEffects:
-    def __init__(self, obs, pulsar_pars, profile_length, period, spectra):
+    def __init__(self, obs, pulsar_pars, profile_length=1, period=0, spectra=0):
         self.ID = pulsar_pars['ID']
         self.obs = obs
         self.pulsar_pars = pulsar_pars

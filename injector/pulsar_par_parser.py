@@ -21,7 +21,7 @@ class PulsarParParser:
         parser = argparse.ArgumentParser(description='Pulsar parameters', formatter_class=CustomFormatter)
         parser.add_argument('--ID', metavar='(str)', required=True, type=str, help='Identifier for injected pulsar')
         parser.add_argument('--seed', metavar='(positive int)', required=False, default=0, type=int, help='Random number generator seed for pulsar')
-        parser.add_argument('--create_parfile', metavar='(0 or 1)', required=False, default=1, type=int, help="If '1', then create a TEMPO style parfile for injected pulsar")
+        parser.add_argument('--create_parfile', metavar='(0 or 1)', required=False, default='par', type=str, help="If '1', then create a TEMPO style parfile for injected pulsar")
         
         parser.add_argument('--RAJ', metavar='(hh:mm:ss)', required=False, type=str, help='Right Ascension (J2000) (default: beam centre)')
         parser.add_argument('--DECJ', metavar='(dd:mm:ss)', required=False, type=str, help='Declination (J2000) (default: beam centre)')
@@ -30,9 +30,13 @@ class PulsarParParser:
         parser.add_argument('--beam_fwhm', metavar='(arcmin)', required=False, default=0, type=float, help='FWHM of injected beam, required for (separation, position_angle)')
 
         parser.add_argument('--PEPOCH', metavar='(MJD)', required=False, type=float, help='Reference epoch for pulsar spin values (default: obseravtion start, barycentre)')
-        parser.add_argument('--FX', metavar='(Hz)', required=False, type=float, help='Xth frequency derivative of pulsar spin')
-        parser.add_argument('--PX', metavar='(sec)', required=False, type=float, help='Xth period derivative of pulsar spin')
+        parser.add_argument('--FX', metavar='(Hz)', required=False, type=list, help='Xth frequency derivative of pulsar spin')
+        parser.add_argument('--PX', metavar='(sec)', required=False, type=list, help='Xth period derivative of pulsar spin')
+        parser.add_argument('--AX', metavar='(m/s^(2+X))', required=False, type=list, help='Xth acceleration derivative')
+        parser.add_argument('--presto_z', metavar='(z)', required=False, type=float, help='presto acceleration')
+        parser.add_argument('--presto_w', metavar='(w)', required=False, type=float, help='presto jerk')
         parser.add_argument('--phase_offset', metavar='(phase)', required=False, default=0, type=float, help='Phase offset from PEPOCH')
+
         parser.add_argument('--DM', metavar='(pc/cm^3)', required=False, default=0, type=float, help='Dispersion measure')
         parser.add_argument('--SNR', required=True, type=float, help='Injected signal-to-noise')
         parser.add_argument('--PSD', metavar='(file)', required=False, type=str, help='NumPy .npy file containing a pulsar power spectrum (1D)')
@@ -85,6 +89,7 @@ class PulsarParParser:
             psr_pars = pulsar_pars
 
         FX_list, PX_list = self.get_spin_params(psr_pars)
+        AX_list = self.get_accel(psr_pars)
         RAJ = psr_pars.pop('RAJ', None)
         DECJ = psr_pars.pop('DECJ', None)
         psr_args_list = self.dict_to_args(psr_pars)
@@ -95,9 +100,26 @@ class PulsarParParser:
         clean_psr_pars['DECJ'] = DECJ
         clean_psr_pars['FX'] = FX_list
         clean_psr_pars['PX'] = PX_list
+        clean_psr_pars['AX'] = AX_list
 
         clean_psr_pars = self.calc_binary_pars(clean_psr_pars)
+        clean_psr_pars = self.conv_accel_units(clean_psr_pars)
         self.psr_pars = clean_psr_pars
+    
+    def get_accel(self, pulsar_pars):
+        ID = pulsar_pars['ID']
+        presto_z = self.str2func(pulsar_pars.get('presto_z', 0), 'presto_z', ID, float)
+        presto_w = self.str2func(pulsar_pars.get('presto_w', 0), 'presto_w', ID, float)
+
+        if presto_z or presto_w:
+            accel_vals = ['presto', presto_z, presto_w]
+        else:
+            pattern = re.compile(r'^[A]\d+$')
+            accel_keys = [key for key in pulsar_pars.keys() if pattern.match(key)]
+            accel_keys.sort(key=lambda x: int(x[1:]))
+            accel_vals = [self.str2func(pulsar_pars.get(f'A{i}', 0), accel_keys[i], ID, float) for i in range(int(accel_keys[-1][1:])+1)]
+
+        return accel_vals
         
     @staticmethod
     def spin_pars_converter(spin_values, spin_types):

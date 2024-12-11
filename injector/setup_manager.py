@@ -5,7 +5,10 @@ import numpy as np
 import pandas as pd
 from pathlib import Path 
 import astropy.units as u
+from math import factorial
 from datetime import datetime
+import astropy.constants as const
+from sympy import lambdify, symbols
 
 from .io_tools import FilterbankReader, print_exe
 from .pulsar_par_parser import PulsarParParser
@@ -18,12 +21,12 @@ from .observation import Observation
 class SetupManager:
     def __init__(self, pulsar_data_path, filterbank_path, ephem_path, output_path):
         self.fb = self.get_filterbank(filterbank_path) 
-        self.pulsars = self.get_pulsars(pulsar_data_path)
         self.ephem = self.get_ephem(ephem_path)
         self.output_path = output_path
-
+        self.pulsars = self.get_pulsars(pulsar_data_path)
+        
         self.pulsar_models = self.construct_models()
-        self.parfile_paths = self.create_parfiles()
+        self.parfile_paths = self.create_foldfiles()
         self.mode_resolver()
 
         self.create_injection_report()
@@ -67,9 +70,11 @@ class SetupManager:
         pulsar_clean_list = []
         for pulsar in pulsar_list:
             parser = PulsarParParser(pulsar, global_list)
-            pulsar_clean_list.append(parser.psr_pars)
+            parser_clean = self.conv_accel_units(parser.psr_pars)
+            pulsar_clean_list.append(parser_clean)
 
         pulsar_clean_list = self.double_pulsar(pulsar_clean_list, ID_list)
+        pulsar_clean_list = self.conv_accel_units(pulsar_clean_list)
         
         return pulsar_clean_list
     
@@ -126,26 +131,18 @@ class SetupManager:
                     p = value.get('weights', np.ones_like(value['samples']))
                     rng = np.random.default_rng(seed+0)
                     pulsar_pars[key] = rng.choice(a=value['samples'], p=p/np.sum(p))
+
                 elif value['rng'] == 'uniform':
                     rng = np.random.default_rng(seed+1)
                     pulsar_pars[key] = rng.uniform(low=value['low']*units, high=value['high']*units)
+
                 elif value['rng'] == 'loguniform':
                     rng = np.random.default_rng(seed+2)
                     pulsar_pars[key] = np.exp(rng.uniform(low=np.log(value['low']*units), high=np.log(value['high']*units)))
+
                 elif value['rng'] == 'normal':
                     rng = np.random.default_rng(seed+3)
                     pulsar_pars[key] = rng.normal(loc=value['mean']*units, scale=value['sigma']*units)
-
-                elif value['rng'] == 'split_uniform':
-                    p = value.get('weights', [1, 1])
-                    rng = np.random.default_rng(seed+4)
-                    which_range = rng.choice(a=[0, 1], p=p/np.sum(p))
-                    val_range = value['lower_range'] if which_range == 0 else value['upper_range']
-                    pulsar_pars[key] = rng.uniform(low=val_range[0]*units, high=val_range[1]*units)
-
-                    binary = value.get('binary', [1, 1])
-                    if not binary[which_range]:
-                        pulsar_pars['binary_period'] = 0
 
         return pulsar_pars
 
@@ -171,6 +168,41 @@ class SetupManager:
                 else:
                     sys.exit(f"Invalid double_pulsar ID parameter for pulsar {pulsar_list[i]['ID']}.")
         return pulsar_list
+    
+
+    def conv_accel_units(self, pulsar_pars):
+        if pulsar_pars['AX']:
+            if (pulsar_pars['AX'][0] == 'presto'):
+                _, presto_z, presto_w = pulsar_pars['AX']
+                harmonic = 1
+                reffreq, obs_length = self.get_presto_conv_pars(pulsar_pars, ref='start')
+                accel_presto = presto_z * const.c.value / (harmonic * reffreq * obs_length**2)
+                jerk_presto = presto_w * const.c.value / (harmonic * reffreq * obs_length**3)
+
+                if jerk_presto:
+                    pulsar_pars['AX'] = [accel_presto, jerk_presto]
+                else:
+                    pulsar_pars['AX'] = [accel_presto]
+
+        return pulsar_pars
+    
+    def get_presto_conv_pars(self, pulsar_pars, ref):   
+        FX_list = pulsar_pars['FX']
+        t = symbols('t')
+        FX = symbols([f'F{x}' for x in range(len(FX_list))])
+        freq_derivs = dict(zip(FX, FX_list))
+
+        spin_symbolic = sum([FX[n]*t**n/factorial(n) for n in range(len(FX_list))])
+        spin_func = lambdify(t, spin_symbolic.subs(freq_derivs))
+
+        obs = Observation(self.fb, self.ephem, pulsar_pars, generate=False) 
+        pepoch = pulsar_pars['PEPOCH'] if pulsar_pars['PEPOCH'] else obs.obs_start_bary
+        spin_ref = (obs.obs_start_bary - pepoch) * u.day.to(u.s)
+        self.period = 1/spin_func(spin_ref)
+        if ref == 'start':
+            return spin_func(spin_ref), obs.obs_len
+        if ref == 'mid':
+            return spin_func(spin_ref+obs.obs_len/2), obs.obs_len
 
     @staticmethod   
     def get_ephem(ephem):
@@ -192,52 +224,82 @@ class SetupManager:
         ra_str = '{}{:02.0f}:{:02.0f}:{:07.4f}'.format(ra_sign, *np.abs(ra_hms))
         dec_str = '{}{:02.0f}:{:02.0f}:{:07.4f}'.format(dec_sign, *np.abs(dec_dms))
         return ra_str, dec_str
+    
+    def create_parfile(self, i):
+        pulsar_model = self.pulsar_models[i]
+        parfile_params = {'PSR': f'0000+{i+1:04}i'}
+        parfile_params['RAJ'], parfile_params['DECJ'] = self.source2str(pulsar_model.obs.source)
+        # parfile_params['POSEPOCH'] = pulsar_model.posepoch
 
-    def create_parfiles(self):
+        parfile_params['DM'] = pulsar_model.prop_effect.DM
+
+        parfile_params['PEPOCH'] = pulsar_model.pepoch
+        for i, freq_deriv in enumerate(pulsar_model.FX_list):
+            if freq_deriv != 0:
+                parfile_params[f'F{i}'] = str(freq_deriv).replace('e', 'D')
+            
+        # ephem = Path(pulsar_model.obs.ephem).stem.upper()
+        # parfile_params['EPHEM'] = ephem if (ephem != 'BUILTIN') else 'DE440'
+        parfile_params['EPHEM'] = 'DE421' # some singularities seg fault with DE440
+
+        parfile_params['TZRMJD'] = pulsar_model.obs.obs_start_bary
+        parfile_params['TZRFRQ'] = 0
+
+        parfile_params['CLK'] = 'TT(BIPM)'
+        parfile_params['UNITS'] = 'TDB'
+        parfile_params['TIMEEPH'] = 'FB90'
+        parfile_params['T2CMETHOD'] = 'TEMPO'
+        parfile_params['CORRECT_TROPOSPHERE'] = 'N'
+        parfile_params['PLANET_SHAPIRO'] = 'N'
+        parfile_params['DILATEFREQ'] = 'N'
+
+        if pulsar_model.binary.period:
+            parfile_params['BINARY'] = 'BT'
+            parfile_params['T0'] = pulsar_model.binary.T0
+            parfile_params['A1'] = pulsar_model.binary.a1_sini_c
+            parfile_params['PB'] = pulsar_model.binary.period * u.s.to(u.day)
+            parfile_params['ECC'] = pulsar_model.binary.e
+            parfile_params['OM'] =  np.rad2deg(pulsar_model.binary.AoP+pulsar_model.binary.LoAN)
+
+        par_file = pd.Series(parfile_params)
+        par_file_path = self.output_path+f'/{pulsar_model.ID}.par'
+        par_file.to_csv(par_file_path, sep='\t', header=False)
+        return par_file_path
+    
+    def create_psrfold_candfile(self, i):
+        pm = self.pulsar_models[i]
+        if len(pm.FX_list) > 1:
+            F1 = pm.FX_list[1]
+        else:
+            F1 = 0
+
+        if len(pm.AX_list):
+            accel = pm.AX_list[0]
+        else:
+            accel = 0
+
+        cand_file_path = self.output_path+f'/{pm.ID}.candfile'
+        with open(cand_file_path, 'w') as file:
+            file.write("#id DM accel F0 F1 S/N\n")
+            file.write(f"{0} {pm['DM']} {accel} {pm.FX_list[0]} {F1} {pm['SNR']}\n")
+        return cand_file_path
+
+    def create_presto_candfile(self, i):
+        pass
+
+    def create_foldfiles(self):
         parfile_paths = []
         for i in range(len(self.pulsars)):
-            pulsar_model = self.pulsar_models[i]
-            if self.pulsars[i]['create_parfile']:
-                parfile_params = {'PSR': f'0000+{i+1:04}i'}
-
-                parfile_params['RAJ'], parfile_params['DECJ'] = self.source2str(pulsar_model.obs.source)
-                # parfile_params['POSEPOCH'] = pulsar_model.posepoch
-
-                parfile_params['DM'] = pulsar_model.prop_effect.DM
-
-                parfile_params['PEPOCH'] = pulsar_model.pepoch
-                for i, freq_deriv in enumerate(pulsar_model.FX_list):
-                    if freq_deriv != 0:
-                        parfile_params[f'F{i}'] = str(freq_deriv).replace('e', 'D')
-                    
-                # ephem = Path(pulsar_model.obs.ephem).stem.upper()
-                # parfile_params['EPHEM'] = ephem if (ephem != 'BUILTIN') else 'DE440'
-                parfile_params['EPHEM'] = 'DE421' # some singularities seg fault with DE440
-
-                parfile_params['TZRMJD'] = pulsar_model.obs.obs_start_bary
-                parfile_params['TZRFRQ'] = 0
-
-                parfile_params['CLK'] = 'TT(BIPM)'
-                parfile_params['UNITS'] = 'TDB'
-                parfile_params['TIMEEPH'] = 'FB90'
-                parfile_params['T2CMETHOD'] = 'TEMPO'
-                parfile_params['CORRECT_TROPOSPHERE'] = 'N'
-                parfile_params['PLANET_SHAPIRO'] = 'N'
-                parfile_params['DILATEFREQ'] = 'N'
-
-                if pulsar_model.binary.period:
-                    parfile_params['BINARY'] = 'BT'
-                    parfile_params['T0'] = pulsar_model.binary.T0
-                    parfile_params['A1'] = pulsar_model.binary.a1_sini_c
-                    parfile_params['PB'] = pulsar_model.binary.period * u.s.to(u.day)
-                    parfile_params['ECC'] = pulsar_model.binary.e
-                    parfile_params['OM'] =  np.rad2deg(pulsar_model.binary.AoP+pulsar_model.binary.LoAN)
-
-                par_file = pd.Series(parfile_params)
-                par_file_path = self.output_path+f'/{pulsar_model.ID}.par'
-                par_file.to_csv(par_file_path, sep='\t', header=False)
-
-                parfile_paths.append(par_file_path)
+            fold_type = self.pulsars[i]['create_parfile']
+            if (fold_type == 'par') or (fold_type == '1'):
+                fold_file_path = self.create_parfile(i)
+            elif fold_type == 'pulsarx':
+                fold_file_path = self.create_psrfold_candfile(i)
+            elif fold_type == 'presto':
+                fold_file_path = self.create_presto_candfile(i)
+            else:
+                fold_file_path = ''
+            parfile_paths.append(fold_file_path)
 
         return parfile_paths
     

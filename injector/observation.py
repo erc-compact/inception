@@ -24,7 +24,7 @@ class Observation:
 
         self.obs_start_bary = self.topo2bary([self.obs_start])[0]
         if generate:
-            self.prop_effect = PropagationEffects(self, pulsar_pars, 1, '', '')
+            self.prop_effect = PropagationEffects(self, pulsar_pars)
             self.barycentre_delays_interp = self.generate_interp(generate)
 
     def get_pointing_data(self, fb_header, pulsar_pars):

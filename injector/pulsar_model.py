@@ -5,6 +5,7 @@ import pandas as pd
 from pathlib import Path
 import astropy.units as u
 from math import factorial
+import astropy.constants as const
 from sympy import lambdify, symbols
 from scipy.integrate import quad, IntegrationWarning
 from scipy.interpolate import interp1d, RegularGridInterpolator
@@ -24,8 +25,8 @@ class PulsarModel:
         self.get_epochs(pulsar_pars)
         self.PX_list = pulsar_pars['PX']
         self.FX_list = pulsar_pars['FX']
+        self.AX_list = pulsar_pars['AX']
         self.get_spin_functions(pulsar_pars)
-        self.get_period_start()
 
         self.spectra = self.get_spectra(pulsar_pars)
         self.intrinsic_profile_chan = self.get_intrinsic_profile(pulsar_pars)
@@ -66,23 +67,33 @@ class PulsarModel:
         self.spin_ref = spin_ref
         # self.pos_ref = pos_ref
         self.orbit_ref = orbit_ref
-
+    
     def get_spin_functions(self, pulsar_pars):
-        t = symbols('t')
-        FX = symbols([f'F{x}' for x in range(len(self.FX_list))])
+        t, c = symbols('t, c')
+        phase_offset = pulsar_pars['phase_offset']
+        n_freq, n_accel = len(self.FX_list), len(self.AX_list)
+
+        FX = symbols([f'F{x}' for x in range(n_freq)])
         freq_derivs = dict(zip(FX, self.FX_list))
 
-        phase_symbolic = sum([FX[n]*t**(n+1)/factorial(n+1) for n in range(len(self.FX_list))])
-        phase_offset = pulsar_pars['phase_offset']
-        phase_func_abs = lambdify(t, phase_symbolic.subs(freq_derivs))
-        self.phase_func = lambda t: phase_func_abs(t) + phase_offset
-
-        spin_symbolic = sum([FX[n]*t**(n)/factorial(n) for n in range(len(self.FX_list))])
+        spin_symbolic = sum([FX[n]*t**n/factorial(n) for n in range(n_freq)])
         self.spin_func = lambdify(t, spin_symbolic.subs(freq_derivs))
-    
-    def get_period_start(self):
-        T_mid_proper = self.obs.obs_start_bary + self.spin_ref 
-        self.period = 1/self.spin_func(T_mid_proper)
+        self.period = 1/self.spin_func(self.spin_ref)
+
+        if n_accel:
+            AX = symbols([f'A{x}' for x in range(n_accel)])
+            accel_derivs = dict(zip(AX, self.AX_list))
+
+            Vel_symbolic = sum([AX[n]*t**(n+1)/factorial(n+1) for n in range(n_accel)])
+            spin_doppler = spin_symbolic * (1 - Vel_symbolic/c)
+            phase_symbolic = spin_doppler.integrate(t)  
+            phase_func_abs = lambdify([t, c], phase_symbolic.subs(freq_derivs | accel_derivs))
+            self.phase_func = lambda t: phase_func_abs(t, const.c.value) + phase_offset
+
+        else:
+            phase_symbolic = sum([FX[n]*t**(n+1)/factorial(n+1) for n in range(n_freq)])
+            phase_func_abs = lambdify(t, phase_symbolic.subs(freq_derivs))
+            self.phase_func = lambda t: phase_func_abs(t) + phase_offset
 
     def get_spectra(self, pulsar_pars):            
         PSD_file = pulsar_pars['PSD']
