@@ -74,7 +74,6 @@ class SetupManager:
             pulsar_clean_list.append(parser_clean)
 
         pulsar_clean_list = self.double_pulsar(pulsar_clean_list, ID_list)
-        pulsar_clean_list = self.conv_accel_units(pulsar_clean_list)
         
         return pulsar_clean_list
     
