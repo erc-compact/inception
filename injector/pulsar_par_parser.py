@@ -115,9 +115,11 @@ class PulsarParParser:
         else:
             pattern = re.compile(r'^[A]\d+$')
             accel_keys = [key for key in pulsar_pars.keys() if pattern.match(key)]
-            accel_keys.sort(key=lambda x: int(x[1:]))
-            accel_vals = [self.str2func(pulsar_pars.get(f'A{i}', 0), accel_keys[i], ID, float) for i in range(int(accel_keys[-1][1:])+1)]
-
+            if accel_keys:
+                accel_keys.sort(key=lambda x: int(x[1:]))
+                accel_vals = [self.str2func(pulsar_pars.get(f'A{i}', 0), accel_keys[i], ID, float) for i in range(int(accel_keys[-1][1:])+1)]
+            else:
+                accel_vals = []
         return accel_vals
         
     @staticmethod
