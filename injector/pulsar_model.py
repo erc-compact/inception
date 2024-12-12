@@ -19,6 +19,7 @@ class PulsarModel:
         self.get_mode(pulsar_pars)
         self.ID = pulsar_pars['ID']
         self.seed = pulsar_pars['seed']
+        self.SNR = pulsar_pars['SNR']
         self.obs = obs
         self.binary = binary
         
@@ -163,7 +164,7 @@ class PulsarModel:
         return intrinsic_pulse
     
     def calculate_SNR(self, pulsar_pars, generate):
-        SNR_obs = pulsar_pars['SNR']
+        SNR_obs = self.SNR
         if (not SNR_obs):
             sys.exit(f'SNR value is required for pulsar {self.ID}.')
 
