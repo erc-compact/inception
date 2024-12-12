@@ -284,7 +284,8 @@ class SetupManager:
         return cand_file_path
 
     def create_presto_candfile(self, i):
-        print('Presto .cand file creation not implemented yet.')
+        print('Presto .cand file creation not implemented yet. Creating pulsarX candfile instead...')
+        self.create_psrfold_candfile(i)
 
     def create_foldfiles(self):
         parfile_paths = []
