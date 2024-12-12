@@ -103,7 +103,6 @@ class PulsarParParser:
         clean_psr_pars['AX'] = AX_list
 
         clean_psr_pars = self.calc_binary_pars(clean_psr_pars)
-        clean_psr_pars = self.conv_accel_units(clean_psr_pars)
         self.psr_pars = clean_psr_pars
     
     def get_accel(self, pulsar_pars):
