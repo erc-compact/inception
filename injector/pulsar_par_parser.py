@@ -18,7 +18,7 @@ class PulsarParParser:
         class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter):
             def add_usage(self, usage, actions, groups, prefix=None): pass
 
-        parser = argparse.ArgumentParser(description='Pulsar parameters', formatter_class=CustomFormatter)
+        parser = argparse.ArgumentParser(description='Pulsar parameters in --signal', formatter_class=CustomFormatter)
         parser.add_argument('--ID', metavar='(str)', required=True, type=str, help='Identifier for injected pulsar')
         parser.add_argument('--seed', metavar='(positive int)', required=False, default=0, type=int, help='Random number generator seed for pulsar')
         parser.add_argument('--create_parfile', metavar='(0 or 1)', required=False, default='par', type=str, help="If '1', then create a TEMPO style parfile for injected pulsar")
@@ -40,27 +40,27 @@ class PulsarParParser:
         parser.add_argument('--DM', metavar='(pc/cm^3)', required=False, default=0, type=float, help='Dispersion measure')
         parser.add_argument('--SNR', required=True, type=float, help='Injected signal-to-noise')
         parser.add_argument('--PSD', metavar='(file)', required=False, type=str, help='NumPy .npy file containing a pulsar power spectrum (1D)')
-        parser.add_argument('--spectral_index', required=False, default=0, type=float, help='Spectral index of pulsar')
+        parser.add_argument('--spectral_index', metavar='(-)', required=False, default=0, type=float, help='Spectral index of pulsar')
         parser.add_argument('--duty_cycle', metavar='(phase)', required=False, default=0.1, type=float, help='Duty cycle of default gaussian pulse profile')
         parser.add_argument('--profile', metavar='(file)', required=False, type=str, default='default', help='NumPy .npy or EPN .txt file containing a custom pulsar pulse profile (1D or 2D)')
         parser.add_argument('--micro_structure', metavar='(microsec)', required=False, default=0, type=float, help='Mean timescale of pulse microstructure')
         parser.add_argument('--scattering_time', metavar='(millisec)', required=False, default=0, type=float, help='Scattering timescale due to ISM')
-        parser.add_argument('--scattering_index', required=False, default=-4, type=float, help='Scattering index to describe frequency evolution')
+        parser.add_argument('--scattering_index', metavar='(-)', required=False, default=-4, type=float, help='Scattering index to describe frequency evolution')
         parser.add_argument('--DM_smear', metavar='(0 or 1)', required=False, default=0, type=int, help='Smear the pulse profile due to intra-channel DM smearing')
 
         parser.add_argument('--binary_period', metavar='(hour)', required=False, type=float, help='Period of binary oribit')
         parser.add_argument('--T0', metavar='(MJD)', required=False,  type=float, help='Reference epoch of pulsar periapsis (default: obseravtion start, barycentre)')
-        parser.add_argument('--A1', metavar='(light-sec)', required=False, type=float, help='Projected semi-major orbital axis')
+        parser.add_argument('--x', metavar='(light-sec)', required=False, type=float, help='Projected semi-major orbital axis')
         parser.add_argument('--M1', metavar='(M_sun)', required=False,  type=float, help='Mass of pulsar (default: 1.4)')
         parser.add_argument('--M2', metavar='(M_sun)', required=False, type=float, help='Companion mass')
         parser.add_argument('--inc', metavar='(deg)', required=False, type=float, help='Orbital inclination (default: 90)')
-        parser.add_argument('--ecc', required=False, default=0, type=float, help='Orbital eccentricity')
+        parser.add_argument('--ecc', metavar='(-)', required=False, default=0, type=float, help='Orbital eccentricity')
         parser.add_argument('--AoP', metavar='(deg)', required=False,  default=0, type=float, help='Argument of periapsis')
         parser.add_argument('--LoAN', metavar='(deg)', required=False,  default=0, type=float, help='Longitude of the ascending node')
         parser.add_argument('--double_pulsar', metavar='(ID)', required=False, type=str, help='Make pulsar the companion of pulsar {double_pulsar:ID}')
 
         parser.add_argument('--mode', metavar='(str)', required=False, default='python', type=str, help="Inject using analytical 'python' code or polycos from 'pint'")
-        parser.add_argument('--pint_N', required=False, default=12, type=int, help='Number of coefficients per timestep for polycos generation')
+        parser.add_argument('--pint_N', metavar='(-)', required=False, default=12, type=int, help='Number of coefficients per timestep for polycos generation')
         parser.add_argument('--pint_T', metavar='(min)', required=False, default=5, type=float, help='Timestep for polycos generation')
         parser.add_argument('--polycos', metavar='(file)', required=False, type=str, help='Polycos file defining Pulsar phase. If supplied, Pint will use this file instead of making one.')
 
@@ -204,7 +204,7 @@ class PulsarParParser:
             return pulsar_pars
         period = abs(pulsar_pars['binary_period']) * 3600
 
-        A1 = pulsar_pars['A1']
+        A1 = pulsar_pars['x']
         M1 = pulsar_pars['M1']
         M2 = pulsar_pars['M2']
         inc = pulsar_pars['inc']
@@ -244,7 +244,7 @@ class PulsarParParser:
             sys.exit(f"Error: Pulsar {pulsar_pars['ID']} requires either an A1 or M1, M2 and inc.")
 
         pulsar_pars['binary_period'] = period
-        pulsar_pars['A1'] = abs(A1)
+        pulsar_pars['x'] = abs(A1)
         pulsar_pars['M1'] = abs(M1)
         pulsar_pars['M2'] = abs(M2)
         pulsar_pars['inc'] = inc

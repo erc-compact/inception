@@ -160,7 +160,7 @@ class SetupManager:
                         pulsar_list[i]['M1'] = c_psr['M2']
                         pulsar_list[i]['M2'] = c_psr['M1']
                         pulsar_list[i]['AoP'] = c_psr['AoP'] + 180
-                        pulsar_list[i]['A1'] = PulsarParParser.orbit_par_converter(c_psr['binary_period'], find='A1', 
+                        pulsar_list[i]['x'] = PulsarParParser.orbit_par_converter(c_psr['binary_period'], find='A1', 
                                                                                      M1=c_psr['M2'], M2=c_psr['M1'], inc=c_psr['inc']) 
                     else:
                          sys.exit(f"Only one 'double_pulsar' parameter allowed per binary pulsar pair.")                    
@@ -255,7 +255,7 @@ class SetupManager:
         if pulsar_model.binary.period:
             parfile_params['BINARY'] = 'BT'
             parfile_params['T0'] = pulsar_model.binary.T0
-            parfile_params['A1'] = pulsar_model.binary.a1_sini_c
+            parfile_params['x'] = pulsar_model.binary.a1_sini_c
             parfile_params['PB'] = pulsar_model.binary.period * u.s.to(u.day)
             parfile_params['ECC'] = pulsar_model.binary.e
             parfile_params['OM'] =  np.rad2deg(pulsar_model.binary.AoP+pulsar_model.binary.LoAN)

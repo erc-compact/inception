@@ -18,7 +18,7 @@ class BinaryModel:
             self.I = np.deg2rad(pulsar_pars['inc'])
             self.sini = np.sin(self.I)
 
-            self.a1_sini_c = pulsar_pars['A1'] 
+            self.a1_sini_c = pulsar_pars['x'] 
             self.a = self.get_semi_major(self.period, self.mass_p+self.mass_c) # m
             self.a1 = self.mass_c/(self.mass_p+self.mass_c) * self.a
             self.gamma = self.mass_c**2 * (self.mass_p + 2*self.mass_c) * self.P2pi * self.e / (self.a1 * (self.mass_p + self.mass_c)**2)

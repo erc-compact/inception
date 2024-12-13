@@ -5,11 +5,14 @@ sys.path.insert(0, str(Path(__file__).absolute().parent.parent))
 import argparse
 from injector.setup_manager import SetupManager
 from injector.signal_injector import InjectSignal
+from injector.pulsar_par_parser import PulsarParParser
 
 
 if __name__=='__main__':
+    pulsar_params = PulsarParParser({'ID': 'help', 'P0': 1, 'SNR': 1}, {}).parser.print_help()
+
     parser = argparse.ArgumentParser(prog='Inception injector',
-                                     epilog='Feel free to contact me if you have questions - rsenzel@mpifr-bonn.mpg.de')
+                                     epilog=f'Feel free to contact me if you have questions - rsenzel@mpifr-bonn.mpg.de.')
     parser.add_argument('--signal', metavar='file', required=True, help='text file containing pulsar parameters to inject')
     parser.add_argument('--fb', metavar='file', required=True, help='path to filterbank where signal is injected')
     parser.add_argument('--output', metavar='directory', required=True, help='output directory for injected filterbank')
