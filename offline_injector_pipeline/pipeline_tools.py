@@ -2,7 +2,6 @@ import sys
 import json
 from collections import namedtuple
 
-
 class PipelineTools:
     def __init__(self, search_args):
         self.parse_search_args(search_args)
@@ -37,3 +36,4 @@ class PipelineTools:
             segments.append(DMRange(low_dm, high_dm, dm_step, tscrunch))
 
         return list(sorted(segments, key=lambda x: x.tscrunch))
+    

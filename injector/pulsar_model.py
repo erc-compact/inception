@@ -20,6 +20,7 @@ class PulsarModel:
         self.ID = pulsar_pars['ID']
         self.seed = pulsar_pars['seed']
         self.SNR = pulsar_pars['SNR']
+        self.pulsar_pars = pulsar_pars
         self.obs = obs
         self.binary = binary
         

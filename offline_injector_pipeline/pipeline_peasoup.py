@@ -5,11 +5,12 @@ import numpy as np
 from pathlib import Path
 
 from pipeline_tools import PipelineTools
+from pipeline_inj_cand_sifter import CandFinder
 from inception.injector.io_tools import FilterbankReader
 
 
 class PeasoupExec(PipelineTools):
-    def __init__(self, tscrunch_index, search_args, out_dir, injection_number, n_nearest=-1):
+    def __init__(self, tscrunch_index, search_args, injection_file, out_dir, injection_number, n_nearest=-1):
         super().__init__(search_args)
         self.work_dir = os.getcwd()
         self.tscrunch_index = int(tscrunch_index)
@@ -19,6 +20,8 @@ class PeasoupExec(PipelineTools):
         self.n_nearest = n_nearest
 
         self.fb, injection_report = self.get_inputs()
+        self.inj_file = injection_file
+        self.inj_report_path = injection_report
         self.inj_report = self.parse_JSON(injection_report)
         self.gulp_size = self.get_gulp_size()
 
@@ -150,21 +153,35 @@ class PeasoupExec(PipelineTools):
         xml_name = [f'overview_dm_{dm_range.low_dm:.6f}_{dm_range.high_dm:.6f}.xml' for dm_range in DD_plan][self.tscrunch_index]
 
         inj_ID = self.inj_report['injection']['ID']
+        xml_name_old = f'{self.work_dir}/overview.xml'
         xml_name_new = f'{self.data_ID}_{inj_ID}_{xml_name}'
 
-        peasoup_dir = f'{self.out_dir}/inj_{self.injection_number:06}/processing'
-        subprocess.run(f"rsync -Pav {self.work_dir}/overview.xml {peasoup_dir}/{xml_name_new}", shell=True)
+        cand_finder = CandFinder(self.fb, self.inj_file, self.inj_report_path)
+        cands_df = cand_finder.parse_xml_file(xml_name_old)
+        self.n_harmonics = 2
+        for n in range(self.n_harmonics):
+            cands_data = cand_finder.filter_df(self, cands_df, snr_limit=5, pfact=n+1, adjust=0.05)
+            cands_data.to_csv(f'{self.work_dir}/injected_xml_candidates_harm_{n+1}.csv')
 
+        peasoup_dir = f'{self.out_dir}/inj_{self.injection_number:06}/processing'
+        subprocess.run(f"rsync -Pav {xml_name_old} {peasoup_dir}/{xml_name_new}", shell=True)
+        for n in range(self.n_harmonics):
+            cand_name_old = f'injected_xml_candidates_harm_{n+1}.csv'
+            cand_name_new = f'injected_xml_candidates_harm_{n+1}_tscrunch_{self.tscrunch}.csv'
+            subprocess.run(f"rsync -Pav f'{self.work_dir}/{cand_name_old} {peasoup_dir}/{cand_name_new}", shell=True)
+
+            
 if __name__=='__main__':
     parser = argparse.ArgumentParser(prog='peasoup for offline injection pipeline',
                                      epilog='Feel free to contact me if you have questions - rsenzel@mpifr-bonn.mpg.de')
     parser.add_argument('--tscrunch_index', metavar='file', required=True, help='tscrucnh of filterbank file to search')
     parser.add_argument('--search_args', metavar='file', required=True, help='JSON file with search parameters')
+    parser.add_argument('--injection_file', metavar='file', required=True, help='JSON file with injection plan')
     parser.add_argument('--injection_number', metavar='int', required=True, type=int, help='injection process number')
     parser.add_argument('--out_dir', metavar='dir', required=True, help='output directory')
 
     args = parser.parse_args()
 
-    peasoup_exec = PeasoupExec(args.tscrunch_index, args.search_args, args.out_dir, args.injection_number, -1)
+    peasoup_exec = PeasoupExec(args.tscrunch_index, args.search_args, args.injection_file, args.out_dir, args.injection_number, -1)
     peasoup_exec.run_cmd()
     peasoup_exec.transfer_products()

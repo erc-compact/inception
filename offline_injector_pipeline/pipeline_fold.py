@@ -8,11 +8,13 @@ from pathlib import Path
 from multiprocessing import Process
 
 from pipeline_tools import PipelineTools
+from pipeline_inj_cand_sifter import CandFinder
 from inception.injector.io_tools import FilterbankReader
 
 
+
 class FoldScoreExec(PipelineTools):
-    def __init__(self, mode, search_args, out_dir, injection_number, ncpus):
+    def __init__(self, mode, search_args, inject_file, out_dir, injection_number, ncpus):
         super().__init__(search_args)
         self.work_dir = os.getcwd()
         self.mode = mode
@@ -22,6 +24,8 @@ class FoldScoreExec(PipelineTools):
 
         filterbank, injection_report, cand_file = self.get_inputs()
         self.fb = filterbank
+        self.inject_file = inject_file
+        self.inj_report_path = injection_report
         self.inj_report = self.parse_JSON(injection_report)
         self.fold_cands = cand_file
 
@@ -94,53 +98,25 @@ class FoldScoreExec(PipelineTools):
         self.fold_cands['adj_period'] = period_obs_centre(period, pdot, float(tsamp), n_samples//tscrunch, fftsize//tscrunch)
         del fbreader
 
-    def filter_cands(self):
-        cands_cut = self.fold_cands[self.cand_cutoffs()]
-        cands_list = cands_cut.sort_values(by='snr', ascending=False)
-        cands_list.index = np.arange(len(cands_list))
-
-        max_cands = self.fold_args['cand_limit_per_beam']
-        beams = cands_list['beam_id'].unique()
-        
-        keep_cands_index = []
-        beam_counts = np.zeros_like(beams)
-        for i, cand in cands_list.iterrows():
-            beam_index = np.where(beams == cand['beam_id'])[0]
-            if beam_counts[beam_index] != max_cands:
-                keep_cands_index.append(i)
-                beam_counts[beam_index] += 1
-
-        filtered_cands = cands_list.iloc[keep_cands_index]
-        filtered_cands.index = np.arange(len(filtered_cands))
-        return filtered_cands
-    
-    def get_injected_cands(self, filtered_cands):
-        psr = self.inj_report['pulsars']
-        ptol, dmtol = 0.01, 0.01
-
-        pulsar_cands = [[] for _ in range(len(psr))]
-        for i, psr_i in enumerate(psr):
-            p0_i = psr_i['PX'][0]
-            dm_i = psr_i['DM']
-            p_cond = (filtered_cands['period'] > p0_i*(1-ptol)) & (filtered_cands['period'] < p0_i*(1+ptol))
-            dm_cond = (filtered_cands['dm'] > dm_i*(1-dmtol)) & (filtered_cands['dm'] < dm_i*(1+dmtol))
-            psr_cands = filtered_cands[p_cond & dm_cond]
-            pulsar_cands[i].extend(psr_cands.index.values)
-
-        return filtered_cands.iloc[np.concatenate(pulsar_cands).astype(int)]
-
     def create_cand_file(self):
         self.add_tscrunch()
         self.add_adjusted_periods()
-        filtered_cands = self.filter_cands()
 
-        cands_data = self.get_injected_cands(filtered_cands)
+        cand_finder = CandFinder(self.fb, self.inject_file, self.inj_report_path)
+        cands_df = cand_finder.parse_csv_file(self.fold_cands)
+        self.n_harmonics = 2
+        cands_harmon = []
+        for n in range(self.n_harmonics):
+            cands_data = cand_finder.filter_df(self, cands_df, snr_limit=5, pfact=n+1, adjust=0.05, period_key='adj_period')
+            cands_data.to_csv(f'{self.work_dir}/injected_csv_candidates_harm_{n+1}.csv')
+            cands_harmon.append(cands_data)
 
         cand_file_path = f'{self.work_dir}/candidates.candfile'
         with open(cand_file_path, 'w') as file:
             file.write("#id DM accel F0 F1 S/N\n")
-            for i, cand in cands_data.iterrows():
-                file.write(f"{i} {cand['dm']} {cand['acc']} {1/cand['adj_period']} 0 {cand['snr']}\n")
+            for n in range(self.n_harmonics):
+                for i, cand in cands_harmon[n].iterrows():
+                    file.write(f"{i} {cand['dm']} {cand['acc']} {1/cand['adj_period']} 0 {cand['snr']}\n")
 
         return cand_file_path
         
@@ -228,7 +204,9 @@ class FoldScoreExec(PipelineTools):
             subprocess.run(f"cp {self.work_dir}/*.png {cand_dir}", shell=True)
             subprocess.run(f"cp {self.work_dir}/*.ar {cand_dir}", shell=True)
             subprocess.run(f"cp {self.work_dir}/*.cands {cand_dir}", shell=True)
-            subprocess.run(f"cp {self.work_dir}/*.candfile {cand_dir}", shell=True)
+            subprocess.run(f"cp {self.work_dir}/candidates.candfile {cand_dir}", shell=True)
+            for n in range(self.n_harmonics):
+                subprocess.run(f"cp {self.work_dir}/injected_csv_candidates_harm_{n+1}.csv {cand_dir}", shell=True)
             # subprocess.run(f"cp {self.work_dir}/pics_scores.txt {cand_dir}", shell=True)
 
 
@@ -237,11 +215,12 @@ if __name__=='__main__':
                                      epilog='Feel free to contact me if you have questions - rsenzel@mpifr-bonn.mpg.de')
     parser.add_argument('--mode', metavar='str', required=True,  help='which mode to fold')
     parser.add_argument('--search_args', metavar='file', required=True, help='JSON file with search parameters')
+    parser.add_argument('--injection_file', metavar='file', required=True, help='JSON file with injection plan')
     parser.add_argument('--injection_number', metavar='int', required=True, type=int, help='injection process number')
     parser.add_argument('--out_dir', metavar='dir', required=True, help='output directory')
     parser.add_argument('--ncpus', metavar='int', type=int, required=True, help='number of cpus to use')
     args = parser.parse_args()
 
-    fold_exec = FoldScoreExec(args.mode, args.search_args, args.out_dir, args.injection_number, args.ncpus)
+    fold_exec = FoldScoreExec(args.mode, args.search_args, args.injection_file, args.out_dir, args.injection_number, args.ncpus)
     fold_exec.run_cmd()
     fold_exec.transfer_products()

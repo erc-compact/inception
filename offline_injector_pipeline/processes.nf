@@ -64,7 +64,7 @@ process fold_par {
     export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda-10.2/targets/x86_64-linux/lib;
     export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/lib;
 
-    python3.6 ${projectDir}/pipeline_fold.py --mode=par --search_args=${params.search_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
+    python3.6 ${projectDir}/pipeline_fold.py --mode=par --search_args=${params.search_params}  --injection_file=${params.injection_plan} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
 
     """
 }
@@ -90,7 +90,7 @@ process peasoup0 {
     export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/software/PulsarX/src/ymw16/.libs;
     export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda-10.2/targets/x86_64-linux/lib;
     export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/lib;
-    python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=0 --search_args=${params.search_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}
+    python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=0 --search_args=${params.search_params} --injection_file=${params.injection_plan} --out_dir=${params.output_dir}  --injection_number=${injection_number}
     inputs=""
 
     """
@@ -117,7 +117,7 @@ process peasoup1 {
     export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/software/PulsarX/src/ymw16/.libs;
     export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda-10.2/targets/x86_64-linux/lib;
     export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/lib;
-    python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=1 --search_args=${params.search_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}
+    python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=1 --search_args=${params.search_params} --injection_file=${params.injection_plan} --out_dir=${params.output_dir}  --injection_number=${injection_number}
     inputs=""
 
     """
@@ -144,7 +144,7 @@ process peasoup2 {
     export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/software/PulsarX/src/ymw16/.libs;
     export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda-10.2/targets/x86_64-linux/lib;
     export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/lib;
-    python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=2 --search_args=${params.search_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}
+    python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=2 --search_args=${params.search_params} --injection_file=${params.injection_plan} --out_dir=${params.output_dir}  --injection_number=${injection_number}
     inputs=""
 
     """
@@ -171,7 +171,7 @@ process peasoup3 {
     export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/software/PulsarX/src/ymw16/.libs;
     export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda-10.2/targets/x86_64-linux/lib;
     export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/lib;
-    python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=3 --search_args=${params.search_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}
+    python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=3 --search_args=${params.search_params} --injection_file=${params.injection_plan} --out_dir=${params.output_dir}  --injection_number=${injection_number}
     inputs=""
 
     """
@@ -220,7 +220,7 @@ process fold_cand {
     export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/software/PulsarX/src/ymw16/.libs;
     export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda-10.2/targets/x86_64-linux/lib;
     export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/lib;
-    python3.6 ${projectDir}/pipeline_fold.py --mode=cand --search_args=${params.search_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
+    python3.6 ${projectDir}/pipeline_fold.py --mode=cand --search_args=${params.search_params}  --injection_file=${params.injection_plan} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
 
     """
 }

@@ -19,17 +19,17 @@ from .observation import Observation
 
 
 class SetupManager:
-    def __init__(self, pulsar_data_path, filterbank_path, ephem_path, output_path):
+    def __init__(self, pulsar_data_path, filterbank_path, ephem_path='builtin', output_path=None, generate=False):
         self.fb = self.get_filterbank(filterbank_path) 
         self.ephem = self.get_ephem(ephem_path)
         self.output_path = output_path
         self.pulsars = self.get_pulsars(pulsar_data_path)
-        
-        self.pulsar_models = self.construct_models()
-        self.parfile_paths = self.create_foldfiles()
-        self.mode_resolver()
+        self.pulsar_models = self.construct_models(generate)
 
-        self.create_injection_report()
+        if self.output_path:
+            self.parfile_paths = self.create_foldfiles()
+            self.mode_resolver()
+            self.create_injection_report()
         
     @staticmethod
     def get_filterbank(filterbank_path):
@@ -40,12 +40,12 @@ class SetupManager:
         else:
             return fb
         
-    def construct_models(self):
+    def construct_models(self, generate):
         pulsar_models = []
         for pulsar_data in self.pulsars:
-            obs = Observation(self.fb, self.ephem, pulsar_data, generate=False)
-            binary = BinaryModel(pulsar_data, generate=False)
-            pulsar_models.append(PulsarModel(obs, binary, pulsar_data, generate=False))
+            obs = Observation(self.fb, self.ephem, pulsar_data, generate=generate)
+            binary = BinaryModel(pulsar_data, generate=generate)
+            pulsar_models.append(PulsarModel(obs, binary, pulsar_data, generate=generate))
 
         return pulsar_models
 
@@ -117,6 +117,7 @@ class SetupManager:
     def resolve_random(self, pulsar_pars):
         seed = pulsar_pars.get('seed', self.seed)
         pulsar_pars['seed'] = seed
+        rng = np.random.default_rng(seed)
         for key, value in pulsar_pars.items():
             
             if type(value) == dict:
@@ -128,19 +129,15 @@ class SetupManager:
 
                 if value['rng'] == 'choice':
                     p = value.get('weights', np.ones_like(value['samples']))
-                    rng = np.random.default_rng(seed+0)
                     pulsar_pars[key] = rng.choice(a=value['samples'], p=p/np.sum(p))
 
                 elif value['rng'] == 'uniform':
-                    rng = np.random.default_rng(seed+1)
                     pulsar_pars[key] = rng.uniform(low=value['low']*units, high=value['high']*units)
 
                 elif value['rng'] == 'loguniform':
-                    rng = np.random.default_rng(seed+2)
                     pulsar_pars[key] = np.exp(rng.uniform(low=np.log(value['low']*units), high=np.log(value['high']*units)))
 
                 elif value['rng'] == 'normal':
-                    rng = np.random.default_rng(seed+3)
                     pulsar_pars[key] = rng.normal(loc=value['mean']*units, scale=value['sigma']*units)
 
         return pulsar_pars
