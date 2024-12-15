@@ -288,7 +288,7 @@ class SetupManager:
         parfile_paths = []
         for i in range(len(self.pulsars)):
             fold_type = self.pulsars[i]['create_parfile']
-            if (fold_type == 'par') or (fold_type == '1'):
+            if (fold_type == 'par') or (str(fold_type) == '1'):
                 fold_file_path = self.create_parfile(i)
             elif fold_type == 'pulsarx':
                 fold_file_path = self.create_psrfold_candfile(i)
