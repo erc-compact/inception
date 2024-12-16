@@ -252,7 +252,7 @@ class SetupManager:
         if pulsar_model.binary.period:
             parfile_params['BINARY'] = 'BT'
             parfile_params['T0'] = pulsar_model.binary.T0
-            parfile_params['x'] = pulsar_model.binary.a1_sini_c
+            parfile_params['A1'] = pulsar_model.binary.a1_sini_c
             parfile_params['PB'] = pulsar_model.binary.period * u.s.to(u.day)
             parfile_params['ECC'] = pulsar_model.binary.e
             parfile_params['OM'] =  np.rad2deg(pulsar_model.binary.AoP+pulsar_model.binary.LoAN)

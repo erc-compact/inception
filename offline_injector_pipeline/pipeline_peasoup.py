@@ -39,6 +39,7 @@ class PeasoupExec(PipelineTools):
         for filename in os.listdir(process_dir):
             if filename.endswith(f'{self.tscrunch_index+1}.fil'):
                 subprocess.run(f"rsync -Pav {process_dir}/{filename} {self.work_dir}", shell=True)
+                os.remove(f"{process_dir}/{filename}")
                 filterbank = filename
         
         return filterbank, injection_report

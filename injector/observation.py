@@ -119,7 +119,7 @@ class Observation:
         pos = ep.xyz.value.astype(np.float64) + op.xyz.value.astype(np.float64)*u.m.to(u.km)
 
         re_dot_L = np.sum(pos.T * L_hat, axis=1)
-        bary_delays_sec = re_dot_L * u.km.to(u.lightsecond) 
+        bary_delays_sec = re_dot_L * u.km.to(const.c * u.s) # u.lightsecond not available in python 3.6
         bary_times = time_scale.tdb.value + bary_delays_sec * u.s.to(u.day)
         if mjd:
             return bary_times
