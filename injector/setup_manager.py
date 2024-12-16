@@ -43,7 +43,7 @@ class SetupManager:
     def construct_models(self, generate):
         pulsar_models = []
         for pulsar_data in self.pulsars:
-            obs = Observation(self.fb, self.ephem, pulsar_data, generate=generate)
+            obs = Observation(self.fb, self.ephem, pulsar_data, generate=False)
             binary = BinaryModel(pulsar_data, generate=generate)
             pulsar_models.append(PulsarModel(obs, binary, pulsar_data, generate=False))
 

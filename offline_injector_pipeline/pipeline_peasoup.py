@@ -161,7 +161,7 @@ class PeasoupExec(PipelineTools):
         cands_df = cand_finder.parse_xml_file(xml_name_old)
         self.n_harmonics = 2
         for n in range(self.n_harmonics):
-            cands_data = cand_finder.filter_df(self, cands_df, snr_limit=5, pfact=n+1, adjust=0.05)
+            cands_data = cand_finder.filter_df(cands_df, snr_limit=5, pfact=n+1, adjust=0.05)
             cands_data.to_csv(f'{self.work_dir}/injected_xml_candidates_harm_{n+1}.csv')
 
         peasoup_dir = f'{self.out_dir}/inj_{self.injection_number:06}/processing'
@@ -169,7 +169,7 @@ class PeasoupExec(PipelineTools):
         for n in range(self.n_harmonics):
             cand_name_old = f'injected_xml_candidates_harm_{n+1}.csv'
             cand_name_new = f'injected_xml_candidates_harm_{n+1}_tscrunch_{self.tscrunch}.csv'
-            subprocess.run(f"rsync -Pav f'{self.work_dir}/{cand_name_old} {peasoup_dir}/{cand_name_new}", shell=True)
+            subprocess.run(f"rsync -Pav {self.work_dir}/{cand_name_old} {peasoup_dir}/{cand_name_new}", shell=True)
 
             
 if __name__=='__main__':

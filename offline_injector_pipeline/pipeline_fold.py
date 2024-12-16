@@ -107,7 +107,7 @@ class FoldScoreExec(PipelineTools):
         self.n_harmonics = 2
         cands_harmon = []
         for n in range(self.n_harmonics):
-            cands_data = cand_finder.filter_df(self, cands_df, snr_limit=5, pfact=n+1, adjust=0.05, period_key='adj_period')
+            cands_data = cand_finder.filter_df(cands_df, snr_limit=5, pfact=n+1, adjust=0.05, period_key='adj_period')
             cands_data.to_csv(f'{self.work_dir}/injected_csv_candidates_harm_{n+1}.csv')
             cands_harmon.append(cands_data)
 

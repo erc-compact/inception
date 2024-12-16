@@ -57,6 +57,7 @@ class CandFinder:
 
         return seeded_inject_file
     
+    @staticmethod
     def get_doppler_velocity(pulsar_model):
         obs_arr = np.linspace(0, pulsar_model.obs.obs_len, 10**4)
         dt = obs_arr[1] - obs_arr[0]
@@ -71,7 +72,8 @@ class CandFinder:
         vc = (np.max(binary_vel)+np.max(earth_vel))/const.c.value
         return vc
     
-    def get_DM_smear(pulsar_model, SNR_limit, pfact=1):
+    @staticmethod
+    def get_DM_smear(pulsar_model, snr_limit, pfact=1):
 
         def relative_SNR(d_DM):
             duty_cycle = pulsar_model.pulsar_pars['duty_cycle']
@@ -84,7 +86,7 @@ class CandFinder:
             return np.sqrt(np.clip((period-W_eff)/W_eff, 0, None))
         
         def get_DM_step(d_DM):
-            return relative_SNR(d_DM)/relative_SNR(0) * pulsar_model.SNR - SNR_limit
+            return relative_SNR(d_DM)/relative_SNR(0) * pulsar_model.SNR - snr_limit
         
         d_DM = fsolve(get_DM_step, 1e-3)
         return d_DM
@@ -99,7 +101,8 @@ class CandFinder:
         tree = ET.parse(xml_file)
         root = tree.getroot()
         xml_dict = self.xml_to_dict(root)
-        return pd.DataFrame(xml_dict['peasoup_search']['candidates']['candidate'])
+        xml_df = pd.DataFrame(xml_dict['peasoup_search']['candidates']['candidate'])
+        return xml_df.astype(np.float64)
     
     def xml_to_dict(self, element):
         if not list(element):
