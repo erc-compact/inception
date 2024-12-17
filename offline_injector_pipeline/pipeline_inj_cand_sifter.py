@@ -21,7 +21,7 @@ class CandFinder:
 
         self.setup = SetupManager(self.inj_plan, fb, generate=True)
 
-    def filter_df(self, df, snr_limit=5, pfact=1, adjust=0, period_key='period'):
+    def filter_df(self, df, snr_limit=5, pfact=1, adjust=0, period_key='period'): # change pfact to ffact
         pulsar_cands = []
         for pm in self.setup.pulsar_models:
             period = pm.PX_list[0]*pfact
