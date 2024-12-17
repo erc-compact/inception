@@ -24,7 +24,37 @@
             "phase_offset": 0           
         },
         {
-            "ID": "pulsar2", 
+            "ID": "pulsar2",        
+            "RAJ": "17:50:13.0600",
+            "DECJ": "-37:03:05.2000",
+            "PEPOCH": 59379.311,
+            "create_parfile": "pulsarx",
+            "P0": 0.004, 
+            "A0": 10,
+            "A1": 20,            
+            "SNR": 400,
+            "DM": 34,
+            "spectral_index": -2,
+            "duty_cycle": 0.08,       
+            "phase_offset": 0           
+        },
+        {
+            "ID": "pulsar3",        
+            "RAJ": "17:50:13.0600",
+            "DECJ": "-37:03:05.2000",
+            "PEPOCH": 59379.311,
+            "create_parfile": "presto",
+            "P0": 0.0035, 
+            "presto_z": 200,
+            "presto_w": 400,            
+            "SNR": 400,
+            "DM": 34,
+            "spectral_index": -2,
+            "duty_cycle": 0.08,       
+            "phase_offset": 0           
+        },
+        {
+            "ID": "pulsar4", 
             "separation": 4,           
             "position_angle": 35,   
             "beam_fwhm": 10,    
@@ -41,12 +71,12 @@
             "micro_structure": 300, 
             "binary_period": 6,  
             "T0": 59379,
-            "A1": 2.1,
+            "x": 2.1,
             "ecc": 0.2,
             "AoP": 0.0
         },
         {
-            "ID": "pulsar3",            
+            "ID": "pulsar5",            
             "RAJ": "17:50:13.0600",
             "DECJ": "-37:03:05.2000",
             "P0": 0.015,
@@ -68,14 +98,14 @@
             "AoP": 0.0
         }, 
         {
-            "ID": "pulsar4",
+            "ID": "pulsar6",
             "PEPOCH": 59379,
             "P0": 0.005,
             "F1": 1e-12,
             "SNR": 10,
             "duty_cycle": 0.12,
             "spectral_index": -2,
-            "double_pulsar": "pulsar3"
+            "double_pulsar": "pulsar5"
 
         }
     ]
