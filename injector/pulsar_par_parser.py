@@ -212,12 +212,17 @@ class PulsarParParser:
         if A1:
             if not (M1 and M2 and inc):
                 if (not M1) and (not M2) and (not inc):
+                    M1 = M1_default
+                    inc = inc_default
                     M2 = self.orbit_par_converter(period, find='M2', A1=A1, M1=M1_default, inc=inc_default) 
                 elif (M1) and (not M2) and (not inc):
+                    inc = inc_default
                     M2 = self.orbit_par_converter(period, find='M2', A1=A1, M1=M1, inc=inc_default)                
                 elif (not M1) and (M2) and (not inc):
+                    inc = inc_default
                     M1 = self.orbit_par_converter(period, find='M1', A1=A1, M2=M2, inc=inc_default)                
                 elif (not M1) and (not M2) and (inc):
+                    M1 = M1_default
                     M2 = self.orbit_par_converter(period, find='M2', A1=A1, M1=M1_default, inc=inc)                 
                 elif (M1) and (M2) and (not inc):
                     inc = self.orbit_par_converter(period, find='inc', A1=A1, M1=M1, M2=M2)                 
@@ -246,6 +251,10 @@ class PulsarParParser:
         pulsar_pars['binary_period'] = period
         pulsar_pars['x'] = abs(A1)
         pulsar_pars['M1'] = abs(M1)
+        if type(M2) == np.ndarray:
+            M2 = M2[0]
+        if type(inc) == np.ndarray:
+            inc = inc[0]
         pulsar_pars['M2'] = abs(M2)
         pulsar_pars['inc'] = inc
         pulsar_pars['ecc'] = abs(pulsar_pars['ecc'])
