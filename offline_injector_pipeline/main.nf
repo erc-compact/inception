@@ -12,26 +12,42 @@ include { candidate_filter } from './processes'
 include { fold_cand } from './processes'
 
 
+
+workflow peasoup_spawner {
+    take:
+    injection_number
+
+    main:
+
+    // peasoup_jobs = Channel.of(0..3)
+    // peasoup(injection_number, peasoup_jobs)
+
+    p0 = peasoup0(injection_number)
+    p1 = peasoup1(injection_number)
+    p2 = peasoup2(injection_number)
+    p3 = peasoup3(injection_number)
+    
+    emit:
+    injection_number
+
+}
+
+
 workflow injection_pipeline {
     take:
     injection_number
 
     main:
-    c0 = injection(injection_number)
-    c1 = filtool(c0)
-    c2 = fold_par(c1)
-    c3 = peasoup3(c2)
-    c4 = peasoup2(c3)
-    c5 = peasoup1(c4)
-    c6 = peasoup0(c5)
-    c7 = candidate_filter(c6)
-    c8 = fold_cand(c7)
+    inj_pulsars = injection(injection_number)
+    inj_filtool = filtool(inj_pulsars)
+    inj_fold_par = fold_par(inj_pulsars)
+    inj_peasoup = peasoup_spawner(inj_filtool)
+    inj_cand_filter = candidate_filter(inj_fold_par, inj_peasoup)
+    inj_finished = fold_cand(inj_cand_filter)
 }
 
 workflow {
 
-    injection_range = Channel.from(1..params.n_injections)
+    Channel.from(1..params.n_injections) | injection_pipeline
 
-    injection_pipeline(injection_range)
-    
 }
