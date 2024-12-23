@@ -172,14 +172,12 @@ process peasoup3 {
     """
 }
 
-
 process candidate_filter {
     label "candidate_filter"
     container params.candidate_filter_image
 
     input:
         val injection_number
-        val complete
 
     output:
         val injection_number
@@ -222,10 +220,11 @@ process pics_scorer {
     container params.pics_scorer_image
 
     input:
-        val injection_number
+        val inj_cand
+        val inj_fold
 
     output:
-        val injection_number
+        val inj_cand
 
     scratch params.tmp_dir
 
@@ -233,7 +232,7 @@ process pics_scorer {
     """
     source ${params.singularity_config}
 
-    python3.6 ${projectDir}/pipeline_PICS.py --pics_code=${params.pics_code} --pics_models=${params.pics_models} --injection_number=${injection_number}  --out_dir=${params.output_dir}
+    python3.6 ${projectDir}/pipeline_PICS.py --pics_code=${params.pics_code} --pics_models=${params.pics_models} --injection_number=${inj_cand}  --out_dir=${params.output_dir}
 
     """
 }

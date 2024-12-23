@@ -43,11 +43,11 @@ workflow injection_pipeline {
     inj_filtool = filtool(inj_pulsars)
     inj_fold_par = fold_par(inj_pulsars)
     inj_peasoup = peasoup_spawner(inj_filtool)
-    inj_cand_filter = candidate_filter(inj_fold_par, inj_peasoup)
+    inj_cand_filter = candidate_filter(inj_peasoup)
     inj_fold_cand = fold_cand(inj_cand_filter)
-    inj_pics = pics_scorer(inj_fold_cand)
+    inj_pics = pics_scorer(inj_fold_par, inj_fold_cand)
 
-}   
+}  
 
 workflow {
 
