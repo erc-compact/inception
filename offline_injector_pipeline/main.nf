@@ -20,7 +20,7 @@ workflow peasoup_spawner {
 
     main:
 
-    // peasoup_jobs = Channel.of(0..3)
+    // peasoup_jobs = Channel.of(0..3)  (channel inside channel does not work)
     // peasoup(injection_number, peasoup_jobs)
 
     p0 = peasoup0(injection_number)

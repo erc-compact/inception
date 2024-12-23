@@ -93,6 +93,9 @@ process peasoup0 {
 
     input:
         val injection_number
+
+    output:
+        val injection_number
         
     scratch params.tmp_dir
 
