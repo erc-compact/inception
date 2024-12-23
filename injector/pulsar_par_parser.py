@@ -21,7 +21,7 @@ class PulsarParParser:
         parser = argparse.ArgumentParser(description='Pulsar parameters in --signal', formatter_class=CustomFormatter)
         parser.add_argument('--ID', metavar='(str)', required=True, type=str, help='Identifier for injected pulsar')
         parser.add_argument('--seed', metavar='(positive int)', required=False, default=0, type=int, help='Random number generator seed for pulsar')
-        parser.add_argument('--create_parfile', metavar='(0 or 1)', required=False, default='par', type=str, help="If '1', then create a TEMPO style parfile for injected pulsar")
+        parser.add_argument('--create_parfile', metavar='(0 or 1)', required=False, default='1', type=str, help="If '1', then create a TEMPO style parfile for injected pulsar")
         
         parser.add_argument('--RAJ', metavar='(hh:mm:ss)', required=False, type=str, help='Right Ascension (J2000) (default: beam centre)')
         parser.add_argument('--DECJ', metavar='(dd:mm:ss)', required=False, type=str, help='Declination (J2000) (default: beam centre)')
@@ -38,7 +38,7 @@ class PulsarParParser:
         parser.add_argument('--phase_offset', metavar='(phase)', required=False, default=0, type=float, help='Phase offset from PEPOCH')
 
         parser.add_argument('--DM', metavar='(pc/cm^3)', required=False, default=0, type=float, help='Dispersion measure')
-        parser.add_argument('--SNR', required=True, type=float, help='Injected signal-to-noise')
+        parser.add_argument('--SNR', metavar='(-)', required=True, type=float, help='Injected signal-to-noise')
         parser.add_argument('--PSD', metavar='(file)', required=False, type=str, help='NumPy .npy file containing a pulsar power spectrum (1D)')
         parser.add_argument('--spectral_index', metavar='(-)', required=False, default=0, type=float, help='Spectral index of pulsar')
         parser.add_argument('--duty_cycle', metavar='(phase)', required=False, default=0.1, type=float, help='Duty cycle of default gaussian pulse profile')

@@ -147,14 +147,15 @@ class FoldScoreExec(PipelineTools):
 
         subprocess.run(cmd, shell=True)
 
-    def fold_par_file(self, psr_id):
+    def fold_par_file(self, psr):
         nsubband = self.fold_args.get('nsubband', 64)
         fast_nbins = self.fold_args.get('fast_nbins', 64)
         slow_nbins = self.fold_args.get('slow_nbins', 128)
 
+        psr_id = psr['ID']
         par_file =  f'{self.out_dir}/inj_{self.injection_number:06}/inj_pulsars/{psr_id}.par'
 
-        psr_p0 = self.inj_report['pulsars'][psr_id]['PX_list'][0]
+        psr_p0 = psr['PX'][0]
         if psr_p0 > 0.1:
             block_size = 10
         else:
@@ -169,16 +170,15 @@ class FoldScoreExec(PipelineTools):
         subprocess.run(cmd, shell=True, cwd=tmp_cwd) 
 
     def fold_par_pulsars(self):
-        fold_list = [psr_id['ID'] for psr_id in self.inj_report['pulsars']]
 
         processes = []
-        for psr_id in fold_list:
-            process = Process(target=self.fold_par_file, args=(psr_id, ))
+        for psr in self.inj_report['pulsars']:
+            process = Process(target=self.fold_par_file, args=(psr, ))
             processes.append(process)
             process.start()
         
         for process in processes:
-            process.join()    
+            process.join()        
 
     def run_cmd(self):
         if self.mode == 'par':
