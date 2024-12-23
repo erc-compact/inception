@@ -6,6 +6,7 @@ import numpy as np
 from pathlib import Path
 
 from pipeline_tools import PipelineTools
+from inception.injector import SCRIPT_inject_pulsars 
 from inception.injector.io_tools import merge_filterbanks, print_exe
 
 
@@ -61,9 +62,8 @@ class InjectorSetup(PipelineTools):
     def run_injector(self, ephem, ncpus):
         subprocess.run(f"rsync -Pav {ephem} {self.work_dir}", shell=True)
         
-        script_path = '/hercules/scratch/rsenzel/offline_injections/injection_scripts/inception/injector'
         inputs = f"--signal={self.seeded_inject_file} --fb={self.merged_fb} --ephem=./de440.bsp --output={self.work_dir} --ncpu={ncpus}"
-        cmd = f"python3 {script_path}/SCRIPT_inject_pulsars.py {inputs}"
+        cmd = f"python3 {SCRIPT_inject_pulsars.__file__} {inputs}"
 
         print_exe('starting injection')
         subprocess.run(cmd, shell=True)
@@ -78,7 +78,7 @@ class InjectorSetup(PipelineTools):
         
         os.mkdir(results_dir)
         os.mkdir(par_dir)
-        # subprocess.run(f"rsync -Pav {self.merged_fb} {results_dir}", shell=True)
+        subprocess.run(f"rsync -Pav {self.merged_fb} {results_dir}", shell=True)
         subprocess.run(f"rsync -Pav {injected_fb} {results_dir}", shell=True)
         subprocess.run(f"rsync -Pav {injection_report} {results_dir}", shell=True)
         subprocess.run(f"rsync -Pav {self.work_dir}/*.par {par_dir}", shell=True)
