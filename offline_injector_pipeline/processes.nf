@@ -216,3 +216,24 @@ process fold_cand {
 
     """
 }
+
+process pics_scorer {
+    label "pics_scorer"
+    container params.pics_scorer_image
+
+    input:
+        val injection_number
+
+    output:
+        val injection_number
+
+    scratch params.tmp_dir
+
+    script:
+    """
+    source ${params.singularity_config}
+
+    python3.6 ${projectDir}/pipeline_PICS.py --pics_code=${params.pics_code} --pics_models=${params.pics_models} --injection_number=${injection_number}  --out_dir=${params.output_dir}
+
+    """
+}

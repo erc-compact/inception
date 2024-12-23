@@ -172,22 +172,13 @@ class FoldScoreExec(PipelineTools):
             process.start()
         
         for process in processes:
-            process.join()
-
-    def pics_score(self):
-        # pics_code = '/home/psr/software/trapum-pipeline-wrapper/pipelines/trapum_fold_and_score_pipeline/webpage_score.py'
-        pics_code = '/hercules/scratch/rsenzel/offline_injections/injections_config/test_1000/PICS_MMGPS.py'
-        model_dir = '/hercules/scratch/rsenzel/offline_injections/injections_config/test_1000/pics_models'
-        cmd = f"python2 {pics_code} --in_path={self.work_dir} --model_dir={model_dir}"
-        subprocess.run(cmd, shell=True)        
+            process.join()    
 
     def run_cmd(self):
         if self.mode == 'par':
             self.fold_par_pulsars()
         elif self.mode == 'cand':
             self.fold_inj_cands()
-
-        # self.pics_score()
 
     def transfer_products(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
@@ -196,7 +187,6 @@ class FoldScoreExec(PipelineTools):
             subprocess.run(f"cp {self.work_dir}/*.png {par_dir}", shell=True)
             subprocess.run(f"cp {self.work_dir}/*.ar {par_dir}", shell=True)
             subprocess.run(f"cp {self.work_dir}/*.cands {par_dir}", shell=True)
-            # subprocess.run(f"cp {self.work_dir}/pics_scores.txt {par_dir}", shell=True)
 
         elif self.mode == 'cand':
             cand_dir = f'{results_dir}/inj_cands'
@@ -207,7 +197,6 @@ class FoldScoreExec(PipelineTools):
             subprocess.run(f"cp {self.work_dir}/candidates.candfile {cand_dir}", shell=True)
             for n in range(self.n_harmonics):
                 subprocess.run(f"cp {self.work_dir}/injected_csv_candidates_harm_{n+1}.csv {cand_dir}", shell=True)
-            # subprocess.run(f"cp {self.work_dir}/pics_scores.txt {cand_dir}", shell=True)
 
 
 if __name__=='__main__':
