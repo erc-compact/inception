@@ -16,7 +16,7 @@ include { pics_scorer } from './processes'
 
 workflow peasoup_spawner {
     take:
-    injection_number
+        injection_number
 
     main:
 
@@ -29,14 +29,14 @@ workflow peasoup_spawner {
     p3 = peasoup3(injection_number)
     
     emit:
-    injection_number
+        p0
 
 }
 
 
 workflow injection_pipeline {
     take:
-    injection_number
+        injection_number
 
     main:
     inj_pulsars = injection(injection_number)
