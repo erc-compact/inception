@@ -179,12 +179,18 @@ class FoldScoreExec(PipelineTools):
         
         for process in processes:
             process.join()    
+    
+    def delete_inj_filterbank(self):
+        fb_name = Path(self.fb).name
+        fb_path = f'{self.out_dir}/inj_{self.injection_number:06}/{fb_name}'
+        os.remove(fb_path)
 
     def run_cmd(self):
         if self.mode == 'par':
             self.fold_par_pulsars()
         elif self.mode == 'cand':
             self.fold_inj_cands()
+            self.delete_inj_filterbank()
 
     def transfer_products(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
@@ -203,12 +209,7 @@ class FoldScoreExec(PipelineTools):
             subprocess.run(f"cp {self.work_dir}/candidates.candfile {cand_dir}", shell=True)
             for n in range(self.n_harmonics):
                 subprocess.run(f"cp {self.work_dir}/injected_csv_candidates_harm_{n+1}.csv {cand_dir}", shell=True)
-
-    def delete_inj_filterbank(self):
-        fb_name = Path(self.fb).name
-        fb_path = f'{self.out_dir}/inj_{self.injection_number:06}/{fb_name}'
-        os.remove(fb_path)
-
+                
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(prog='candidate folder for offline injection pipeline',
@@ -224,4 +225,4 @@ if __name__=='__main__':
     fold_exec = FoldScoreExec(args.mode, args.search_args, args.injection_file, args.out_dir, args.injection_number, args.ncpus)
     fold_exec.run_cmd()
     fold_exec.transfer_products()
-    fold_exec.delete_inj_filterbank()
+   
