@@ -41,7 +41,7 @@ workflow injection_pipeline {
     main:
     inj_pulsars = injection(injection_number)
     inj_filtool = filtool(inj_pulsars)
-    inj_fold_par = fold_par(injection_number)
+    inj_fold_par = fold_par(inj_pulsars)
     inj_peasoup = peasoup_spawner(inj_filtool)
     inj_cand_filter = candidate_filter(inj_fold_par, inj_peasoup)
     inj_fold_cand = fold_cand(inj_cand_filter)

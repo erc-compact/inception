@@ -173,7 +173,7 @@ class PulsarModel:
             beam_scale = self.obs.get_beam_snr() 
 
             sigma_pt = self.obs.fb_std
-            n_pulses = self.obs.obs_len/self.period*4
+            n_pulses = self.obs.obs_len/self.period
 
             Weq_t = pulsar_pars['duty_cycle'] * np.sqrt(2*np.pi)/(2*np.sqrt(2*np.log(2)))*self.period
             Amp = SNR_obs * sigma_pt / (np.sqrt(Weq_t) * np.sqrt(self.obs.n_chan * n_pulses))

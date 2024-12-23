@@ -154,7 +154,13 @@ class FoldScoreExec(PipelineTools):
 
         par_file =  f'{self.out_dir}/inj_{self.injection_number:06}/inj_pulsars/{psr_id}.par'
 
-        cmd = f"psrfold_fil2 --dmboost 250 --plotx -v --nosearch --parfile {par_file} -n {nsubband} {self.beam_tag} " \
+        psr_p0 = self.inj_report['pulsars'][psr_id]['PX_list'][0]
+        if psr_p0 > 0.1:
+            block_size = 10
+        else:
+            block_size = 2
+
+        cmd = f"psrfold_fil2 --dmboost 250 --blocksize {block_size} --plotx -v --nosearch --parfile {par_file} -n {nsubband} {self.beam_tag} " \
             f"-b {fast_nbins} --nbinplan 0.1 {slow_nbins} --template {self.template} --clfd 8 -L {self.fold_args['subint_length']} --fillPatch rand " \
             f"-f {self.fb} --rfi zdot {self.zap_string} --fd {self.fold_args['fscrunch']} --td {self.fold_args['tscrunch']} -o {self.work_dir}/{psr_id}"
 
