@@ -78,7 +78,7 @@ class InjectorSetup(PipelineTools):
         
         os.mkdir(results_dir)
         os.mkdir(par_dir)
-        subprocess.run(f"rsync -Pav {self.merged_fb} {results_dir}", shell=True)
+        # subprocess.run(f"rsync -Pav {self.merged_fb} {results_dir}", shell=True)
         subprocess.run(f"rsync -Pav {injected_fb} {results_dir}", shell=True)
         subprocess.run(f"rsync -Pav {injection_report} {results_dir}", shell=True)
         subprocess.run(f"rsync -Pav {self.work_dir}/*.par {par_dir}", shell=True)

@@ -107,7 +107,7 @@ class FoldScoreExec(PipelineTools):
         self.n_harmonics = 2
         cands_harmon = []
         for n in range(self.n_harmonics):
-            cands_data = cand_finder.filter_df(cands_df, snr_limit=5, pfact=n+1, adjust=0.05, period_key='adj_period')
+            cands_data = cand_finder.filter_df(cands_df, snr_limit=5, pfact=n+1, adjust=0.1, period_key='adj_period')
             cands_data.to_csv(f'{self.work_dir}/injected_csv_candidates_harm_{n+1}.csv')
             cands_harmon.append(cands_data)
 
@@ -145,7 +145,7 @@ class FoldScoreExec(PipelineTools):
               f"-b {fast_nbins} --nbinplan 0.1 {slow_nbins} --template {self.template} --clfd 8 -L {self.fold_args['subint_length']} --fillPatch rand " \
               f"-f {self.fb} --rfi zdot {self.zap_string} --fd {self.fold_args['fscrunch']} --td {self.fold_args['tscrunch']} -o {self.work_dir}/inj_cand"
 
-        subprocess.run(cmd, shell=True)
+        subprocess.run(cmd, shell=True)        
 
     def fold_par_file(self, psr):
         nsubband = self.fold_args.get('nsubband', 64)
@@ -178,7 +178,7 @@ class FoldScoreExec(PipelineTools):
             process.start()
         
         for process in processes:
-            process.join()        
+            process.join()    
 
     def run_cmd(self):
         if self.mode == 'par':
@@ -204,6 +204,11 @@ class FoldScoreExec(PipelineTools):
             for n in range(self.n_harmonics):
                 subprocess.run(f"cp {self.work_dir}/injected_csv_candidates_harm_{n+1}.csv {cand_dir}", shell=True)
 
+    def delete_inj_filterbank(self):
+        fb_name = Path(self.fb).name
+        fb_path = f'{self.out_dir}/inj_{self.injection_number:06}/{fb_name}'
+        os.remove(fb_path)
+
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(prog='candidate folder for offline injection pipeline',
@@ -219,3 +224,4 @@ if __name__=='__main__':
     fold_exec = FoldScoreExec(args.mode, args.search_args, args.injection_file, args.out_dir, args.injection_number, args.ncpus)
     fold_exec.run_cmd()
     fold_exec.transfer_products()
+    fold_exec.delete_inj_filterbank()
