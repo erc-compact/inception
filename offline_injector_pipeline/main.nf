@@ -19,10 +19,7 @@ workflow peasoup_spawner {
         injection_number
 
     main:
-
-    // peasoup_jobs = Channel.of(0..3)  (channel inside channel does not work)
-    // peasoup(injection_number, peasoup_jobs)
-
+    
     p0 = peasoup0(injection_number)
     p1 = peasoup1(injection_number)
     p2 = peasoup2(injection_number)
@@ -39,6 +36,7 @@ workflow injection_pipeline {
         injection_number
 
     main:
+
     inj_pulsars = injection(injection_number)
     inj_filtool = filtool(inj_pulsars)
     inj_fold_par = fold_par(inj_pulsars)
@@ -47,10 +45,10 @@ workflow injection_pipeline {
     inj_fold_cand = fold_cand(inj_cand_filter)
     inj_pics = pics_scorer(inj_fold_par, inj_fold_cand)
 
-}  
+}   
 
 workflow {
 
     Channel.from(1..params.n_injections) | injection_pipeline
-
+  
 }

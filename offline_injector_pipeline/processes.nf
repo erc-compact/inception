@@ -2,6 +2,7 @@ nextflow.enable.dsl=2
 
 
 process injection {
+    maxForks params.batch_size
     label "injection"
     container params.injection_image
 
@@ -63,29 +64,6 @@ process fold_par {
     """
 }
 
-// process peasoup {
-//     label "peasoup"
-//     container params.peasoup_image
-
-//     input:
-//         val injection_number
-//         val tscrunch
-
-//     output:
-//         val injection_number
-
-//     scratch params.tmp_dir
-
-//     script:
-//     """
-//     source ${params.singularity_config}
-//     source ${params.pip_install} ${params.tmp_dir}
-
-//     python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=${tscrunch} --search_args=${params.search_params} --injection_file=${params.injection_plan} --out_dir=${params.output_dir}  --injection_number=${injection_number}
-
-//     """
-// }
-
 
 process peasoup0 {
     label "peasoup"
@@ -93,7 +71,7 @@ process peasoup0 {
 
     input:
         val injection_number
-
+        
     output:
         val injection_number
         
@@ -104,7 +82,7 @@ process peasoup0 {
     source ${params.singularity_config}
     source ${params.dependencies_config} ${params.tmp_dir}
 
-    python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=0 --search_args=${params.search_params} --injection_file=${params.injection_plan} --out_dir=${params.output_dir}  --injection_number=${injection_number}
+    python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=0 --search_args=${params.search_params} --injection_file=${params.injection_plan} --out_dir=${params.output_dir} --data_dir=${params.data_dir} --injection_number=${injection_number}
 
     """
 }
@@ -126,7 +104,7 @@ process peasoup1 {
     source ${params.singularity_config}
     source ${params.dependencies_config} ${params.tmp_dir}
 
-    python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=1 --search_args=${params.search_params} --injection_file=${params.injection_plan} --out_dir=${params.output_dir}  --injection_number=${injection_number}
+    python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=1 --search_args=${params.search_params} --injection_file=${params.injection_plan} --out_dir=${params.output_dir} --data_dir=${params.data_dir} --injection_number=${injection_number}
 
     """
 }
@@ -148,7 +126,7 @@ process peasoup2 {
     source ${params.singularity_config}
     source ${params.dependencies_config} ${params.tmp_dir}
 
-    python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=2 --search_args=${params.search_params} --injection_file=${params.injection_plan} --out_dir=${params.output_dir}  --injection_number=${injection_number}
+    python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=2 --search_args=${params.search_params} --injection_file=${params.injection_plan} --out_dir=${params.output_dir} --data_dir=${params.data_dir} --injection_number=${injection_number}
 
     """
 }
@@ -170,7 +148,7 @@ process peasoup3 {
     source ${params.singularity_config}
     source ${params.dependencies_config} ${params.tmp_dir}
 
-    python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=3 --search_args=${params.search_params} --injection_file=${params.injection_plan} --out_dir=${params.output_dir}  --injection_number=${injection_number}
+    python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=3 --search_args=${params.search_params} --injection_file=${params.injection_plan} --out_dir=${params.output_dir} --data_dir=${params.data_dir} --injection_number=${injection_number}
 
     """
 }

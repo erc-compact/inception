@@ -15,13 +15,14 @@ class PicsScorer:
 
     def run_cmd(self):
 
+        cand_dir = f'{self.out_dir}/inj_{self.injection_number:06}/inj_cands'
+        if os.path.isdir(cand_dir):
+            self.pics_score(cand_dir)
+
         par_dir = f'{self.out_dir}/inj_{self.injection_number:06}/inj_pulsars'
         if os.path.isdir(par_dir):
             self.pics_score(par_dir)
         
-        cand_dir = f'{self.out_dir}/inj_{self.injection_number:06}/inj_cands'
-        if os.path.isdir(cand_dir):
-            self.pics_score(cand_dir)
 
 
 if __name__=='__main__':

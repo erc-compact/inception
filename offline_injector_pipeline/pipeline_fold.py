@@ -112,13 +112,15 @@ class FoldScoreExec(PipelineTools):
             cands_harmon.append(cands_data)
 
         cand_file_path = f'{self.work_dir}/candidates.candfile'
+        n_cands = 0
         with open(cand_file_path, 'w') as file:
             file.write("#id DM accel F0 F1 S/N\n")
             for n in range(self.n_harmonics):
                 for i, cand in cands_harmon[n].iterrows():
+                    n_cands += 1
                     file.write(f"{i} {cand['dm']} {cand['acc']} {1/cand['adj_period']} 0 {cand['snr']}\n")
 
-        return cand_file_path
+        return cand_file_path, n_cands
         
     def create_zap_sting(self):
         cmask = self.fold_args['channel_mask']
@@ -135,17 +137,18 @@ class FoldScoreExec(PipelineTools):
         return beam_tag
 
     def fold_inj_cands(self):
-        cand_file = self.create_cand_file()
+        cand_file_path, n_cands = self.create_cand_file()
 
         nsubband = self.fold_args.get('nsubband', 64)
         fast_nbins = self.fold_args.get('fast_nbins', 64)
         slow_nbins = self.fold_args.get('slow_nbins', 128)
         
-        cmd = f"psrfold_fil2 --dmboost 250 --plotx -v -t {self.ncpus} --candfile {cand_file} -n {nsubband} {self.beam_tag} " \
+        cmd = f"psrfold_fil2 --dmboost 250 --plotx -v -t {self.ncpus} --candfile {cand_file_path} -n {nsubband} {self.beam_tag} " \
               f"-b {fast_nbins} --nbinplan 0.1 {slow_nbins} --template {self.template} --clfd 8 -L {self.fold_args['subint_length']} --fillPatch rand " \
               f"-f {self.fb} --rfi zdot {self.zap_string} --fd {self.fold_args['fscrunch']} --td {self.fold_args['tscrunch']} -o {self.work_dir}/inj_cand"
-
-        subprocess.run(cmd, shell=True)        
+        
+        if n_cands:
+            subprocess.run(cmd, shell=True)        
 
     def fold_par_file(self, psr):
         nsubband = self.fold_args.get('nsubband', 64)
