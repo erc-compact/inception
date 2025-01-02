@@ -8,8 +8,6 @@ import numpy as np
 import pandas as pd
 
 
-from pipeline_tools import PipelineTools
-
 class ScoreAndCollect:
     def __init__(self, pics_code, pics_models, injection_number, out_dir):
         self.pics_code = pics_code
@@ -31,9 +29,8 @@ class ScoreAndCollect:
             cmd = f"python2 {self.pics_code} --in_path={in_path} --model_dir={self.pics_models} --work_dir={os.getcwd()}"
             subprocess.run(cmd, shell=True)
 
-    def candfile_reader(self, psr_name):
-        cand_file = glob.glob(f"{self.out_dir}/inj_pulsars/{psr_name}*.cands")
-        cand_df = pd.read_csv(cand_file[0], skiprows=11, engine='python', sep=r'\s+')
+    def candfile_reader(self, cand_file):
+        cand_df = pd.read_csv(cand_file, skiprows=11, engine='python', sep=r'\s+')
         return cand_df
 
     def get_inj_results(self):
@@ -52,7 +49,8 @@ class ScoreAndCollect:
     def get_parfold_results(self, results):
         psr_candfiles = []
         for psr in self.inj_report['pulsars']:
-            cand_df = self.candfile_reader(psr['ID'])
+            cand_file = glob.glob(f"{self.out_dir}/inj_pulsars/{psr['ID']}*.cands")[0]
+            cand_df = self.candfile_reader(cand_file)
             psr_candfiles.append(cand_df[['f0_new', 'acc_new', 'S/N_new']].add_prefix('parfold_'))
         psr_df = pd.concat(psr_candfiles)
         results[psr_df.keys()] = psr_df.values
@@ -62,7 +60,7 @@ class ScoreAndCollect:
         psr_par_pics = f'{self.out_dir}/inj_pulsars/pics_scores.txt'
         if os.path.exists(psr_par_pics):
             pics_par_df = pd.read_csv(psr_par_pics).drop(['arfile'], axis=1)
-            pics_par_df.columns = [f'parfold_{col.split('_')[-1].split('.')[0]}' for col in pics_par_df.columns]
+            pics_par_df.columns = [f"parfold_{col.split('_')[-1].split('.')[0]}" for col in pics_par_df.columns]
             results[pics_par_df.keys()] = pics_par_df.values
         return results
 
@@ -125,24 +123,23 @@ class ScoreAndCollect:
             sifted_csv = pd.read_csv(glob.glob(f'{self.out_dir}/inj_cands/injected_csv_candidates_harm_{n_harm}.csv')[0])
 
             pics_sift_df = pd.read_csv(psr_sift_pics).drop(['arfile'], axis=1)
-            pics_cols = [f'sift_{col.split('_')[-1].split('.')[0]}' for col in pics_sift_df.columns]
+            pics_cols = [f"sift_{col.split('_')[-1].split('.')[0]}" for col in pics_sift_df.columns]
             pics_sift_df.columns = pics_cols
             pics_sift_df = pics_sift_df[:len(sifted_csv)]
             
             pics_results = pd.DataFrame(columns=pics_cols)
             for i, psr in enumerate(self.inj_report['pulsars']): 
+                
                 csv_psr = sifted_csv[sifted_csv['pulsar_id'] == psr['ID']]
-                pics_sift_df = pics_sift_df[sifted_csv['pulsar_id'] == psr['ID']]
-
-                if np.any(pics_sift_df):
-                    combined_df = pd.concat([pics_sift_df, csv_psr], axis=1)
+                csv_sift = pics_sift_df[sifted_csv['pulsar_id'] == psr['ID']]
+                if np.any(csv_sift):
+                    combined_df = pd.concat([csv_sift, csv_psr], axis=1)
                     combined_df = combined_df.sort_values('snr', ascending=False)
 
                     pics_results.loc[i] = combined_df[pics_cols].iloc[0]
                 else:
                     pics_results.loc[i] = np.zeros_like(pics_cols)
-            
-            results[pics_sift_df.keys()] = pics_sift_df.values
+            results[pics_results.keys()] = pics_results.values
         return results
 
     def collect_results(self):
