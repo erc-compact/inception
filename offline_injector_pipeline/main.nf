@@ -10,7 +10,7 @@ include { peasoup2 } from './processes'
 include { peasoup3 } from './processes'
 include { candidate_filter } from './processes'
 include { fold_cand } from './processes'
-include { pics_scorer } from './processes'
+include { score_collect } from './processes'
 
 
 
@@ -43,7 +43,7 @@ workflow injection_pipeline {
     inj_peasoup = peasoup_spawner(inj_filtool)
     inj_cand_filter = candidate_filter(inj_peasoup)
     inj_fold_cand = fold_cand(inj_cand_filter)
-    inj_pics = pics_scorer(inj_fold_par, inj_fold_cand)
+    inj_score = score_collect(inj_fold_par, inj_fold_cand)
 
 }   
 
@@ -52,3 +52,4 @@ workflow {
     Channel.from(1..params.n_injections) | injection_pipeline
   
 }
+

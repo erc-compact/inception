@@ -64,6 +64,29 @@ process fold_par {
     """
 }
 
+// process peasoup {
+//     label "peasoup"
+//     container params.peasoup_image
+
+//     input:
+//         val injection_number
+//         val tscrunch
+
+//     output:
+//         val injection_number
+
+//     scratch params.tmp_dir
+
+//     script:
+//     """
+//     source ${params.singularity_config}
+//     source ${params.pip_install} ${params.tmp_dir}
+
+//     python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=${tscrunch} --search_args=${params.search_params} --injection_file=${params.injection_plan} --out_dir=${params.output_dir} --data_dir=${params.data_dir} --injection_number=${injection_number}
+
+//     """
+// }
+
 
 process peasoup0 {
     label "peasoup"
@@ -196,9 +219,9 @@ process fold_cand {
     """
 }
 
-process pics_scorer {
-    label "pics_scorer"
-    container params.pics_scorer_image
+process score_collect {
+    label "score_collect"
+    container params.score_collect_image
 
     input:
         val inj_cand
@@ -213,7 +236,7 @@ process pics_scorer {
     """
     source ${params.singularity_config}
 
-    python3.6 ${projectDir}/pipeline_PICS.py --pics_code=${params.pics_code} --pics_models=${params.pics_models} --injection_number=${inj_cand}  --out_dir=${params.output_dir}
+    python3.6 ${projectDir}/pipeline_score_collect.py --pics_code=${params.pics_code} --pics_models=${params.pics_models} --injection_number=${inj_cand}  --out_dir=${params.output_dir}
 
     """
 }
