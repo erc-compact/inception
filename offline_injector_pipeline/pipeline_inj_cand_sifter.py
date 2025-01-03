@@ -10,6 +10,7 @@ from scipy.optimize import fsolve
 import xml.etree.ElementTree as ET
 
 from inception.injector.setup_manager import SetupManager
+from inception.injector.io_tools import print_exe
 
 
 class CandFinder:
@@ -19,9 +20,11 @@ class CandFinder:
         self.inj_report, self.beam_id = self.parse_report(injection_report)
         self.inj_plan = self.resolve_inj_plan(injection_plan)
 
+        print_exe('Setting up pulsar models ...')
         self.setup = SetupManager(self.inj_plan, fb, generate=True)
+        print_exe('Done. Sifting ...')
 
-    def filter_df(self, df, snr_limit=5, pfact=1, adjust=0, period_key='period'): # change pfact to ffact
+    def filter_df(self, df, snr_limit=5, pfact=1, adjust=0, period_key='period'):
         pulsar_cands = []
         for pm in self.setup.pulsar_models:
             period = pm.PX_list[0]*pfact
@@ -34,6 +37,10 @@ class CandFinder:
             dm_cond = (df['dm'] > dm - d_dm) & (df['dm'] < dm + d_dm)
 
             psr_cands = df[p_cond & dm_cond]
+            psr_cands['pulsar_id'] = pm.ID
+            psr_cands['delta_dm'] = d_dm
+            psr_cands['doppler_max'] = period * doppler_max
+            psr_cands['doppler_min'] = period * doppler_min
             pulsar_cands.append(psr_cands)
         return pd.concat(pulsar_cands)
         
@@ -69,7 +76,7 @@ class CandFinder:
         binary_delays = pulsar_model.binary.orbital_delay(obs_arr)*const.c.value
         binary_vel = np.gradient(binary_delays, dt)
 
-        vc = (np.max(binary_vel)+np.max(earth_vel))/const.c.value
+        vc = (np.max(np.abs(binary_vel))+np.max(np.abs(earth_vel)))/const.c.value
         return vc
     
     @staticmethod
@@ -94,7 +101,7 @@ class CandFinder:
     def parse_csv_file(self, cand_csv):
         inj_rows = cand_csv[cand_csv['beam_id'] == self.beam_id]
         inj_rows.sort_values('snr')
-        inj_rows['SNR_index'] = np.arange(len(inj_rows))
+        inj_rows['beam_index'] = np.arange(len(inj_rows))
         return inj_rows
     
     def parse_xml_file(self, xml_file):
