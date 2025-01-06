@@ -157,6 +157,7 @@ class PeasoupExec(PipelineTools):
         self.n_harmonics = 2
         for n in range(self.n_harmonics):
             cands_data = cand_finder.filter_df(cands_df, snr_limit=5, pfact=n+1, adjust=0.05)
+            cands_data['tscrunch'] = self.tscrunch
             cands_data.to_csv(f'{self.work_dir}/injected_xml_candidates_harm_{n+1}.csv')
         
         subprocess.run(f"rsync -Pav {xml_name_old} {peasoup_dir}/{xml_name_new}", shell=True)
