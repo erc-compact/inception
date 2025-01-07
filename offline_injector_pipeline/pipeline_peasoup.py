@@ -47,7 +47,7 @@ class PeasoupExec(PipelineTools):
         if not filterbank:
             DD_plan = self.create_DDplan()
             xml_name = [f'overview_dm_{dm_range.low_dm:.6f}_{dm_range.high_dm:.6f}.xml' for dm_range in DD_plan][self.tscrunch_index]
-            inj_ID = injection_report['injection']['ID']
+            inj_ID = self.parse_JSON(injection_report)['injection']['ID']
             xml_name_new = f'{self.data_ID}_{inj_ID}_{xml_name}'
 
             self.peasoup_failed(xml_name_new, xml_name, process_dir)
