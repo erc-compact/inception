@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 import argparse
 import subprocess
 import numpy as np
@@ -38,11 +39,19 @@ class PeasoupExec(PipelineTools):
                 injection_report = f'{results_dir}/{filename}'
 
         process_dir = f'{results_dir}/processing'
+        filterbank = ''
         for filename in os.listdir(process_dir):
             if filename.endswith(f'{self.tscrunch_index+1}.fil'):
                 subprocess.run(f"rsync -Pav {process_dir}/{filename} {self.work_dir}", shell=True)
-                os.remove(f"{process_dir}/{filename}")
                 filterbank = filename
+        if not filterbank:
+            DD_plan = self.create_DDplan()
+            xml_name = [f'overview_dm_{dm_range.low_dm:.6f}_{dm_range.high_dm:.6f}.xml' for dm_range in DD_plan][self.tscrunch_index]
+            inj_ID = injection_report['injection']['ID']
+            xml_name_new = f'{self.data_ID}_{inj_ID}_{xml_name}'
+
+            self.peasoup_failed(xml_name_new, xml_name, process_dir)
+            sys.exit(0)
         
         return filterbank, injection_report
         
@@ -183,6 +192,8 @@ class PeasoupExec(PipelineTools):
         
         if os.path.exists(xml_name_old):
             self.peasoup_success(xml_name_old, xml_name_new, peasoup_dir)
+            process_dir = f'{self.out_dir}/inj_{self.injection_number:06}/processing'
+            os.remove(f"{process_dir}/{self.fb}")
         else:
             self.peasoup_failed(xml_name_new, xml_name, peasoup_dir)
 
