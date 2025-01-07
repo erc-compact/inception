@@ -22,6 +22,7 @@ class PeasoupExec(PipelineTools):
         self.injection_number = injection_number
         self.n_nearest = n_nearest
 
+        self.inj_file = injection_file
         self.fb = self.get_inputs()
         
         self.gulp_size = self.get_gulp_size()
@@ -43,7 +44,6 @@ class PeasoupExec(PipelineTools):
                 subprocess.run(f"rsync -Pav {process_dir}/{filename} {self.work_dir}", shell=True)
                 filterbank = filename
 
-        self.inj_file = injection_report
         self.inj_report_path = injection_report
         self.inj_report = self.parse_JSON(injection_report)
         
