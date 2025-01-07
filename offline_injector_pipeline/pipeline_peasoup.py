@@ -22,10 +22,8 @@ class PeasoupExec(PipelineTools):
         self.injection_number = injection_number
         self.n_nearest = n_nearest
 
-        self.fb, injection_report = self.get_inputs()
-        self.inj_file = injection_file
-        self.inj_report_path = injection_report
-        self.inj_report = self.parse_JSON(injection_report)
+        self.fb = self.get_inputs()
+        
         self.gulp_size = self.get_gulp_size()
 
     def get_tscrunch(self):
@@ -44,17 +42,22 @@ class PeasoupExec(PipelineTools):
             if filename.endswith(f'{self.tscrunch_index+1}.fil'):
                 subprocess.run(f"rsync -Pav {process_dir}/{filename} {self.work_dir}", shell=True)
                 filterbank = filename
+
+        self.inj_file = injection_report
+        self.inj_report_path = injection_report
+        self.inj_report = self.parse_JSON(injection_report)
+        
         if not filterbank:
             DD_plan = self.create_DDplan()
             xml_name = [f'overview_dm_{dm_range.low_dm:.6f}_{dm_range.high_dm:.6f}.xml' for dm_range in DD_plan][self.tscrunch_index]
-            inj_ID = self.parse_JSON(injection_report)['injection']['ID']
+            inj_ID = self.inj_report['injection']['ID']
             xml_name_new = f'{self.data_ID}_{inj_ID}_{xml_name}'
 
             self.peasoup_failed(xml_name_new, xml_name, process_dir)
             sys.exit(0)
         
-        return filterbank, injection_report
-        
+        return filterbank
+    
     def get_gulp_size(self):
         fscrunch = int(self.processing_args.get('fscrunch', 1))
 
