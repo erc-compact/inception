@@ -53,6 +53,6 @@ workflow {
     injection_batch = Channel.from(1..params.n_injections) 
     inj_results = injection_batch | injection_pipeline
 
-    get_results(inj_results)
+    // get_results(0)
 }
 
