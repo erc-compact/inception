@@ -6,6 +6,7 @@ from pathlib import Path
 import astropy.units as u
 from math import factorial
 import astropy.constants as const
+from scipy.optimize import fsolve
 from sympy import lambdify, symbols
 from scipy.integrate import quad, IntegrationWarning
 from scipy.interpolate import interp1d, RegularGridInterpolator
@@ -37,9 +38,10 @@ class PulsarModel:
 
         if generate:
             self.observed_profile_chan = self.get_observed_profile()
+            self.calculate_SNR(pulsar_pars)
             self.observed_profile = self.vectorise_observed_profile()
 
-        self.calculate_SNR(pulsar_pars, generate)
+        
 
     def get_mode(self, pulsar_pars):
         self.mode = pulsar_pars['mode'] if pulsar_pars['mode'] else 'python'
@@ -164,36 +166,59 @@ class PulsarModel:
 
         return intrinsic_pulse
     
-    def calculate_SNR(self, pulsar_pars, generate):
-        SNR_obs = self.SNR
-        if (not SNR_obs):
-            sys.exit(f'SNR value is required for pulsar {self.ID}.')
+    def calculate_SNR(self, pulsar_pars):
 
-        if generate:
-            beam_scale = self.obs.get_beam_snr() 
+        def get_pulse_scale(SNR):
 
-            sigma_pt = self.obs.fb_std
-            n_pulses = self.obs.obs_len/self.period
+            def get_SNR(scale):
+                intrinsic_profile_sum = np.sum([self.intrinsic_profile_chan(phase, chan) for chan in range(n_chan)], axis=0)
+                profile = noise + intrinsic_profile_sum*n_pulse*scale
+                return 1/(fb_std*np.sqrt(Weq)) * np.sum(profile-fb_mean)
+            
+            out = fsolve(lambda x: np.round(get_SNR(x) - SNR, 2), 0.1)
+            return out[0]
 
-            Weq_t = pulsar_pars['duty_cycle'] * np.sqrt(2*np.pi)/(2*np.sqrt(2*np.log(2)))*self.period
-            Amp = SNR_obs * sigma_pt / (np.sqrt(Weq_t) * np.sqrt(self.obs.n_chan * n_pulses))
-            self.SNR_scale = Amp * beam_scale /64
+        rng = np.random.default_rng(self.seed)
+        beam_scale = self.obs.get_beam_snr() 
 
-            # if pulsar_pars['profile'] == 'default':
-            #     sigma_pt = self.obs.fb_std
-            #     n_sample = self.obs.n_samples
-            #     Weq_t = pulsar_pars['duty_cycle']/(2*np.sqrt(2*np.log(2)))*np.sqrt(2*np.pi)
-            #     Amp = SNR_obs * sigma_pt / (np.sqrt(Weq_t) * np.sqrt(self.obs.n_chan) * np.sqrt(n_sample))
-            #     self.SNR_scale = Amp * beam_scale
-            # else:
-            #     integrated_profile = 0
-            #     with warnings.catch_warnings():
-            #         warnings.simplefilter("ignore", IntegrationWarning)
-            #         for chan in range(self.obs.n_chan):
-            #             integrated_profile += quad(self.observed_profile_chan, args=(chan,), a=0, b=1, epsabs=1e-5)[0]
+        n_samp = self.obs.n_samples
+        n_chan = self.obs.n_chan
+        p0 = self.PX_list[0]
+        n_pulse = self.obs.obs_len/p0
+        duty_cycle = pulsar_pars['duty_cycle']
 
-            #     profile_bin = self.period / self.obs.dt
-            #     self.SNR_scale = SNR_obs * self.obs.fb_std * np.sqrt(self.period * self.obs.n_chan / self.obs.obs_len) * beam_scale / (integrated_profile * profile_bin)
+        nbins = int(np.round(p0/self.obs.dt))
+        Weq = duty_cycle * nbins * np.sqrt(2*np.pi)/(2*np.sqrt(2*np.log(2)))
+        
+        fb_std = self.obs.fb_std * np.sqrt(n_samp*n_chan/nbins)
+        fb_mean = self.obs.fb_mean * (n_samp*n_chan)/nbins
+        noise = rng.normal(fb_mean, fb_std, size=nbins)
+
+        phase = np.linspace(0, 1, nbins)
+        self.SNR_scale = get_pulse_scale(self.SNR) * beam_scale
+
+        # sigma_pt = self.obs.fb_std
+        # n_pulses = self.obs.obs_len/self.period
+
+        # Weq_t = pulsar_pars['duty_cycle'] * np.sqrt(2*np.pi)/(2*np.sqrt(2*np.log(2)))*self.period
+        # Amp = self.SNR * sigma_pt / (np.sqrt(Weq_t) * np.sqrt(self.obs.n_chan * n_pulses))
+        # self.SNR_scale = Amp /64
+
+        # if pulsar_pars['profile'] == 'default':
+        #     sigma_pt = self.obs.fb_std
+        #     n_sample = self.obs.n_samples
+        #     Weq_t = pulsar_pars['duty_cycle']/(2*np.sqrt(2*np.log(2)))*np.sqrt(2*np.pi)
+        #     Amp = SNR_obs * sigma_pt / (np.sqrt(Weq_t) * np.sqrt(self.obs.n_chan) * np.sqrt(n_sample))
+        #     self.SNR_scale = Amp * beam_scale
+        # else:
+        #     integrated_profile = 0
+        #     with warnings.catch_warnings():
+        #         warnings.simplefilter("ignore", IntegrationWarning)
+        #         for chan in range(self.obs.n_chan):
+        #             integrated_profile += quad(self.observed_profile_chan, args=(chan,), a=0, b=1, epsabs=1e-5)[0]
+
+        #     profile_bin = self.period / self.obs.dt
+        #     self.SNR_scale = SNR_obs * self.obs.fb_std * np.sqrt(self.period * self.obs.n_chan / self.obs.obs_len) * beam_scale / (integrated_profile * profile_bin)
      
     def vectorise_observed_profile(self):
         phases = self.prop_effect.phase

@@ -161,6 +161,8 @@ class PulsarParParser:
         f0_find = pulsar_pars.get('F0', 0)
         if (not p0_find) and (not f0_find):
             sys.exit(f'No P0 or F0 found for pulsar {ID}. Pulsar must be spinning!')
+        if not pulsar_pars.get('SNR', 0):
+            sys.exit(f'SNR value is required for pulsar {ID}.')
 
         pattern = re.compile(r'^[PF]\d+$')
         matching_keys = [key for key in pulsar_pars.keys() if pattern.match(key)]
