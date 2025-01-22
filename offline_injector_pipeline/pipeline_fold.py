@@ -205,7 +205,9 @@ class FoldScoreExec(PipelineTools):
 
         elif self.mode == 'cand':
             cand_dir = f'{results_dir}/inj_cands'
-            os.mkdir(cand_dir)
+            if os.path.isfile(cand_dir):
+                os.remove(cand_dir)
+            os.mkdir(cand_dir, exist_ok=True)
             subprocess.run(f"cp {self.work_dir}/*.png {cand_dir}", shell=True)
             subprocess.run(f"cp {self.work_dir}/*.ar {cand_dir}", shell=True)
             subprocess.run(f"cp {self.work_dir}/*.cands {cand_dir}", shell=True)

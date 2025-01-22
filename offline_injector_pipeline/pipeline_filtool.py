@@ -72,7 +72,7 @@ class FiltoolExec(PipelineTools):
     def transfer_products(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
         filtool_out_dir = f'{results_dir}/processing'
-        os.mkdir(filtool_out_dir)
+        os.mkdir(filtool_out_dir, exist_ok=True)
 
         for filename in os.listdir(self.work_dir):
             if 'downsampled' in filename:
