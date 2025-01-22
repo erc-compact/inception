@@ -76,8 +76,8 @@ class InjectorSetup(PipelineTools):
         injected_fb = f'{self.work_dir}/{Path(self.merged_fb).stem}_{inj_ID}.fil'
         injection_report = f'{self.work_dir}/report_{inj_ID}_{self.seed}.json'
         
-        os.mkdir(results_dir, exist_ok=True)
-        os.mkdir(par_dir, exist_ok=True)
+        os.makedirs(results_dir, exist_ok=True)
+        os.makedirs(par_dir, exist_ok=True)
         # subprocess.run(f"rsync -Pav {self.merged_fb} {results_dir}", shell=True)
         subprocess.run(f"rsync -Pav {injected_fb} {results_dir}", shell=True)
         subprocess.run(f"rsync -Pav {injection_report} {results_dir}", shell=True)
