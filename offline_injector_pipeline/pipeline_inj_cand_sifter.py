@@ -96,7 +96,7 @@ class CandFinder:
             return relative_SNR(d_DM)/relative_SNR(0) * pulsar_model.SNR - snr_limit
         
         d_DM = fsolve(get_DM_step, 1e-3)
-        return d_DM
+        return np.abs(d_DM)
 
     def parse_csv_file(self, cand_csv):
         inj_rows = cand_csv[cand_csv['beam_id'] == self.beam_id]

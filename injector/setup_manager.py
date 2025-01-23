@@ -57,25 +57,30 @@ class SetupManager:
             sys.exit(f'Unable to find {pulsar_data_path}.')
         except json.JSONDecodeError:
             sys.exit(f'Unable to parse {pulsar_data_path} using JSON.')
-
-        global_list = read_inject_file.get('psr_global', None)
-        self.seed = global_list.pop('global_seed', 'random')
-        if self.seed == 'random':
-            self.seed = np.random.randint(1e11, 1e12)
-        self.inj_ID = global_list.pop('injection_id', f'inj_{self.seed}')
-
-        pulsar_list = read_inject_file.get('pulsars', None)
-        pulsar_list, ID_list = self.resolve_ID(pulsar_list, pulsar_data_path)
-
-        pulsar_clean_list = []
-        for pulsar in pulsar_list:
-            parser = PulsarParParser(pulsar, global_list)
-            parser_clean = self.conv_accel_units(parser.psr_pars)
-            pulsar_clean_list.append(parser_clean)
-
-        pulsar_clean_list = self.double_pulsar(pulsar_clean_list, ID_list)
         
-        return pulsar_clean_list
+        inj_report = read_inject_file.get('injection_report', None)
+        if inj_report:
+            self.inj_ID = inj_report['ID']
+            self.seed = inj_report['global_seed']
+            return read_inject_file['pulsars']
+        else:
+            global_list = read_inject_file.get('psr_global', None)
+            self.seed = global_list.pop('global_seed', 'random')
+            if self.seed == 'random':
+                self.seed = np.random.randint(1e11, 1e12)
+            self.inj_ID = global_list.pop('injection_id', f'inj_{self.seed}')
+
+            pulsar_list = read_inject_file.get('pulsars', None)
+            pulsar_list, ID_list = self.resolve_ID(pulsar_list, pulsar_data_path)
+
+            pulsar_clean_list = []
+            for pulsar in pulsar_list:
+                parser = PulsarParParser(pulsar, global_list)
+                parser_clean = self.conv_accel_units(parser.psr_pars)
+                pulsar_clean_list.append(parser_clean)
+
+            pulsar_clean_list = self.double_pulsar(pulsar_clean_list, ID_list)
+            return pulsar_clean_list
     
     def resolve_ID(self, pulsar_list, pulsar_data_path):
         ID_list = []
@@ -302,7 +307,7 @@ class SetupManager:
     
     def create_injection_report(self):
         report_path = os.path.join(self.output_path, f'report_{self.inj_ID}_{self.seed}.json')
-        report = {'injection': {'ID': self.inj_ID, 'global_seed': self.seed, 'datetime': str(datetime.now()), 'ephem': self.ephem,
+        report = {'injection_report': {'ID': self.inj_ID, 'global_seed': self.seed, 'datetime': str(datetime.now()), 'ephem': self.ephem,
                                 'fb': self.fb.path, 'fb_mean': self.fb.fb_mean, 'fb_sigma': self.fb.fb_std}, 
                   'pulsars': self.pulsars}
         with open(report_path, 'w') as report_file:
