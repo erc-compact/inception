@@ -8,6 +8,7 @@ from astropy.coordinates import SkyCoord, EarthLocation, solar_system_ephemeris,
 
 from .propagation_effects import PropagationEffects
 
+
 class Observation:
     telescope_id = {64: ['Meerkat', 'mk'],  1: ['Arecibo', 'ao'], 4: ['Parkes', 'pk'], 5: ['Jodrell', 'jb'], 
                     6: ['GBT', 'gb'], 7: ['GMRT', 'gm'], 8: ['Effelsberg', 'ef']}
@@ -60,7 +61,9 @@ class Observation:
         
     @staticmethod
     def convert_coord(coord_str):
-        coord_str = str(coord_str)
+        integer, decimal = str(coord_str).split('.')
+        coord_str = f"{'0'*(6-len(integer))}{integer}.{decimal}"
+
         is_negative = coord_str.startswith('-')
         if is_negative:
             coord_str = coord_str[1:]
@@ -72,7 +75,7 @@ class Observation:
         if is_negative:
             formatted_coord = '-' + formatted_coord
 
-        return formatted_coord   
+        return formatted_coord    
     
     def get_coords(self, pulsar_pars):   
         pulsar_ra, pulsar_dec = pulsar_pars['RAJ'],  pulsar_pars['DECJ']
