@@ -21,6 +21,8 @@ class FiltoolExec(PipelineTools):
     def get_fb(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
         for filename in os.listdir(results_dir):
+            print(results_dir)
+            print(filename)
             if f'_{self.data_ID}_' in filename:
                 subprocess.run(f"rsync -Pav {results_dir}/{filename} {self.work_dir}", shell=True)
                 return f'{self.work_dir}/{Path(filename).name}'
@@ -60,7 +62,7 @@ class FiltoolExec(PipelineTools):
 
         fscrunch = self.processing_args.get('fscrunch', 1) 
         rfi_flags = self.processing_args.get('rfi_flags', 'zdot')
-        
+
         fb_root = Path(self.fb).stem.split('_')
         rootname = f"downsampled_{fb_root[-2]}_{fb_root[-1]}" 
 

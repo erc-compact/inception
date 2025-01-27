@@ -16,6 +16,7 @@ process injection {
 
     script:
     """
+    export PYTHONPATH=${params.inception_dir}
     python3 ${projectDir}/pipeline_injector.py --search_args=${params.search_params} --injection_file=${params.injection_plan} --data_dir=${params.data_dir} --out_dir=${params.output_dir} --injection_number=${injection_number} --ephem=${params.ephem} --ncpus=${task.cpus}
     
     """
@@ -23,53 +24,16 @@ process injection {
 
 process filtool {
     label "filtool"
-    container params.filtool_image
-
-    input:
-        val injection_number
-
-    output:
-        val injection_number
-
-    scratch params.tmp_dir
-
-    script:
-    """
-    source ${params.singularity_config}
-
+    container params.filtool_imagesplit_inj_filtool
     python3.6 ${projectDir}/pipeline_filtool.py --injection_number=${injection_number} --search_args=${params.search_params} --out_dir=${params.output_dir}  --ncpus=${task.cpus}
 
     """
 }
-
-process fold_par {
-    label "fold_par"
-    container params.fold_par_image
-
-    input:
-        val injection_number
-
-    output:
-        val injection_number
-
-    scratch params.tmp_dir
-
-    script:
-    """
-    source ${params.singularity_config}
-    source ${params.dependencies_config} ${params.tmp_dir}
-
-    python3.6 ${projectDir}/pipeline_fold.py --mode=par --search_args=${params.search_params}  --injection_file=${params.injection_plan} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
-
-    """
-}
-
-process peasoup0 {
-    label "peasoup"
+split_inj_filtool
     container params.peasoup_image
 
     input:
-        val injection_number
+        tuple val(injection_number), val(tscrunch_index), path(filterbanks)
         
     output:
         val injection_number
@@ -79,78 +43,12 @@ process peasoup0 {
     script:
     """
     source ${params.singularity_config}
-    source ${params.dependencies_config} ${params.tmp_dir}
-
-    python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=0 --search_args=${params.search_params} --injection_file=${params.injection_plan} --out_dir=${params.output_dir} --data_dir=${params.data_dir} --injection_number=${injection_number}
-
-    """
-}
-
-process peasoup1 {
-    label "peasoup"
-    container params.peasoup_image
-
-    input:
-        val injection_number
-
-    output:
-        val injection_number
-
-    scratch params.tmp_dir
-
-    script:
-    """
-    source ${params.singularity_config}
-    source ${params.dependencies_config} ${params.tmp_dir}
-
-    python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=1 --search_args=${params.search_params} --injection_file=${params.injection_plan} --out_dir=${params.output_dir} --data_dir=${params.data_dir} --injection_number=${injection_number}
+    source ${params.dependencies_config} ${params.tmp_dir} ${params.injection_dir}
+    python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=${tscrunch_index} --search_args=${params.search_params} --injection_file=${params.injection_plan} --out_dir=${params.output_dir} --data_dir=${params.data_dir} --injection_number=${injection_number}
 
     """
 }
 
-process peasoup2 {
-    label "peasoup"
-    container params.peasoup_image
-
-    input:
-        val injection_number
-
-    output:
-        val injection_number
-
-    scratch params.tmp_dir
-
-    script:
-    """
-    source ${params.singularity_config}
-    source ${params.dependencies_config} ${params.tmp_dir}
-
-    python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=2 --search_args=${params.search_params} --injection_file=${params.injection_plan} --out_dir=${params.output_dir} --data_dir=${params.data_dir} --injection_number=${injection_number}
-
-    """
-}
-
-process peasoup3 {
-    label "peasoup"
-    container params.peasoup_image
-
-    input:
-        val injection_number
-
-    output:
-        val injection_number
-
-    scratch params.tmp_dir
-
-    script:
-    """
-    source ${params.singularity_config}
-    source ${params.dependencies_config} ${params.tmp_dir}
-
-    python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=3 --search_args=${params.search_params} --injection_file=${params.injection_plan} --out_dir=${params.output_dir} --data_dir=${params.data_dir} --injection_number=${injection_number}
-
-    """
-}
 
 process candidate_filter {
     label "candidate_filter"
@@ -188,7 +86,7 @@ process fold_cand {
     script:
     """
     source ${params.singularity_config}
-    source ${params.dependencies_config} ${params.tmp_dir}
+    source ${params.dependencies_config} ${params.tmp_dir} ${params.injection_dir}
 
     python3.6 ${projectDir}/pipeline_fold.py --mode=cand --search_args=${params.search_params}  --injection_file=${params.injection_plan} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
 

@@ -15,3 +15,15 @@
 /offline_injector_pipeline/*.ipynb
 
 /injector/TODO.txt
+
+*.nextflow*
+
+/offline_injector_pipeline/work/
+
+*.fil
+
+*.par
+
+*.pyc
+
+*.bsp

@@ -53,8 +53,9 @@ class InjectorSetup(PipelineTools):
 
         data_paths = [f'{self.data_dir}/{pointing_id}/{inj_beam_name}/{fb_name}' for fb_name in fb_names]
         for data_product in data_paths:
-            cmd = f"rsync -Pav {data_product} {self.work_dir}"
+            cmd = f"rsync -PavL {data_product} {self.work_dir}"
             subprocess.run(cmd, shell=True)
+            print(cmd)
 
         new_data_paths = [f'{self.work_dir}/{fb_name}' for fb_name in fb_names]
         merge_filterbanks(new_data_paths, self.merged_fb)
@@ -64,9 +65,11 @@ class InjectorSetup(PipelineTools):
         
         inputs = f"--signal={self.seeded_inject_file} --fb={self.merged_fb} --ephem=./de440.bsp --output={self.work_dir} --ncpu={ncpus}"
         cmd = f"python3 {SCRIPT_inject_pulsars.__file__} {inputs}"
-
         print_exe('starting injection')
-        subprocess.run(cmd, shell=True)
+        try:
+            subprocess.run(cmd, shell=True)
+        except:
+            raise
         print_exe('injection complete')
 
     def transfer_products(self):
@@ -79,9 +82,9 @@ class InjectorSetup(PipelineTools):
         os.makedirs(results_dir, exist_ok=True)
         os.makedirs(par_dir, exist_ok=True)
         # subprocess.run(f"rsync -Pav {self.merged_fb} {results_dir}", shell=True)
-        subprocess.run(f"rsync -Pav {injected_fb} {results_dir}", shell=True)
-        subprocess.run(f"rsync -Pav {injection_report} {results_dir}", shell=True)
-        subprocess.run(f"rsync -Pav {self.work_dir}/*.par {par_dir}", shell=True)
+        subprocess.run(f"rsync -PavL {injected_fb} {results_dir}", shell=True)
+        subprocess.run(f"rsync -PavL {injection_report} {results_dir}", shell=True)
+        subprocess.run(f"rsync -PavL {self.work_dir}/*.par {par_dir}", shell=True)
 
 
 if __name__=='__main__':
