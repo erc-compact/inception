@@ -24,12 +24,50 @@ process injection {
 
 process filtool {
     label "filtool"
-    container params.filtool_imagesplit_inj_filtool
+    container params.filtool_image
+    
+    input:
+        val injection_number
+
+    output:
+        val injection_number
+
+    scratch params.tmp_dir
+
+    script:
+    """
+    source ${params.singularity_config}
+
     python3.6 ${projectDir}/pipeline_filtool.py --injection_number=${injection_number} --search_args=${params.search_params} --out_dir=${params.output_dir}  --ncpus=${task.cpus}
 
     """
 }
-split_inj_filtool
+
+
+process fold_par {
+    label "fold_par"
+    container params.fold_par_image
+
+    input:
+        val injection_number
+
+    output:
+        val injection_number
+
+    scratch params.tmp_dir
+
+    script:
+    """
+    source ${params.singularity_config}
+    source ${params.dependencies_config} ${params.tmp_dir} ${params.injection_dir}
+
+    python3.6 ${projectDir}/pipeline_fold.py --mode=par --search_args=${params.search_params}  --injection_file=${params.injection_plan} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
+
+    """
+}
+
+
+process peasoup {
     container params.peasoup_image
 
     input:
