@@ -59,7 +59,7 @@ process fold_par {
     script:
     """
     source ${params.singularity_config}
-    source ${params.dependencies_config} ${params.tmp_dir} ${params.injection_dir}
+    source ${params.dependencies_config} ${params.tmp_dir} ${params.inception_dir}
 
     python3.6 ${projectDir}/pipeline_fold.py --mode=par --search_args=${params.search_params}  --injection_file=${params.injection_plan} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
 
@@ -81,7 +81,7 @@ process peasoup {
     script:
     """
     source ${params.singularity_config}
-    source ${params.dependencies_config} ${params.tmp_dir} ${params.injection_dir}
+    source ${params.dependencies_config} ${params.tmp_dir} ${params.inception_dir}
     python3.6 ${projectDir}/pipeline_peasoup.py --tscrunch_index=${tscrunch_index} --search_args=${params.search_params} --injection_file=${params.injection_plan} --out_dir=${params.output_dir} --data_dir=${params.data_dir} --injection_number=${injection_number}
 
     """
@@ -124,7 +124,7 @@ process fold_cand {
     script:
     """
     source ${params.singularity_config}
-    source ${params.dependencies_config} ${params.tmp_dir} ${params.injection_dir}
+    source ${params.dependencies_config} ${params.tmp_dir} ${params.inception_dir}
 
     python3.6 ${projectDir}/pipeline_fold.py --mode=cand --search_args=${params.search_params}  --injection_file=${params.injection_plan} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
 

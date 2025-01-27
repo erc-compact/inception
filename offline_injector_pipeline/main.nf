@@ -40,7 +40,12 @@ workflow injection_pipeline {
     
     // split_inj_filtool.view()
     inj_peasoup = peasoup(split_inj_filtool)
-    inj_cand_filter = candidate_filter(inj_peasoup)
+
+
+    // Wait for all inj_peasoup outputs to complete before running inj_cand_filter
+    all_peasoup_results = inj_peasoup.collect()
+
+    inj_cand_filter = candidate_filter(all_peasoup_results)
     inj_fold_cand = fold_cand(inj_cand_filter)
     inj_results = score_collect(inj_fold_cand, inj_fold_par)
 
