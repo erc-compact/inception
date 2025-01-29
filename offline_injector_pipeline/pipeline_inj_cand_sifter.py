@@ -49,7 +49,7 @@ class CandFinder:
         with open(json_file, 'r') as file:
             pars = json.load(file)
         
-        fb_name = pars['injection']['fb']
+        fb_name = pars['injection_report']['fb']
         match = re.search(r'cfbf\d{5}', fb_name)
         return pars, match.group()
     
@@ -58,7 +58,7 @@ class CandFinder:
             pars = json.load(file)
 
         seeded_inject_file = f'{self.work_dir}/{Path(json_file).name}'
-        pars['psr_global']['global_seed'] = self.inj_report['injection']['global_seed']
+        pars['psr_global']['global_seed'] = self.inj_report['injection_report']['global_seed']
         with open(seeded_inject_file, 'w') as file:
             json.dump(pars, file, indent=4)
 

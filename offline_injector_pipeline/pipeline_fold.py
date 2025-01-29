@@ -129,7 +129,7 @@ class FoldScoreExec(PipelineTools):
         return zap_string
     
     def get_beam_tag(self):
-        beam_name = re.search(r'[ci]fbf\d{5}', self.inj_report['injection']['fb']).group()
+        beam_name = re.search(r'[ci]fbf\d{5}', self.inj_report['injection_report']['fb']).group()
         if 'ifbf' in beam_name:
             beam_tag = "--incoherent"
         elif 'cfbf' in beam_name:

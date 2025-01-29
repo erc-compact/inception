@@ -17,7 +17,7 @@ class CandExec(PipelineTools):
         self.injection_number = injection_number
 
         self.inj_report = self.get_injection_report()
-        self.injection_ID = self.inj_report['injection']['ID']
+        self.injection_ID = self.inj_report['injection_report']['ID']
     
     def get_injection_report(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
@@ -29,8 +29,8 @@ class CandExec(PipelineTools):
         ddplan = self.create_DDplan()
         xml_file_names = [f'overview_dm_{dm_range.low_dm:.6f}_{dm_range.high_dm:.6f}.xml' for dm_range in ddplan]
 
-        pointing_id = re.search(r'MMGPS_U_\d{4}', self.inj_report['injection']['fb']).group()
-        inj_beam_name = re.search(r'[ci]fbf\d{5}', self.inj_report['injection']['fb']).group()
+        pointing_id = re.search(r'MMGPS_U_\d{4}', self.inj_report['injection_report']['fb']).group()
+        inj_beam_name = re.search(r'[ci]fbf\d{5}', self.inj_report['injection_report']['fb']).group()
         xml_file_paths = []
         for nbeam in range(self.data['n_cbeams']):
             for xml_name in xml_file_names:
@@ -63,7 +63,7 @@ class CandExec(PipelineTools):
         def get_beam_name(file_path):
             path_obj = Path(file_path)
             if path_obj.stem.split('_')[0] != 'overview':
-                return re.search(r'[ci]fbf\d{5}', self.inj_report['injection']['fb']).group()
+                return re.search(r'[ci]fbf\d{5}', self.inj_report['injection_report']['fb']).group()
             else:
                 return path_obj.parent.stem 
 

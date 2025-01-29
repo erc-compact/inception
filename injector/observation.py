@@ -24,8 +24,8 @@ class Observation:
         self.get_freq_data(fb_header)
 
         self.obs_start_bary = self.topo2bary([self.obs_start])[0]
+        self.prop_effect = PropagationEffects(self, pulsar_pars)
         if generate:
-            self.prop_effect = PropagationEffects(self, pulsar_pars)
             self.barycentre_delays_interp = self.generate_interp(generate)
 
     def get_pointing_data(self, fb_header, pulsar_pars):
@@ -38,7 +38,7 @@ class Observation:
         self.source = self.get_coords(pulsar_pars)
     
     def get_beam_data(self, pulsar_pars):
-        self.beam_fwhm = pulsar_pars['beam_fwhm'] # beam reader, one beam/ multi beams- meta map
+        self.beam_fwhm = pulsar_pars.get('beam_fwhm', 0) # beam reader, one beam/ multi beams- meta map
 
     def get_obs_data(self, fb_header, filterbank):
         self.obs_start = fb_header['tstart']
@@ -78,7 +78,7 @@ class Observation:
         return formatted_coord    
     
     def get_coords(self, pulsar_pars):   
-        pulsar_ra, pulsar_dec = pulsar_pars['RAJ'],  pulsar_pars['DECJ']
+        pulsar_ra, pulsar_dec = pulsar_pars.get('RAJ', None),  pulsar_pars.get('DECJ', None)
         if pulsar_ra and pulsar_dec:
             try: 
                 source = SkyCoord(ra=pulsar_ra, dec=pulsar_dec, unit=(u.hourangle, u.deg), frame='icrs')
@@ -87,7 +87,7 @@ class Observation:
             else:
                 return source
         else:
-            return self.obs_pointing.directional_offset_by(pulsar_pars['position_angle']*u.deg, pulsar_pars['separation']*u.arcmin)
+            return self.obs_pointing.directional_offset_by(pulsar_pars.get('position_angle', 0)*u.deg, pulsar_pars.get('separation', 0)*u.arcmin)
 
     def get_beam_snr(self):
         if self.beam_fwhm != 0:
