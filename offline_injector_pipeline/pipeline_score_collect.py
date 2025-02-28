@@ -39,8 +39,8 @@ class ScoreAndCollect:
         results = results[['ID', 'seed', 'P0', 'phase_offset', 'DM', 'SNR', 'duty_cycle', 'spectral_index',
                            'binary_period', 'x', 'M1', 'M2', 'inc', 'ecc', 'AoP']].add_prefix('inj_')
         
-        pointing_id = re.search(r'MMGPS_U_\d{4}', self.inj_report['injection']['fb']).group()
-        inj_beam_name = re.search(r'[ci]fbf\d{5}', self.inj_report['injection']['fb']).group()
+        pointing_id = re.search(r'MMGPS_U_\d{4}', self.inj_report['injection_report']['fb']).group()
+        inj_beam_name = re.search(r'[ci]fbf\d{5}', self.inj_report['injection_report']['fb']).group()
 
         results['pointing_id'] = [pointing_id] * len(results)
         results['beam_id'] = [inj_beam_name] * len(results)

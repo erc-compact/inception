@@ -89,7 +89,7 @@ class CandFinder:
 
             W_int = period * duty_cycle
             freq = pulsar_model.obs.freq_arr
-            W_eff = np.sqrt(W_int**2 + (DM_const * d_DM * (1/freq[0]**2 - 1/freq[-1]**2))**2)
+            W_eff = np.sqrt(W_int**2 + (2*DM_const * d_DM * (1/freq[0]**2 - 1/freq[-1]**2))**2)
             return np.sqrt(np.clip((period-W_eff)/W_eff, 0, None))
         
         def get_DM_step(d_DM):

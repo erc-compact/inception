@@ -107,14 +107,14 @@ class FilterbankReader:
         
         return out.reshape(-1, self.nchans).astype(self.output_dtype)
     
-    def split_fb_channels(self, output_path, ext=''):
+    def split_fb_channels(self, output_path, ext='', nbits=32):
         block_size = 2**11
         n_blocks, remainder = divmod(self.n_samples, block_size)
         open_files = [open(output_path+f'/{ext}_{chan}.dat', 'wb') for chan in range(self.nchans)]
-
+        data_type = {64: 'float64', 32: 'float32'}
         def split_block(block):
             for chan in range(self.nchans):
-                raw = block.T[chan].astype('float64')
+                raw = block.T[chan].astype(data_type[nbits])
                 open_files[chan].write(raw.tobytes())
 
         for _ in range(n_blocks):
@@ -212,6 +212,9 @@ def print_exe(output):
 def read_datfile(path, nbits, count=-1):
     if nbits == 64:
         raw = np.fromfile(path, dtype=np.float64,count=count)
+        return raw.astype(np.float64)
+    if nbits == 32:
+        raw = np.fromfile(path, dtype=np.float32,count=count)
         return raw.astype(np.float64)
     if nbits == 8:
         raw = np.fromfile(path, dtype=np.uint8, count=count)

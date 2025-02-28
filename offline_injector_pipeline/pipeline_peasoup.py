@@ -50,7 +50,7 @@ class PeasoupExec(PipelineTools):
         if not filterbank:
             DD_plan = self.create_DDplan()
             xml_name = [f'overview_dm_{dm_range.low_dm:.6f}_{dm_range.high_dm:.6f}.xml' for dm_range in DD_plan][self.tscrunch_index]
-            inj_ID = self.inj_report['injection']['ID']
+            inj_ID = self.inj_report['injection_report']['ID']
             xml_name_new = f'{self.data_ID}_{inj_ID}_{xml_name}'
 
             self.peasoup_failed(xml_name_new, xml_name, process_dir)
@@ -179,8 +179,8 @@ class PeasoupExec(PipelineTools):
             subprocess.run(f"rsync -Pav {self.work_dir}/{cand_name_old} {peasoup_dir}/{cand_name_new}", shell=True)
     
     def peasoup_failed(self, xml_name_new, xml_name, peasoup_dir):
-        pointing_id = re.search(r'MMGPS_U_\d{4}', self.inj_report['injection']['fb']).group()
-        inj_beam_name = re.search(r'[ci]fbf\d{5}', self.inj_report['injection']['fb']).group()
+        pointing_id = re.search(r'MMGPS_U_\d{4}', self.inj_report['injection_report']['fb']).group()
+        inj_beam_name = re.search(r'[ci]fbf\d{5}', self.inj_report['injection_report']['fb']).group()
         xml_original = f'{self.data_dir}/{pointing_id}/XML_FILES/{inj_beam_name}/{xml_name}'
         subprocess.run(f"rsync -Pav {xml_original} {peasoup_dir}/{xml_name_new}", shell=True)
 
@@ -188,7 +188,7 @@ class PeasoupExec(PipelineTools):
         DD_plan = self.create_DDplan()
         xml_name = [f'overview_dm_{dm_range.low_dm:.6f}_{dm_range.high_dm:.6f}.xml' for dm_range in DD_plan][self.tscrunch_index]
 
-        inj_ID = self.inj_report['injection']['ID']
+        inj_ID = self.inj_report['injection_report']['ID']
         xml_name_old = f'{self.work_dir}/overview.xml'
         xml_name_new = f'{self.data_ID}_{inj_ID}_{xml_name}'
         peasoup_dir = f'{self.out_dir}/inj_{self.injection_number:06}/processing'
