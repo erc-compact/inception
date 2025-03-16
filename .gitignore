@@ -4,11 +4,9 @@
 
 /dev_injector
 
-/dev_pipeline
+/dev_offline_injector
 
 /dev_signal
-
-/signal_finder
 
 /injector/__pycache__
 

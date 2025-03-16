@@ -28,7 +28,7 @@ class FilterbankReader:
         self.fbottom = self.ftop + self.header['foff'] * self.header['nchans']
         self.center = self.ftop + 0.5 * self.header['foff'] * self.header['nchans']
 
-        self.n_samples = self.get_n_samples()
+        self.n_samples = self.get_n_samples() #474537276
         self.fb_mean, self.fb_std = self.get_FB_stats(2**14)
 
     def read_string(self):
@@ -107,11 +107,11 @@ class FilterbankReader:
         
         return out.reshape(-1, self.nchans).astype(self.output_dtype)
     
-    def split_fb_channels(self, output_path, ext='', nbits=32):
+    def split_fb_channels(self, output_path, ext='', nbits='fb'):
         block_size = 2**11
         n_blocks, remainder = divmod(self.n_samples, block_size)
         open_files = [open(output_path+f'/{ext}_{chan}.dat', 'wb') for chan in range(self.nchans)]
-        data_type = {64: 'float64', 32: 'float32'}
+        data_type = {64: 'float64', 32: 'float32', 'fb': self.nbits}
         def split_block(block):
             for chan in range(self.nchans):
                 raw = block.T[chan].astype(data_type[nbits])

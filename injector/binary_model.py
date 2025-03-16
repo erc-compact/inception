@@ -83,7 +83,7 @@ class BinaryModel:
         Ob = 1/self.P2pi
         ecc = 1/np.sqrt(1-self.e**2) 
         theta = self.true_anomaly(t)
-        return com * Ob * self.a1 * ecc * (np.cos(self.AoP + theta) + self.e*np.cos(self.AoP))
+        return com * Ob * self.a * ecc * (np.cos(self.AoP + theta) + self.e*np.cos(self.AoP))
     
     def get_radial_accel(self, t, star='pulsar'):
         numerator_mass = self.mass_c if star=='pulsar' else self.mass_p
@@ -91,7 +91,7 @@ class BinaryModel:
         Ob = 1/self.P2pi
         ecc = 1/(1-self.e**2) 
         theta = self.true_anomaly(t)
-        return -com * Ob ** 2 * self.a1 * ecc * (1 + self.e*np.cos(theta))**2 * np.sin(self.AoP + theta)
+        return -com * Ob ** 2 * self.a * ecc * (1 + self.e*np.cos(theta))**2 * np.sin(self.AoP + theta)
 
     def get_roemer_delay_proper(self, t):
         E = self.eccentric_anomaly(t)

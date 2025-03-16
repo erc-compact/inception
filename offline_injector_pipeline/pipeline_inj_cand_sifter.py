@@ -67,16 +67,20 @@ class CandFinder:
     @staticmethod
     def get_doppler_velocity(pulsar_model):
         obs_arr = np.linspace(0, pulsar_model.obs.obs_len, 10**4)
-        dt = obs_arr[1] - obs_arr[0]
-        timeseries = obs_arr*u.s.to(u.day) + pulsar_model.obs.obs_start
+        # dt = obs_arr[1] - obs_arr[0]
+        # timeseries = obs_arr*u.s.to(u.day) + pulsar_model.obs.obs_start
 
-        earth_delays = pulsar_model.obs.topo2bary_calc(timeseries, mjd=True)*const.c.value
-        earth_vel = np.gradient(earth_delays, dt)
+        # earth_delays = pulsar_model.obs.topo2bary_calc(timeseries, mjd=True)*const.c.value
+        # earth_vel = np.gradient(earth_delays, dt)
 
-        binary_delays = pulsar_model.binary.orbital_delay(obs_arr)*const.c.value
-        binary_vel = np.gradient(binary_delays, dt)
+        # binary_delays = pulsar_model.binary.orbital_delay(obs_arr)*const.c.value
+        # binary_vel = np.gradient(binary_delays, dt)
 
-        vc = (np.max(np.abs(binary_vel))+np.max(np.abs(earth_vel)))/const.c.value
+        # vc = (np.max(np.abs(binary_vel))+np.max(np.abs(earth_vel)))/const.c.value
+
+        obs_arr = np.linspace(0, pulsar_model.obs.obs_len, 10**4)
+        velocity = pulsar_model.get_radial_velocity(obs_arr)
+        vc = np.mean(velocity)
         return vc
     
     @staticmethod
