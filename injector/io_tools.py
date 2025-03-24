@@ -117,7 +117,8 @@ class FilterbankReader:
                 raw = block.T[chan].astype(data_type[nbits])
                 open_files[chan].write(raw.tobytes())
 
-        for _ in range(n_blocks):
+        for i in range(n_blocks):
+            print_exe(f'{i}/{n_blocks} blocks processed') if (i%100 == 0) else None
             block = self.read_block(block_size)
             split_block(block)
         
