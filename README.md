@@ -1,3 +1,3 @@
 # **INCEPTION**
 
-s**I**g**N**al **C**ertainty **E**stimator using **P**ulsar injec**TION**
+**IN**je**C**tion toolkit for pulsar s**E**arch **P**ipeline valida**TION**

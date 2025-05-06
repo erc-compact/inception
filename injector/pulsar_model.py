@@ -278,5 +278,18 @@ class PulsarModel:
 
         phase_array = self.get_phase(bary_array + DM_array)
         return self.get_pulse(phase_array, obs_freq_array)
+    
+    def generate_signal_python_topo(self, n_samples, sample_start=0):
+        timeseries = np.linspace(self.obs.dt*sample_start, self.obs.dt*(n_samples+sample_start-1), n_samples)
+        DM_array = np.tile(self.prop_effect.DM_delays, (len(timeseries),1))
+        obs_freq_array = np.tile(self.obs.freq_arr, (len(timeseries),1))
+
+        # topo_times = self.obs.sec2mjd(timeseries)
+        # # bary_times = self.obs.topo2bary(topo_times, mjd=False, interp=True)
+        # topo_times = (topo_times - self.obs.obs_start)*u.day.to(u.s)
+        bary_array = np.tile(timeseries, (len(self.obs.freq_arr),1)).T
+
+        phase_array = self.get_phase(bary_array + DM_array)
+        return self.get_pulse(phase_array, obs_freq_array)
 
    
