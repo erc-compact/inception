@@ -38,25 +38,45 @@ class InjectorSetup(PipelineTools):
         
     def get_beam(self): 
         beams = []
-        for pointing in self.data['pointings']:
-            for beam in pointing['beams']:
-                beam_data = [pointing['id'], beam['name']]
-                for filterbank in beam['data_products']:
-                    beam_data.append(filterbank['filename'])
-                beams.append(beam_data)
+        if type(self.data) == dict:
+            for pointing in self.data['pointings']:
+                for beam in pointing['beams']:
+                    beam_data = [pointing['id'], beam['name']]
+                    for filterbank in beam['data_products']:
+                        beam_data.append(filterbank['filename'])
+                    beams.append(beam_data)
 
-        self.beam_data = beams[self.rng.integers(0, len(beams))]
+            self.beam_data = beams[self.rng.integers(0, len(beams))]
+        else:
+            beam_name = self.data[self.rng.integers(0, len(self.data))]
+            poinitng_id = beam_name.split('/')[6]
+            beam_id = beam_name.split('/')[8]
+            self.beam_data = [poinitng_id, beam_id]
+            for file in self.data:
+                if (file.split('/')[6] == poinitng_id) and (file.split('/')[8] == beam_id):
+                    self.beam_data.append(file)
     
+    # def rsync_merge_data_products(self):
+    #     pointing_id, inj_beam_name, *fb_names = self.beam_data
+    #     self.merged_fb = f'{self.work_dir}/{pointing_id}_{inj_beam_name}_merged_{self.data_ID}.fil'
+
+    #     data_paths = [f'{self.data_dir}/{pointing_id}/{inj_beam_name}/{fb_name}' for fb_name in fb_names]
+    #     for data_product in data_paths:
+    #         cmd = f"rsync -Pav {data_product} {self.work_dir}"
+    #         subprocess.run(cmd, shell=True)
+
+    #     new_data_paths = [f'{self.work_dir}/{fb_name}' for fb_name in fb_names]
+    #     merge_filterbanks(new_data_paths, self.merged_fb)
     def rsync_merge_data_products(self):
         pointing_id, inj_beam_name, *fb_names = self.beam_data
         self.merged_fb = f'{self.work_dir}/{pointing_id}_{inj_beam_name}_merged_{self.data_ID}.fil'
 
-        data_paths = [f'{self.data_dir}/{pointing_id}/{inj_beam_name}/{fb_name}' for fb_name in fb_names]
-        for data_product in data_paths:
+        # data_paths = [f'{self.data_dir}/{pointing_id}/{inj_beam_name}/{fb_name}' for fb_name in fb_names]
+        for data_product in fb_names:
             cmd = f"rsync -Pav {data_product} {self.work_dir}"
             subprocess.run(cmd, shell=True)
 
-        new_data_paths = [f'{self.work_dir}/{fb_name}' for fb_name in fb_names]
+        new_data_paths = [f'{self.work_dir}/{Path(fb_name).name}' for fb_name in fb_names]
         merge_filterbanks(new_data_paths, self.merged_fb)
 
     def run_injector(self, ephem, ncpus):
