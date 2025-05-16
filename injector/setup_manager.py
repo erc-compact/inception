@@ -100,9 +100,9 @@ class SetupManager:
             sys.exit('Pulsar IDs must be unique.')
 
         pulsar_list_resolved = []
+        rng = np.random.default_rng(self.seed)
         for i, ID in enumerate(ID_list):
             if type(ID) == dict:
-                rng = np.random.default_rng(self.seed)
                 seeds = rng.integers(1e11, 1e12, size=int(ID['replicate']))
                 pulsar_prefix = ID.get('prefix', '')
                 rng_pars = pulsar_list[i]

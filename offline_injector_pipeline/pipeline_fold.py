@@ -124,9 +124,12 @@ class FoldScoreExec(PipelineTools):
         
     def create_zap_sting(self):
         cmask = self.fold_args['channel_mask']
-        cmask = cmask.strip()
-        zap_string = ' '.join(['--rfi zap {} {}'.format(*i.split(':')) for i in cmask.split(',')])
-        return zap_string
+        if cmask:
+            cmask = cmask.strip()
+            zap_string = ' '.join(['--rfi zap {} {}'.format(*i.split(':')) for i in cmask.split(',')])
+            return zap_string
+        else:
+            return ""
     
     def get_beam_tag(self):
         beam_name = re.search(r'[ci]fbf\d{5}', self.inj_report['injection_report']['fb']).group()
