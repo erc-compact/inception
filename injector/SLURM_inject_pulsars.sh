@@ -10,23 +10,21 @@ fb_path="/path/filterbank.fil"
 inj_path="/path/example.inject"
 ephem_path="/path/de440.bsp"
 profile_path="/path/profile.npy"
+binds="binds"
 
 sing_img="/path/singularity.sif"
 
-tmp_dir="/tmp/user"
+tmp_dir="/tmp/$USER/$SLURM_JOB_ID"
 
 rm -rf $tmp_dir
 mkdir -p $tmp_dir
 
 rsync -Pav $fb_path $tmp_dir
-rsync -Pav $inj_path $tmp_dir
-rsync -Pav $ephem_path $tmp_dir
-rsync -Pav $profile_path $tmp_dir
 
 
 command="python3 SCRIPT_inject_pulsars.py"  
-inputs="--signal=$tmp_dir/example.inject --fb=$tmp_dir/filterbank.fil --ephem=$tmp_dir/de440.bsp --output=$tmp_dir --ncpu=$SLURM_NTASKS"
-singularity exec -H $HOME:/home -B $sing_img $command $inputs
+inputs="--signal=$inj_path --fb=$tmp_dir/filterbank.fil --ephem=$ephem_path --output=$tmp_dir --ncpu=$SLURM_NTASKS"
+singularity exec -H $HOME:/home -B $binds $sing_img $command $inputs
 
 
 output_dir="/path/output"

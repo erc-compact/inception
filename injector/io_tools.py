@@ -68,9 +68,9 @@ class FilterbankReader:
         self.read_data_pos=self.read_file.tell()
 
     def get_FB_stats(self, nsamples):
-        cuurent_loc = self.read_file.tell()
+        current_loc = self.read_file.tell()
         data = self.read_block(nsamples)
-        self.read_file.seek(cuurent_loc, 0)
+        self.read_file.seek(current_loc, 0)
         return np.median(np.mean(data, axis=0)), np.median(np.std(data, axis=0))
     
     def get_n_samples(self):

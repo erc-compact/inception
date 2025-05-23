@@ -1,7 +1,9 @@
 import numpy as np 
 import astropy.constants as const
 from scipy.optimize import fsolve
+from sympy import lambdify, symbols
 from scipy.interpolate import interp1d
+from sympy.parsing.sympy_parser import parse_expr
 
 
 class BinaryModel:
@@ -26,6 +28,9 @@ class BinaryModel:
         self.T0 = None
         if generate:
             self.orbital_delay = self.generate_interp()
+
+        self.v_coord, self.a_coord = get_coord_motion_funcs()
+        
 
     @staticmethod
     def get_semi_major(period, mass_func):
@@ -77,7 +82,7 @@ class BinaryModel:
         func_list = [TA,  2*np.pi + TA]
         return np.select(cond_list, func_list)
     
-    def get_radial_velocity(self, t, star='pulsar'):
+    def get_radial_velocity_proper(self, t, star='pulsar'):
         numerator_mass = self.mass_c if star=='pulsar' else self.mass_p
         com = numerator_mass/(self.mass_p+self.mass_c) 
         Ob = 1/self.P2pi
@@ -85,13 +90,34 @@ class BinaryModel:
         theta = self.true_anomaly(t)
         return com * Ob * self.a * ecc * (np.cos(self.AoP + theta) + self.e*np.cos(self.AoP))
     
-    def get_radial_accel(self, t, star='pulsar'):
+    def get_radial_velocity_coord(self, t):
+        E = self.eccentric_anomaly(t)
+        sinE, cosE = np.sin(E), np.cos(E)
+        sin2E, cos2E = np.sin(2*E), np.cos(2*E)
+
+        alpha = self.a1_sini_c * np.sin(self.AoP)
+        beta = np.sqrt(1-self.e**2) * self.a1_sini_c * np.cos(self.AoP)
+
+        return self.v_coord(alpha, beta, self.e, self.P2pi, self.gamma, sinE, cosE, sin2E, cos2E) * const.c.value
+    
+    def get_radial_accel_proper(self, t, star='pulsar'):
         numerator_mass = self.mass_c if star=='pulsar' else self.mass_p
         com = numerator_mass/(self.mass_p+self.mass_c) 
         Ob = 1/self.P2pi
         ecc = 1/(1-self.e**2) 
         theta = self.true_anomaly(t)
         return -com * Ob ** 2 * self.a * ecc * (1 + self.e*np.cos(theta))**2 * np.sin(self.AoP + theta)
+    
+    def get_radial_accel_coord(self, t):
+        E = self.eccentric_anomaly(t)
+        sinE, cosE = np.sin(E), np.cos(E)
+        sin2E, cos2E = np.sin(2*E), np.cos(2*E)
+        sin3E, cos3E = np.sin(3*E), np.cos(3*E)
+
+        alpha = self.a1_sini_c * np.sin(self.AoP)
+        beta = np.sqrt(1-self.e**2) * self.a1_sini_c * np.cos(self.AoP)
+
+        return self.a_coord(alpha, beta, self.e, self.P2pi, self.gamma, sinE, cosE, sin2E, cos2E, sin3E, cos3E) * const.c.value
 
     def get_roemer_delay_proper(self, t):
         E = self.eccentric_anomaly(t)
@@ -121,4 +147,45 @@ class BinaryModel:
         else:
             return lambda t: np.zeros_like(t)
         
-    
+
+
+def get_coord_motion_funcs():
+    """
+    Code used to compute first and second derivative of roemer delay in coordinate frame:
+
+    import sympy as smp
+
+    t, alpha, beta, e, P, gamma, s1, c1, s2, c2, s3, c3 = smp.symbols('t, a, b, e, P, y, s1, c1, s2, c2, s3, c3')
+    E = smp.Function('E')(t)
+
+    term1 = alpha * (smp.cos(E) - e)
+    term2 = (beta + gamma) * smp.sin(E)
+    term3 = term1 + term2
+    term4 = (alpha* smp.sin(E) - beta*smp.cos(E))
+    term5 = P * (1 - e * smp.cos(E)) 
+
+    roemer_delay_coord = term3 + term4 * term3 / term5
+    dEdt = 1/(P * (1-e*smp.cos(E)))
+
+    v_coord = roemer_delay_coord.diff(t).subs({E.diff(t): dEdt})
+    a_coord = v_coord.trigsimp().diff(t).subs({E.diff(t): dEdt})
+
+    v_coord_str = str(v_coord.simplify().subs({smp.sin(E):s1, smp.cos(E):c1, smp.sin(2*E):s2, smp.cos(2*E):c2}))
+    a_coord_str = str(a_coord.trigsimp().simplify().subs({smp.sin(E):s1, smp.cos(E):c1, smp.sin(2*E):s2, smp.cos(2*E):c2, smp.sin(3*E):s3, smp.cos(3*E):c3}))
+
+    """
+
+    v_coord_str = '(P*(a*s1 - c1*(b + y))*(c1*e - 1)**2 - e*s1*(a*s1 - b*c1)*(a*(-c1 + e) - s1*(b + y)) ' \
+    '+ (c1*e - 1)*(-a**2*c1*e + a**2*c2 - a*b*e*s1 + 2*a*b*s2 + a*s2*y - b**2*c2 - b*c2*y))/(P**2*(c1*e - 1)**3)'
+
+    a_coord_str = '(P*(11*a*c1*e**2 + 4*a*c1 - 2*a*c2*e**3 - 4*a*c2*e + a*c3*e**2 - 2*a*e**3 - 8*a*e + b*e**2*s1 + b*e**2*s3 - 4*b*e*s2 + 4*b*s1 + e**2*s1*y + e**2*s3*y ' \
+    '- 4*e*s2*y + 4*s1*y) + 12*a**2*e**3*s1 - 4*a**2*e**2*s2 - 17*a**2*e*s1 - a**2*e*s3 + 8*a**2*s2 + 30*a*b*c1*e + 4*a*b*c2*e**2 - 16*a*b*c2 + 2*a*b*c3*e - 20*a*b*e**2 ' \
+    '+ 15*a*c1*e*y + 2*a*c2*e**2*y - 8*a*c2*y + a*c3*e*y - 10*a*e**2*y + 13*b**2*e*s1 + b**2*e*s3 - 8*b**2*s2 + 13*b*e*s1*y + b*e*s3*y - 8*b*s2*y)/(4*P**3*(c1*e - 1)**5)'
+
+
+    alpha, beta, e, P, gamma, s1, c1, s2, c2, s3, c3 = symbols('a, b, e, P, y, s1, c1, s2, c2, s3, c3')
+
+    v_coord = lambdify([alpha, beta, e, P, gamma, s1, c1, s2, c2], parse_expr(v_coord_str))
+    a_coord = lambdify([alpha, beta, e, P, gamma, s1, c1, s2, c2, s3, c3], parse_expr(a_coord_str))
+
+    return v_coord, a_coord

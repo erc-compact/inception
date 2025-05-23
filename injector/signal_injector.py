@@ -49,8 +49,8 @@ class InjectSignal:
             return N_L_block*size_L_block + N_S_block*size_S_block
 
         cpu_start = 0
-        for cpu in range(cpu):
-            cpu_start += sum_file(self.compute_plan[cpu])
+        for cpu_i in range(cpu):
+            cpu_start += sum_file(self.compute_plan[cpu_i])
 
         return cpu_start
             
