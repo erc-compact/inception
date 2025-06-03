@@ -1,11 +1,7 @@
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).absolute().parent.parent))
-
 import argparse
-from injector.setup_manager import SetupManager
-from injector.signal_injector import InjectSignal
-from injector.pulsar_par_parser import PulsarParParser
+from setup_manager import SetupManager
+from signal_injector import InjectSignal
+from pulsar_par_parser import PulsarParParser
 
 
 if __name__=='__main__':

@@ -28,8 +28,9 @@ class FilterbankReader:
         self.fbottom = self.ftop + self.header['foff'] * self.header['nchans']
         self.center = self.ftop + 0.5 * self.header['foff'] * self.header['nchans']
 
-        self.n_samples = self.get_n_samples() #474537276
-        self.fb_mean, self.fb_std = self.get_FB_stats(2**14)
+        # print('warning, test feature in play') #4096000 #
+        self.n_samples = 4096000 #self.get_n_samples() 
+        self.fb_mean, self.fb_std = self.get_FB_stats(min(2**15, self.n_samples))
 
     def read_string(self):
         nchar = np.fromfile(self.read_file, dtype=np.int32, count=1)[0]

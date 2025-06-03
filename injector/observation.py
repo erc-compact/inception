@@ -128,6 +128,16 @@ class Observation:
             return bary_times
         else:
             return (bary_times - self.obs_start_bary)*u.day.to(u.s)
+        
+    def earth_radial_velocity(self, topo_time):
+        time_scale = Time(topo_time, format='mjd', scale='utc')
+        _, ep_vel = solar_system.get_body_barycentric_posvel('earth', time_scale)
+
+        _, obs_vel = self.observatory.get_gcrs_posvel(time_scale)
+        L_hat  = self.source.cartesian.xyz.value.astype(np.float64)
+        total_vel = (ep_vel.xyz + obs_vel.xyz).to(u.m/u.s)
+        radial_velocity = -np.sum(total_vel.T * L_hat, axis=1).value 
+        return radial_velocity
     
     def topo2bary(self, topo_times, mjd=True, interp=False):
         if interp:

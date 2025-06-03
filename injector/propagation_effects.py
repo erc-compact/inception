@@ -70,22 +70,45 @@ class PropagationEffects:
         if not self.pulsar_pars['DM_smear']:
             return intrinsic_pulse
         else:
-            self.smeared_profiles = []
-            for chan in range(self.obs.n_chan):
-                channel_freq = self.obs.freq_arr[chan]
-                channel_top = abs(self.obs.df)/2 + channel_freq
-                channel_bottom = -abs(self.obs.df)/2 + channel_freq
+            if self.pulsar_pars['profile'] == 'default': # untested
+                duty_cycle = self.pulsar_pars['duty_cycle']
+                W_int = self.period * duty_cycle
+                snr_int = np.sqrt((self.period-W_int) / W_int)
 
-                integrate_freq = quad_vec(lambda freq: channel_profile(self.phase, freq, channel_freq, chan),
-                                        a=channel_bottom, b=channel_top,
-                                        epsabs=1e-3, epsrel=1e-3)
+                def intrinsic_pulse(phase, duty_cycle=duty_cycle, snr_scale=1, chan_num=0): 
+                    pulse_sigma = (duty_cycle)/(2*np.sqrt(2*np.log(2)))
+                    return np.exp(-(phase-0.5)**2/(2*(pulse_sigma)**2)) * self.spectra(self.obs.freq_arr[chan_num]) * snr_scale
                 
-                self.smeared_profiles.append(interp1d(self.phase, integrate_freq[0]/np.abs(self.obs.df)))
-                # if integrate_freq[1] < 1:
-                #     sys.exit(f'Unable to DM smear pulse profile for pulsar {self.pulsar_pars['ID']}.')
+                self.smeared_values = []
+                for chan in range(self.obs.n_chan):
+                    channel_freq = self.obs.freq_arr[chan]
+                    
+                    W_eff = np.sqrt(W_int**2 + (2*self.DM_const * self.DM * (self.obs.df/channel_freq**3))**2)
+                    snr_scale = np.sqrt((self.period-W_eff) / W_eff) / snr_int
 
-            def smeared_pulse(phase, chan_num):
-                return self.smeared_profiles[chan_num](phase)
+                    self.smeared_values.append([W_eff, snr_scale])
+
+                def smeared_pulse(phase, chan_num):
+                    W_eff, snr_scale = self.smeared_values[chan_num]
+                    return intrinsic_pulse(phase, W_eff/self.period, snr_scale, chan_num)
+
+            else:
+                self.smeared_profiles = []
+                for chan in range(self.obs.n_chan):
+                    channel_freq = self.obs.freq_arr[chan]
+                    channel_top = abs(self.obs.df)/2 + channel_freq
+                    channel_bottom = -abs(self.obs.df)/2 + channel_freq
+
+                    integrate_freq = quad_vec(lambda freq: channel_profile(self.phase, freq, channel_freq, chan),
+                                            a=channel_bottom, b=channel_top,
+                                            epsabs=1e-3, epsrel=1e-3)
+                    
+                    self.smeared_profiles.append(interp1d(self.phase, integrate_freq[0]/np.abs(self.obs.df)))
+                    # if integrate_freq[1] < 1:
+                    #     sys.exit(f"Unable to DM smear pulse profile for pulsar {self.pulsar_pars['ID']}.")
+
+                def smeared_pulse(phase, chan_num):
+                    return self.smeared_profiles[chan_num](phase)
                 
             return smeared_pulse
         
