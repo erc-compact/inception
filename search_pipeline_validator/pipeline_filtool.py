@@ -26,7 +26,7 @@ class FiltoolProcess:
 
     def get_injection_report(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
-        report_path = glob.glob(f'{results_dir}/report_.json')[0]
+        report_path = glob.glob(f'{results_dir}/report_*.json')[0]
         self.injection_report = inj_tools.parse_JSON(report_path)
         self.inj_id = self.injection_report['injection_report']['ID']
 
