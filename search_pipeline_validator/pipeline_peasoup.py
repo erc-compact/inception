@@ -40,11 +40,11 @@ class PeasoupProcess:
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
 
         if self.processing_args['peasoup_args']['filtool']:
-            data = glob.glob(f"{results_dir}/processing/*_INJ_{self.inj_id}_FILTOOL_0{self.tscrunch_index+1}.fil")[0]
+            data = glob.glob(f"{results_dir}/processing/*_{self.inj_id}_FILTOOL_0{self.tscrunch_index+1}.fil")[0]
             inj_tools.rsync(data, self.work_dir)
 
         else:
-            data = glob.glob(f"{results_dir}/*_INJ_{self.inj_id}.fil")[0]
+            data = glob.glob(f"{results_dir}/*_{self.inj_id}.fil")[0]
             inj_tools.rsync(data, self.work_dir)
 
         self.data = f'{self.work_dir}/{Path(data).name}'
@@ -191,12 +191,12 @@ class PeasoupProcess:
             inj_tools.rsync(self.DM_file, f'{processing_dir}/{prefix}_{Path(self.DM_file).name}')
 
         if self.processing_args['peasoup_args']['delete_filtool_fb']:
-            data = glob.glob(f"{processing_dir}/*_INJ_{self.inj_id}_FILTOOL_0{self.tscrunch_index+1}.fil")
+            data = glob.glob(f"{processing_dir}/*_{self.inj_id}_FILTOOL_0{self.tscrunch_index+1}.fil")
             if data:
                 os.remove(data[0])
 
         if self.processing_args['peasoup_args']['delete_inj_fb']:
-            data = glob.glob(f"{results_dir}/*_INJ_{self.inj_id}.fil")
+            data = glob.glob(f"{results_dir}/*_{self.inj_id}.fil")
             if data:
                 os.remove(data[0])
 

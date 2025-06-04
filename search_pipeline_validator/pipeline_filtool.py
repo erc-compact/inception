@@ -33,7 +33,7 @@ class FiltoolProcess:
     def transfer_data(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
 
-        data = glob.glob(f"{results_dir}/*_INJ_{self.inj_id}.fil")[0]
+        data = glob.glob(f"{results_dir}/*_{self.inj_id}.fil")[0]
         inj_tools.rsync(data, self.work_dir)
 
         self.data = f'{self.work_dir}/{Path(data).name}'

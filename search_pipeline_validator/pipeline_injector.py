@@ -91,7 +91,7 @@ class InjectorProcess:
         par_dir = f'{results_dir}/inj_pulsars'
 
         inj_ID = self.injection_plan['psr_global']['injection_id']
-        injected_fb = f'{self.work_dir}/{Path(self.new_fb_path).stem}_INJ_{inj_ID}.fil'
+        injected_fb = f'{self.work_dir}/{Path(self.new_fb_path).stem}_{inj_ID}.fil'
         injection_report = f'{self.work_dir}/report_{inj_ID}_{self.seed}.json'
         
         os.makedirs(results_dir, exist_ok=True)
