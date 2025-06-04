@@ -13,14 +13,14 @@ class Observation:
     telescope_id = {64: ['Meerkat', 'mk'],  1: ['Arecibo', 'ao'], 4: ['Parkes', 'pk'], 5: ['Jodrell', 'jb'], 
                     6: ['GBT', 'gb'], 7: ['GMRT', 'gm'], 8: ['Effelsberg', 'ef']}
 
-    def __init__(self, filterbank, ephem, pulsar_pars, generate=[]):
+    def __init__(self, filterbank, ephem, pulsar_pars, generate=[], override_length=0):
         solar_system_ephemeris.set(ephem) 
         self.ephem = ephem
         fb_header = filterbank.header
         
         self.get_pointing_data(fb_header, pulsar_pars)
         self.get_beam_data(pulsar_pars)
-        self.get_obs_data(fb_header, filterbank)
+        self.get_obs_data(fb_header, filterbank, override_length)
         self.get_freq_data(fb_header)
 
         self.obs_start_bary = self.topo2bary([self.obs_start])[0]
@@ -40,12 +40,15 @@ class Observation:
     def get_beam_data(self, pulsar_pars):
         self.beam_fwhm = pulsar_pars.get('beam_fwhm', 0) # beam reader, one beam/ multi beams- meta map
 
-    def get_obs_data(self, fb_header, filterbank):
+    def get_obs_data(self, fb_header, filterbank, override_length):
         self.obs_start = fb_header['tstart']
         self.dt = fb_header['tsamp']
         self.n_chan = fb_header['nchans']
         self.nbits = fb_header['nbits']
-        self.n_samples = filterbank.n_samples
+        if override_length == 0:
+            self.n_samples = filterbank.n_samples
+        else:
+            self.n_samples = override_length
         self.obs_len = self.n_samples * self.dt
         self.fb_mean = filterbank.fb_mean
         self.fb_std = filterbank.fb_std

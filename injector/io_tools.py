@@ -5,7 +5,7 @@ import numpy as np
 
 
 class FilterbankReader:     
-    def __init__(self, filterbank):
+    def __init__(self, filterbank, gulp_size_GB=0.1, stats_samples=1e6):
         self.inttypes = ['machine_id', 'telescope_id', 'data_type', 'nchans','nbits', 'nifs', 'scan_number', 
                          'barycentric','pulsarcentric', 'nbeams', 'ibeam', 'nsamples']
         self.strtypes =  ['source_name','rawdatafile']
@@ -18,6 +18,7 @@ class FilterbankReader:
         self.read_header_pos = 0
         self.read_data_pos = 0
         self.output_dtype = np.float64
+        self.gulp_size_GB = gulp_size_GB
 
         self.read_header(filterbank)
         self.dt = self.header['tsamp']
@@ -28,9 +29,11 @@ class FilterbankReader:
         self.fbottom = self.ftop + self.header['foff'] * self.header['nchans']
         self.center = self.ftop + 0.5 * self.header['foff'] * self.header['nchans']
 
-        # print('warning, test feature in play') #4096000 #
         self.n_samples = self.get_n_samples() 
-        self.fb_mean, self.fb_std = self.get_FB_stats(min(2**15, self.n_samples))
+        if stats_samples:
+            self.fb_mean, self.fb_std = self.get_FB_stats(stats_samples)
+        else:
+            self.fb_mean, self.fb_std = 128.0, 6.0
 
     def read_string(self):
         nchar = np.fromfile(self.read_file, dtype=np.int32, count=1)[0]
@@ -68,11 +71,49 @@ class FilterbankReader:
             sys.exit("Cannot parse filterbank header, HEADER_START was not found")
         self.read_data_pos=self.read_file.tell()
 
-    def get_FB_stats(self, nsamples):
+    def get_FB_stats_gulp(self, nsamples):
         current_loc = self.read_file.tell()
         data = self.read_block(nsamples)
         self.read_file.seek(current_loc, 0)
         return np.median(np.mean(data, axis=0)), np.median(np.std(data, axis=0))
+    
+    @staticmethod
+    def Welford_alg(count, mean, M2, new_data):
+        n = new_data.shape[0]
+        count += n
+
+        delta = new_data - mean  
+        new_mean = mean + np.sum(delta, axis=0) / count
+
+        delta2 = new_data - new_mean
+        M2 += np.sum(delta * delta2, axis=0)
+
+        return count, new_mean, M2
+
+    def get_FB_stats(self, stat_samples):
+        count = 0
+        mean = np.zeros(self.nchans)
+        M2 = np.zeros(self.nchans)
+
+        self.read_file.seek(self.read_data_pos, 0)
+        n_chunks =  int(np.int64(self.n_samples) * self.nchans * self.nbits * 1.25e-10/self.gulp_size_GB)
+
+        n_samples = int(stat_samples) if (stat_samples != 0) and (stat_samples < self.n_samples) else self.n_samples
+        full_block_size, remainder = divmod(abs(n_samples), n_chunks)
+        for chunk in range(n_chunks):
+            if chunk < remainder:
+                block_size = full_block_size + 1
+            else:
+                block_size = full_block_size
+
+            data = self.read_block(block_size)
+            count, mean, M2 = self.Welford_alg(count, mean, M2, data)
+
+        std = np.sqrt(M2 / (count - 1)) 
+        global_mean = np.median(mean[std != 0])
+        global_std = np.median(std[std != 0])
+        self.read_file.seek(self.read_data_pos, 0)
+        return global_mean, global_std
     
     def get_n_samples(self):
         self.read_file.seek(0,2)

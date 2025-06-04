@@ -41,7 +41,6 @@ class PulsarModel:
             self.calculate_SNR(pulsar_pars)
             self.observed_profile = self.vectorise_observed_profile()
 
-        
 
     def get_mode(self, pulsar_pars):
         self.mode = pulsar_pars['mode'] if pulsar_pars['mode'] else 'python'

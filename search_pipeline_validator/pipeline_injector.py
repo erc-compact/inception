@@ -73,8 +73,10 @@ class InjectorProcess:
         if ephem != 'builtin':
             inj_tools.rsync(ephem, self.work_dir)
             ephem = f'./{Path(ephem).name}'
-        
-        inputs = f"--signal={self.seeded_inject_file} --fb={self.new_fb_path} --ephem={ephem} --output={self.work_dir} --ncpu={ncpus}"
+        gulp_size = self.processing_args['injection_args']['gulp_size_GB']
+        n_samples = self.processing_args['injection_args']['stats_samples']
+
+        inputs = f"--signal={self.seeded_inject_file} --fb={self.new_fb_path} --ephem={ephem} --output={self.work_dir} --ncpu={ncpus} --gulp_size_GB={gulp_size} --stats_samples={n_samples}"
         cmd = f"{self.processing_args['injection_args']['python']} {SCRIPT_inject_pulsars.__file__} {inputs}"
 
         print_exe('starting injection...')

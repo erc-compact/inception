@@ -211,10 +211,9 @@ if __name__=='__main__':
     parser.add_argument('--out_dir', metavar='dir', required=False, default='cwd', help='output directory')
     parser.add_argument('--work_dir', metavar='dir', required=False, default='cwd', help='work directory')
 
-    parser.add_argument('--threads', metavar='int', type=int, required=False, default=1, help='number of cpus to use')
     args = parser.parse_args()
 
     peasoup_exec = PeasoupProcess(args.tscrunch_index, args.processing_args, args.out_dir, args.work_dir, args.injection_number)
     peasoup_exec.peasoup_setup()
-    peasoup_exec.run_peasoup(args.threads)
+    peasoup_exec.run_peasoup()
     peasoup_exec.transfer_products()

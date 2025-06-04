@@ -14,11 +14,14 @@ if __name__=='__main__':
     parser.add_argument('--output', metavar='directory', required=True, help='output directory for injected filterbank')
     parser.add_argument('--ephem', metavar='file', required=False, default='builtin', help='JPL ephemeris file for solar system (.bsp)')
     parser.add_argument('--ncpu', metavar='integer', required=False, default=1, type=int, help='number of cpus')
+
+    parser.add_argument('--gulp_size_GB', metavar='float', required=False, default=0.1, type=int, help='injection gulp size in GB')
+    parser.add_argument('--stats_samples', metavar='integer', required=False, default=1e6, type=int, help='number of samples to use for fb statistics')
     args = parser.parse_args()
 
     setup = SetupManager(args.signal, args.fb, args.ephem, args.output)
    
-    injector = InjectSignal(setup, args.ncpu)
+    injector = InjectSignal(setup, args.ncpu, args.gulp_size_GB, args.stats_samples)
     injector.parallel_inject()
     injector.combine_files()
     

@@ -13,9 +13,13 @@ from .observation import Observation
 
 
 class InjectSignal:
-    def __init__(self, setup_manager, n_cpus):
+    def __init__(self, setup_manager, n_cpus, gulp_size_GB=0.1, stats_samples=1e6):
         self.n_cpus = n_cpus
-        self.n_samples = setup_manager.pulsar_models[0].obs.n_samples
+        self.gulp_size_GB = gulp_size_GB
+        self.stats_samples = stats_samples
+        self.n_samples = setup_manager.fb.n_samples
+        self.nchans = setup_manager.fb.nchans
+        self.nbits = setup_manager.fb.nbits
         self.compute_plan = self.create_parallel_plan()
 
         self.fb_path = setup_manager.fb.path
@@ -27,7 +31,7 @@ class InjectSignal:
         self.injected_path = self.out_path + '/' + Path(self.fb_path).stem + '_' + setup_manager.inj_ID
 
     def create_parallel_plan(self):
-        block_size = 2**11 # optimise?
+        block_size = int(self.gulp_size_GB/(self.nchans * self.nbits * 1.25e-10 * 2))
         filesize_per_cpu, filesize_remainder = divmod(self.n_samples, self.n_cpus)
         large_block_size, large_remainder = divmod(filesize_per_cpu+1, block_size)
         small_block_size, small_remainder = divmod(filesize_per_cpu, block_size)
@@ -55,7 +59,7 @@ class InjectSignal:
         return cpu_start
             
     def open_tmp_fb(self, cpu):        
-        filterbank_reader = FilterbankReader(self.fb_path) 
+        filterbank_reader = FilterbankReader(self.fb_path, self.gulp_size_GB, self.stats_samples) 
         filterbank_reader.read_file.seek(filterbank_reader.read_data_pos + self.get_file_start(cpu)*filterbank_reader.nchans)
 
         filterbank_writer = FilterbankWriter(filterbank_reader, self.injected_path + f"_{cpu}.tmpfil")

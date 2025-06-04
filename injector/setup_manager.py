@@ -19,12 +19,12 @@ from .observation import Observation
 
 
 class SetupManager:
-    def __init__(self, pulsar_data_path, filterbank_path, ephem_path='builtin', output_path=None, generate=False):
-        self.fb = self.get_filterbank(filterbank_path) 
+    def __init__(self, pulsar_data_path, filterbank_path, ephem_path='builtin', output_path=None, generate=False, override_length=0, gulp_size_GB=0.1, stats_samples=0):
+        self.fb = self.get_filterbank(filterbank_path, gulp_size_GB, stats_samples) 
         self.ephem = self.get_ephem(ephem_path)
         self.output_path = output_path
         self.pulsars = self.get_pulsars(pulsar_data_path)
-        self.pulsar_models = self.construct_models(generate)
+        self.pulsar_models = self.construct_models(generate, override_length)
 
         if self.output_path:
             self.parfile_paths = self.create_foldfiles()
@@ -32,20 +32,20 @@ class SetupManager:
             self.create_injection_report()
         
     @staticmethod
-    def get_filterbank(filterbank_path):
+    def get_filterbank(filterbank_path, gulp_size_GB, stats_samples):
         try:
-            fb = FilterbankReader(filterbank_path)
+            fb = FilterbankReader(filterbank_path, gulp_size_GB, stats_samples)
         except FileNotFoundError:
             sys.exit(f'Unable to open filterbank file: {filterbank_path}')
         else:
             return fb
         
-    def construct_models(self, generate):
+    def construct_models(self, generate, override_length):
         pulsar_models = []
         for pulsar_data in self.pulsars:
-            obs = Observation(self.fb, self.ephem, pulsar_data, generate=False)
+            obs = Observation(self.fb, self.ephem, pulsar_data, generate=generate, override_length=override_length)
             binary = BinaryModel(pulsar_data, generate=generate)
-            pulsar_models.append(PulsarModel(obs, binary, pulsar_data, generate=False))
+            pulsar_models.append(PulsarModel(obs, binary, pulsar_data, generate=generate))
 
         return pulsar_models
 
@@ -108,7 +108,7 @@ class SetupManager:
                 rng_pars = pulsar_list[i]
                 for j, seed in enumerate(seeds):
                     psr_pars = rng_pars.copy()
-                    psr_pars['ID'] = f'{pulsar_prefix}_replicate_{j}'
+                    psr_pars['ID'] = f'{pulsar_prefix}_R{j}'
                     psr_pars['seed'] = seed
                     psr_pars = self.resolve_random(psr_pars)
                     pulsar_list_resolved.append(psr_pars)
@@ -128,9 +128,9 @@ class SetupManager:
             if type(value) == dict:
                 units = value.get('units', 1)
                 if units == 'T_obs_hour':
-                    units = self.fb.header['tsamp'] * self.fb.n_samples / 3600
+                    units = self.fb.dt * self.fb.n_samples / 3600
                 elif units == 'dt':
-                    units = self.fb.header['tsamp']
+                    units = self.fb.dt
 
                 if value['rng'] == 'choice':
                     p = value.get('weights', np.ones_like(value['samples']))

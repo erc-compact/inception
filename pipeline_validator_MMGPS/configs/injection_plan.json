@@ -1,0 +1,38 @@
+{
+
+    "psr_global":
+    {   
+        "injection_id": "inj-template-0",
+        "global_seed": "random",
+        "create_parfile": 1,
+        "DM_smear": 0,
+        "M1": 1.4       
+    },
+
+    "pulsars": [
+        {   
+            "ID": "pulsar_slow",
+            "P0": {"rng": "uniform",  "low": 0.5, "high": 10},
+            "SNR": {"rng": "uniform", "low": 8, "high": 40},
+            "DM": {"rng": "uniform", "low": 5, "high": 500},
+            "duty_cycle": {"rng": "uniform", "low": 0.01, "high": 0.3},
+            "spectral_index": {"rng": "normal", "mean": -2, "sigma": 0.2},
+            "phase_offset": {"rng": "uniform", "low": 0, "high": 1}
+        },
+        {   
+            "ID": {"replicate": 9, "prefix": "binary_milli"},
+            "P0": {"rng": "uniform",  "low": 0.001, "high": 0.03},
+            "SNR": {"rng": "uniform", "low": 8, "high": 40},
+            "DM": {"rng": "uniform", "low": 5, "high": 500},
+            "duty_cycle": {"rng": "uniform", "low": 0.01, "high": 0.3},
+            "spectral_index": {"rng": "normal", "mean": -2, "sigma": 0.2},
+            "phase_offset": {"rng": "uniform", "low": 0, "high": 1},
+            "binary_period": {"rng": "uniform", "low": 10, "high": 30, "units": "T_obs_hour"},
+            "M2": {"rng": "choice", "samples": [0.1, 0.4, 1.4, 2.0, 2.5, 5, 10]},
+            "inc": {"rng": "uniform", "low": 60, "high": 90},
+            "ecc": {"rng": "loguniform", "low": 0.001, "high": 0.5},
+            "AoP": {"rng": "uniform", "low": 0, "high": 360}
+        }
+    ]
+
+}
