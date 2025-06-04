@@ -16,7 +16,7 @@ process injection {
 
     script:
     """
-    python3 ${params.pipeline_code}/pipeline_injector.py --processing_args=${params.search_params} --injection_plan=${params.injection_plan} --out_dir=${params.output_dir} --injection_number=${injection_number} --ncpus=${task.cpus}
+    python3 ${params.pipeline_code}/pipeline_injector.py --processing_args=${params.config_params} --injection_plan=${params.injection_plan} --out_dir=${params.output_dir} --injection_number=${injection_number} --ncpus=${task.cpus}
     
     """
 }
@@ -37,7 +37,7 @@ process filtool {
     """
     source ${params.singularity_config}
 
-    python3.6 ${params.pipeline_code}/pipeline_filtool.py  --processing_args=${params.search_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --threads=${task.cpus}
+    python3.6 ${params.pipeline_code}/pipeline_filtool.py  --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --threads=${task.cpus}
 
     """
 }
@@ -56,7 +56,7 @@ process pulsarx_parfold {
 
     script:
     """
-    python3 ${params.pipeline_code}/pipeline_pulsarx_parfold.py --processing_args=${params.search_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
+    python3 ${params.pipeline_code}/pipeline_pulsarx_parfold.py --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
 
     """
 }
@@ -79,7 +79,7 @@ process pulsarx_candfold {
     source ${params.singularity_config}
     source ${params.dependencies_config} ${params.tmp_dir}
 
-    python3.6 ${params.pipeline_code}/pipeline_pulsarx_candfold.py --processing_args=${params.search_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
+    python3.6 ${params.pipeline_code}/pipeline_pulsarx_candfold.py --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
 
     """
 }

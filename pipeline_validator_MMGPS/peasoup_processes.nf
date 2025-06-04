@@ -18,7 +18,7 @@ process peasoup0 {
     source ${params.singularity_config}
     source ${params.dependencies_config} ${params.tmp_dir}
 
-    python3.6 ${params.pipeline_code}/pipeline_peasoup.py --tscrunch_index=0 --processing_args=${params.search_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}
+    python3.6 ${params.pipeline_code}/pipeline_peasoup.py --tscrunch_index=0 --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}
 
     """
 }
@@ -40,7 +40,7 @@ process peasoup1 {
     source ${params.singularity_config}
     source ${params.dependencies_config} ${params.tmp_dir}
 
-    python3.6 ${params.pipeline_code}/pipeline_peasoup.py --tscrunch_index=1 --processing_args=${params.search_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}
+    python3.6 ${params.pipeline_code}/pipeline_peasoup.py --tscrunch_index=1 --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}
 
     """
 }
@@ -62,7 +62,7 @@ process peasoup2 {
     source ${params.singularity_config}
     source ${params.dependencies_config} ${params.tmp_dir}
 
-    python3.6 ${params.pipeline_code}/pipeline_peasoup.py --tscrunch_index=2 --processing_args=${params.search_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}
+    python3.6 ${params.pipeline_code}/pipeline_peasoup.py --tscrunch_index=2 --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}
 
     """
 }
@@ -84,7 +84,7 @@ process peasoup3 {
     source ${params.singularity_config}
     source ${params.dependencies_config} ${params.tmp_dir}
 
-    python3.6 ${params.pipeline_code}/pipeline_peasoup.py --tscrunch_index=3 --processing_args=${params.search_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}
+    python3.6 ${params.pipeline_code}/pipeline_peasoup.py --tscrunch_index=3 --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}
 
     """
 }
