@@ -1,7 +1,11 @@
 import argparse
-from setup_manager import SetupManager
-from signal_injector import InjectSignal
-from pulsar_par_parser import PulsarParParser
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).absolute().parent.parent))
+
+from injector.setup_manager import SetupManager
+from injector.signal_injector import InjectSignal
+from injector.pulsar_par_parser import PulsarParParser
 
 
 if __name__=='__main__':
@@ -16,7 +20,7 @@ if __name__=='__main__':
     parser.add_argument('--ncpu', metavar='integer', required=False, default=1, type=int, help='number of cpus')
 
     parser.add_argument('--gulp_size_GB', metavar='float', required=False, default=0.1, type=int, help='injection gulp size in GB')
-    parser.add_argument('--stats_samples', metavar='integer', required=False, default=1e6, type=int, help='number of samples to use for fb statistics')
+    parser.add_argument('--stats_samples', metavar='integer', required=False, default=1e6, type=float, help='number of samples to use for fb statistics')
     args = parser.parse_args()
 
     setup = SetupManager(args.signal, args.fb, args.ephem, args.output)

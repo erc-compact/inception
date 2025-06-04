@@ -1,4 +1,3 @@
-import os
 import glob
 import argparse
 import subprocess
@@ -6,7 +5,10 @@ import numpy as np
 from pathlib import Path
 
 import pipeline_tools as inj_tools
-from ..injector.io_tools import FilterbankReader, print_exe
+
+import os, sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from injector.io_tools import FilterbankReader, print_exe
 
 
 class PeasoupProcess:
@@ -30,7 +32,7 @@ class PeasoupProcess:
 
     def get_injection_report(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
-        self.report_path = glob.glob(f'{results_dir}/report_.json')[0]
+        self.report_path = glob.glob(f'{results_dir}/report_*.json')[0]
         self.injection_report = inj_tools.parse_JSON(self.report_path)
         self.inj_id = self.injection_report['injection_report']['ID']
 
@@ -141,12 +143,12 @@ class PeasoupProcess:
         save_csv = self.processing_args['peasoup_args']['save_csv']
         match_inj =self.processing_args['peasoup_args']['candidate_matcher']
         if match_inj['match_inj'] or save_csv:
-            from candidate_tools import xml2csv
+            from .candidate_tools import xml2csv
 
             csv_cands = xml2csv(xml_name_old, f"{processing_dir}/{prefix}.csv", save_csv)
 
         if match_inj['match_inj']:
-            from candidate_tools import CandMatcher
+            from .candidate_tools import CandMatcher
 
             fft_size = self.processing_args['peasoup_args']['cmd'].get('fft_size', self.default_fft_size)
             cand_matcher = CandMatcher(self.report_path, csv_cands, self.data, fft_size, corr_period=True)

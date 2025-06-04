@@ -1,4 +1,3 @@
-import os
 import json
 import glob
 import numpy as np
@@ -10,8 +9,12 @@ from scipy.optimize import curve_fit
 import xml.etree.ElementTree as ET
 
 import pipeline_tools as inj_tools
-from ..injector.setup_manager import SetupManager
-from ..injector.io_tools import FilterbankReader, print_exe
+
+import os, sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from injector.setup_manager import SetupManager
+from injector.io_tools import FilterbankReader, print_exe
 
 
 def xml_to_dict(element):

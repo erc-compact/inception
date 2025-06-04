@@ -1,13 +1,13 @@
 {
     "injection_args": {
         "id": "test_1",
-        "ephem": "builtin",
+        "ephem": "/hercules/u/rsenzel/pulsar_inject/ephem/de440.bsp",
         "python": "python3",
         "filterbank" : "random",
         "gulp_size_GB": 1,
-        "stats_samples": 1e6,
+        "stats_samples": 1e5,
 
-        "save_merged_fb": false,
+        "save_merged_fb": true,
         "save_inj_fb": true,
         "save_report": true,
         "save_pars": true
@@ -18,7 +18,7 @@
         "mode": "psrfold_fil",
 
         "channel_mask": "856.0:863.94140625",
-        "template": "/home/psr/software/PulsarX/include/template/meerkat_fold.template",
+        "template": "/hercules/u/rsenzel/pulsar_inject/fold_code/meerkat_fold.template",
         "blocksize_plan": [2, 10, 0.1],
 
         "cmd": {
@@ -40,22 +40,22 @@
         
         "save_png": true,
         "save_ar": true,
-        "save_cand": false,
+        "save_cand": true,
         "save_csv": true,
 
-        "delete_inj_fb": true
+        "delete_inj_fb": false
 
     },
 
     "data": [
-        ["/mandap/incoming/meertrans/tapeStaging/SCI-20200703-MK-01/msgps_l_0365/20220222_180712/cfbf00244/2022-02-22-18:07:16_cfbf00244_0000000000000000.fil",
-         "/mandap/incoming/meertrans/tapeStaging/SCI-20200703-MK-01/msgps_l_0365/20220222_180712/cfbf00244/2022-02-22-18:07:16_cfbf00244_0000004012498944.fil"],
+        ["/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00011/2024-09-15-14:13:59_cfbf00011_0000000000000000.fil",
+         "/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00011/2024-09-15-14:13:59_cfbf00011_0000005099999232.fil"],
 
-        ["/mandap/incoming/meertrans/tapeStaging/SCI-20200703-MK-01/msgps_l_3169/20211219_113552/cfbf00258/2021-12-19-11:35:59_cfbf00258_0000004012498944.fil",
-         "/mandap/incoming/meertrans/tapeStaging/SCI-20200703-MK-01/msgps_l_3169/20211219_113552/cfbf00258/2021-12-19-11:35:59_cfbf00258_0000000000000000.fil"],
+        ["/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00322/2024-09-15-14:14:00_cfbf00322_0000000000000000.fil",
+         "/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00322/2024-09-15-14:14:00_cfbf00322_0000005099999232.fil"],
 
-        ["/mandap/incoming/meertrans/tapeStaging/SCI-20200703-MK-01/msgps_l_2920/20220311_213918/cfbf00303/2022-03-11-21:39:47_cfbf00303_0000004012498944.fil",
-         "/mandap/incoming/meertrans/tapeStaging/SCI-20200703-MK-01/msgps_l_2920/20220311_213918/cfbf00303/2022-03-11-21:39:47_cfbf00303_0000000000000000.fil"]
+        ["/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00375/2024-09-15-14:13:59_cfbf00375_0000000000000000.fil",
+         "/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00375/2024-09-15-14:13:59_cfbf00375_0000005099999232.fil"]
     ]
     
 }

@@ -1,4 +1,3 @@
-import os
 import json
 import argparse
 import subprocess
@@ -7,8 +6,11 @@ from pathlib import Path
 
 import pipeline_tools as inj_tools
 
-from ..injector import SCRIPT_inject_pulsars 
-from ..injector.io_tools import merge_filterbanks, print_exe
+import os, sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from injector import SCRIPT_inject_pulsars 
+from injector.io_tools import merge_filterbanks, print_exe
 
 
 class InjectorProcess:
@@ -101,7 +103,7 @@ class InjectorProcess:
             inj_tools.rsync(injected_fb, results_dir)
         if self.processing_args['injection_args']['save_report']:
             inj_tools.rsync(injection_report, results_dir)
-        if self.processing_args['injection_args']['save_par']:
+        if self.processing_args['injection_args']['save_pars']:
             inj_tools.rsync(f'{self.work_dir}/*.par', par_dir)
         
 

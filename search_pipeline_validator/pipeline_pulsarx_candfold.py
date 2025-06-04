@@ -25,7 +25,7 @@ class PulsarxFoldCandProcess:
 
     def get_injection_report(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
-        report_path = glob.glob(f'{results_dir}/report_.json')[0]
+        report_path = glob.glob(f'{results_dir}/report_*.json')[0]
         self.injection_report = inj_tools.parse_JSON(report_path)
         self.inj_id = self.injection_report['injection_report']['ID']
 
@@ -76,7 +76,7 @@ class PulsarxFoldCandProcess:
         if self.processing_args['pulsarx_candfold_args']['save_cand']:
             inj_tools.rsync(f'{self.work_dir}/*.cands', results_dir)
         if self.processing_args['pulsarx_candfold_args']['save_csv']:
-            from candidate_tools import fold_cand2csv
+            from .candidate_tools import fold_cand2csv
 
             output = f"{results_dir}/{self.processing_args['injection_args']['id']}_{self.inj_id}_candfold.csv"
             cand_file = glob.glob(f'{self.work_dir}/*.cands')[0]
