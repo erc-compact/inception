@@ -5,7 +5,7 @@ import pandas as pd
 from pathlib import Path
 import astropy.units as u
 import astropy.constants as const
-from scipy.optimize import curve_fit
+
 import xml.etree.ElementTree as ET
 
 import pipeline_tools as inj_tools
@@ -13,8 +13,7 @@ import pipeline_tools as inj_tools
 import os, sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from injector.setup_manager import SetupManager
-from injector.io_tools import FilterbankReader, print_exe
+
 
 
 def xml_to_dict(element):
@@ -115,6 +114,8 @@ def correct_fftsize_offset(period, acc, fftsize, nsamples, dt):
 
 
 def fit_orbit(pulsar, pepoch_ref=0.5, mode='accel', coord_frame=True):
+    from scipy.optimize import curve_fit
+
     topo_sec = np.linspace(0, pulsar.obs.obs_len, 10000)
     topo_mjd = pulsar.obs.sec2mjd(topo_sec)
 
@@ -148,6 +149,9 @@ def create_cand_file_acc(cands, cand_file_path):
 
 class CandMatcher:
     def __init__(self, injection_report, candidates, filterbank, fftsize, corr_period=False):
+        from injector.io_tools import FilterbankReader, print_exe
+        from injector.setup_manager import SetupManager
+
         self.cands = pd.read_csv(candidates) 
 
         self.fb = FilterbankReader(filterbank)

@@ -13,10 +13,10 @@ from .observation import Observation
 
 
 class InjectSignal:
-    def __init__(self, setup_manager, n_cpus, gulp_size_GB=0.1, stats_samples=1e6):
+    def __init__(self, setup_manager, n_cpus, gulp_size_GB=0.01):
         self.n_cpus = n_cpus
         self.gulp_size_GB = gulp_size_GB
-        self.stats_samples = stats_samples
+        self.load_fb_stats = [setup_manager.fb.fb_mean, setup_manager.fb.fb_std]
         self.n_samples = setup_manager.fb.n_samples
         self.nchans = setup_manager.fb.nchans
         self.nbits = setup_manager.fb.nbits
@@ -59,7 +59,7 @@ class InjectSignal:
         return cpu_start
             
     def open_tmp_fb(self, cpu):        
-        filterbank_reader = FilterbankReader(self.fb_path, self.gulp_size_GB, self.stats_samples) 
+        filterbank_reader = FilterbankReader(self.fb_path, load_fb_stats=self.load_fb_stats) 
         filterbank_reader.read_file.seek(filterbank_reader.read_data_pos + self.get_file_start(cpu)*filterbank_reader.nchans)
 
         filterbank_writer = FilterbankWriter(filterbank_reader, self.injected_path + f"_{cpu}.tmpfil")
@@ -147,7 +147,7 @@ class InjectSignal:
         
         for cpu in range(self.n_cpus):
             print_exe(f'combining file {cpu+1}/{self.n_cpus}...')
-            filterbank_sub = FilterbankReader(self.injected_path + f"_{cpu}.tmpfil") 
+            filterbank_sub = FilterbankReader(self.injected_path + f"_{cpu}.tmpfil", load_fb_stats=self.load_fb_stats) 
             filterbank_sub.read_file.seek(filterbank_sub.read_data_pos)
 
             (N_L_blocks, size_L_blocks), (_, size_S_blocks) = self.compute_plan[cpu]

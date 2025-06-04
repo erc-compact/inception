@@ -23,9 +23,9 @@ if __name__=='__main__':
     parser.add_argument('--stats_samples', metavar='integer', required=False, default=1e6, type=float, help='number of samples to use for fb statistics')
     args = parser.parse_args()
 
-    setup = SetupManager(args.signal, args.fb, args.ephem, args.output)
+    setup = SetupManager(args.signal, args.fb, args.ephem, args.output, gulp_size_GB=args.gulp_size_GB, stats_samples=args.stats_samples)
    
-    injector = InjectSignal(setup, args.ncpu, args.gulp_size_GB, args.stats_samples)
+    injector = InjectSignal(setup, args.ncpu, args.gulp_size_GB)
     injector.parallel_inject()
     injector.combine_files()
     

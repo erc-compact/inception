@@ -19,7 +19,7 @@ from .observation import Observation
 
 
 class SetupManager:
-    def __init__(self, pulsar_data_path, filterbank_path, ephem_path='builtin', output_path=None, generate=False, override_length=0, gulp_size_GB=0.1, stats_samples=0):
+    def __init__(self, pulsar_data_path, filterbank_path, ephem_path='builtin', output_path=None, generate=False, override_length=0, gulp_size_GB=0.01, stats_samples=0):
         self.fb = self.get_filterbank(filterbank_path, gulp_size_GB, stats_samples) 
         self.ephem = self.get_ephem(ephem_path)
         self.output_path = output_path

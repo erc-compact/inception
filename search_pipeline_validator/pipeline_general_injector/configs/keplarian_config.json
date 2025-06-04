@@ -1,0 +1,40 @@
+{
+
+    "psr_global":
+    {   
+        "injection_id": "injection_test",
+        "global_seed": "random",
+        "create_parfile": 1,
+        "DM_smear": 0   
+    },
+
+    "pulsars": [
+        {   
+            "ID": "pulsar_easy",
+            "P0": {"rng": "uniform",  "low": 0.0025, "high": 0.03},
+            "SNR": {"rng": "uniform", "low": 20, "high": 30},
+            "DM": 48,
+            "duty_cycle": {"rng": "uniform", "low": 0.0625, "high": 0.3},
+            "phase_offset": {"rng": "uniform", "low": 0, "high": 1},
+            "binary_period": {"rng": "uniform", "low": 1, "high": 5},
+            "M1": {"rng": "uniform", "low": 1.2, "high": 2.2},
+            "M2": {"rng": "uniform", "low": 1.2, "high": 2.2},
+            "inc": {"rng": "uniform", "low": 60, "high": 90},
+            "AoP": {"rng": "uniform", "low": 0, "high": 360}
+        },
+        {   
+            "ID": "pulsar_hard",
+            "P0": {"rng": "uniform",  "low": 0.0025, "high": 0.005},
+            "SNR": {"rng": "uniform", "low": 20, "high": 25},
+            "DM": 48,
+            "duty_cycle": {"rng": "uniform", "low": 0.0625, "high": 0.3},
+            "phase_offset": {"rng": "uniform", "low": 0, "high": 1},
+            "binary_period": {"rng": "uniform", "low": 1, "high": 1.5},
+            "M1": {"rng": "uniform", "low": 1.2, "high": 2.2},
+            "M2": {"rng": "uniform", "low": 1.2, "high": 2.2},
+            "inc": {"rng": "uniform", "low": 85, "high": 90},
+            "AoP": {"rng": "uniform", "low": 0, "high": 360}
+        }
+    ]
+
+}

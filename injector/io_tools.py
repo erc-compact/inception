@@ -5,7 +5,7 @@ import numpy as np
 
 
 class FilterbankReader:     
-    def __init__(self, filterbank, gulp_size_GB=0.1, stats_samples=1e6):
+    def __init__(self, filterbank, gulp_size_GB=0.01, stats_samples=1e6, load_fb_stats=[]):
         self.inttypes = ['machine_id', 'telescope_id', 'data_type', 'nchans','nbits', 'nifs', 'scan_number', 
                          'barycentric','pulsarcentric', 'nbeams', 'ibeam', 'nsamples']
         self.strtypes =  ['source_name','rawdatafile']
@@ -30,10 +30,15 @@ class FilterbankReader:
         self.center = self.ftop + 0.5 * self.header['foff'] * self.header['nchans']
 
         self.n_samples = self.get_n_samples() 
-        if stats_samples:
-            self.fb_mean, self.fb_std = self.get_FB_stats(stats_samples)
+        if load_fb_stats:
+            self.fb_mean, self.fb_std = load_fb_stats
         else:
-            self.fb_mean, self.fb_std = 128.0, 6.0
+            if stats_samples:
+                print_exe(f'calculating filterbnak statistics using {int(stats_samples)}...')
+                self.fb_mean, self.fb_std = self.get_FB_stats(stats_samples)
+                print_exe(f'mean: {self.fb_mean}, std: {self.fb_std}')
+            else:
+                self.fb_mean, self.fb_std = 128.0, 6.0
 
     def read_string(self):
         nchar = np.fromfile(self.read_file, dtype=np.int32, count=1)[0]
