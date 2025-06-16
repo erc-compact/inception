@@ -146,6 +146,18 @@ def create_cand_file_acc(cands, cand_file_path):
             file.write(f"{i} {cand['dm']} {cand['acc']} {1/cand['period']} 0 {cand['snr']}\n")
 
 
+def merge_cand_file_acc(cand_list, cand_file_path):
+
+    cand_data = []
+    for cand_file in cand_list:
+        data = pd.read_csv(cand_file, delimiter=' ')
+        cand_data.append(data.iloc[0].values[1:].tolist())
+
+    with open(cand_file_path, 'w') as file:
+        file.write("#id DM accel F0 F1 S/N\n")
+        for i, cand in enumerate(cand_data):
+            file.write(f"{i} {cand[0]} {cand[1]} {cand[2]} {cand[3]} {cand[4]}\n")
+
 
 class CandMatcher:
     def __init__(self, injection_report, candidates, filterbank, fftsize, corr_period=False):
@@ -179,7 +191,7 @@ class CandMatcher:
             doppler_shift_start = freq_correction(pm, pepoch_ref=0)
             doppler_shift_end = freq_correction(pm, pepoch_ref=1)
 
-            fft_bin = 1/self.fftsize
+            fft_bin = 1/(self.fftsize*pm.obs.dt)
             F0 = pm.FX_list[0]
             nbins_offset = (F0*doppler_shift_ref - 1/self.cands['period']) / fft_bin
 
@@ -192,7 +204,7 @@ class CandMatcher:
             dm_cond = np.abs(dm_offset) <= DM_limit
 
             pulsar_acc_fit = fit_orbit(pm, pepoch_ref=pepoch_ref, mode='accel')
-            accel_drift = (pulsar_acc_fit[0][1] - self.cands['acc']) * F0 * doppler_shift_ref * self.fftsize**2 / const.c.value
+            accel_drift = (pulsar_acc_fit[0][1] - self.cands['acc']) * F0 * doppler_shift_ref / (const.c.value * fft_bin**2)
 
 
             candidates = self.cands[freq_cond & dm_cond]
@@ -206,6 +218,7 @@ class CandMatcher:
             pulsar_cands[pm.ID] = candidates_sorted
 
         return pulsar_cands
+
 
     def generate_files(self, candidate_root, max_cand_per_inj=-1, pepoch_ref=0.5, snr_limit=3, create_candfile=True):
         pulsar_cands = self.match_candidates(pepoch_ref=pepoch_ref, snr_limit=snr_limit)

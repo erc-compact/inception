@@ -47,7 +47,15 @@ class PulsarxFoldCandProcess:
     
     def get_candidates(self):
         processing_dir = f'{self.out_dir}/inj_{self.injection_number:06}/processing'
-        self.candidates = glob.glob(f"{processing_dir}/*{self.processing_args['pulsarx_candfold_args']['candidate_tag']}.candfile")[0]
+        candidates = glob.glob(f"{processing_dir}/*{self.processing_args['pulsarx_candfold_args']['candidate_tag']}*.candfile")
+        if len(candidates) == 1:
+            self.candidates = candidates[0]
+        else:
+            from candidate_tools import merge_cand_file_acc
+            prefix = os.path.commonprefix(candidates)
+            merged_candidates = f"{prefix}_MERGED.candfile"
+            merge_cand_file_acc(candidates, merged_candidates)
+            self.candidates = merged_candidates
 
     def run_fold(self, ncpus):
         fold_args = self.processing_args['pulsarx_canfold_args']
