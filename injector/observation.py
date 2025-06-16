@@ -117,9 +117,9 @@ class Observation:
             return obs_sec
     
     def topo2bary_calc(self, topo_time, mjd=True):
-        if type(topo_time) == float:
+        if type(topo_time) != np.ndarray:
             topo_time = np.array([topo_time])
-            
+
         time_scale = Time(topo_time, format='mjd', scale='utc')
         L_hat  = self.source.cartesian.xyz.value.astype(np.float64)
 
@@ -136,7 +136,7 @@ class Observation:
             return (bary_times - self.obs_start_bary)*u.day.to(u.s)
         
     def earth_radial_velocity(self, topo_time):
-        if type(topo_time) == float:
+        if type(topo_time) != np.ndarray:
             topo_time = np.array([topo_time])
 
         time_scale = Time(topo_time, format='mjd', scale='utc')

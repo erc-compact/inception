@@ -196,9 +196,9 @@ class CandMatcher:
 
             candidates = self.cands[freq_cond & dm_cond]
             candidates['nbins_offset'] = nbins_offset[freq_cond & dm_cond]
-            candidates['accel_bin_drift'] = accel_drift
-            candidates['dm_offset'] = dm_offset
-            candidates['snr_offset'] = pm.SNR - self.cands['snr']
+            candidates['accel_bin_drift'] = accel_drift[freq_cond & dm_cond]
+            candidates['dm_offset'] = dm_offset[freq_cond & dm_cond]
+            candidates['snr_offset'] = (pm.SNR - self.cands['snr'])[freq_cond & dm_cond]
     
             candidates_sorted = candidates.sort_values(by='nbins_offset', key=abs)
 
