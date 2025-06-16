@@ -208,17 +208,16 @@ class CandMatcher:
 
     def generate_files(self, candidate_root, max_cand_per_inj=-1, pepoch_ref=0.5, snr_limit=3, create_candfile=True):
         pulsar_cands = self.match_candidates(pepoch_ref=pepoch_ref, snr_limit=snr_limit)
-
-        cands_df = pd.DataFrame(columns=['inj_id', *pulsar_cands[next(iter(pulsar_cands))].columns])
+        cands_data = []
         for pm in self.setup.pulsar_models:
             candidates = pulsar_cands[pm.ID]
             for i, row in candidates.iterrows():
                 if (i < max_cand_per_inj) or (max_cand_per_inj == -1):
-                    cand_info = pd.DataFrame([pm.ID, *row.values], columns=cands_df.columns)
-                    cands_df = pd.concat([cands_df, cand_info], ignore_index=True)
+                    cands_data.append([pm.ID, *row.values])
                 else:
                     break
-
+        
+        cands_df = pd.DataFrame(cands_data, columns=['inj_id', *pulsar_cands[next(iter(pulsar_cands))].columns])
         cands_df.to_csv(f'{candidate_root}.csv')
         if create_candfile:
             create_cand_file_acc(cands_df, f'{candidate_root}.candfile')
