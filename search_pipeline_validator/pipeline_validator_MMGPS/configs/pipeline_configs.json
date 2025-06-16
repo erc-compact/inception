@@ -108,7 +108,7 @@
         
         "save_png": true,
         "save_ar": true,
-        "save_cand": false,
+        "save_cand": true,
         "save_csv": true,
 
         "delete_inj_fb": false

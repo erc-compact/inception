@@ -36,7 +36,6 @@ process pulsarx_parfold {
 
     script:
     """
-    source ${params.dependencies_config} ${params.tmp_dir}
     python3 ${params.pipeline_code}/pipeline_pulsarx_parfold.py --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
 
     """

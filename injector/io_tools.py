@@ -34,7 +34,7 @@ class FilterbankReader:
             self.fb_mean, self.fb_std = load_fb_stats
         else:
             if stats_samples:
-                print_exe(f'calculating filterbnak statistics using {int(stats_samples)}...')
+                print_exe(f'calculating filterbank statistics using {int(stats_samples)}...')
                 self.fb_mean, self.fb_std = self.get_FB_stats(stats_samples)
                 print_exe(f'mean: {self.fb_mean}, std: {self.fb_std}')
             else:

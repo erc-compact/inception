@@ -10,7 +10,7 @@
 
     "pulsars": [
         {   
-            "ID": "pulsar_easy",
+            "ID": "e",
             "P0": {"rng": "uniform",  "low": 0.0025, "high": 0.03},
             "SNR": {"rng": "uniform", "low": 20, "high": 30},
             "DM": 48,
@@ -23,7 +23,7 @@
             "AoP": {"rng": "uniform", "low": 0, "high": 360}
         },
         {   
-            "ID": "pulsar_hard",
+            "ID": "h",
             "P0": {"rng": "uniform",  "low": 0.0025, "high": 0.005},
             "SNR": {"rng": "uniform", "low": 20, "high": 25},
             "DM": 48,

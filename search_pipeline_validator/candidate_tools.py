@@ -57,7 +57,7 @@ def xml2csv(xml_file, output, save=True):
 def par_cand2csv(injection_report, work_dir, output):
     psr_candfiles = []
     for psr in injection_report['pulsars']:
-        cand_file = glob.glob(f"{work_dir}/{psr['ID']}*.cands")
+        cand_file = glob.glob(f"{work_dir}/{psr['ID']}*.cands")[0]
         cand_df = pd.read_csv(cand_file, skiprows=11, engine='python', sep=r'\s+').iloc[0]
         fold_pars = [psr['ID'], *cand_df[['f0_new', 'dm_new', 'acc_new', 'S/N_new']].values]
         psr_candfiles.append(fold_pars)
@@ -149,7 +149,7 @@ def create_cand_file_acc(cands, cand_file_path):
 
 class CandMatcher:
     def __init__(self, injection_report, candidates, filterbank, fftsize, corr_period=False):
-        from injector.io_tools import FilterbankReader, print_exe
+        from injector.io_tools import FilterbankReader
         from injector.setup_manager import SetupManager
 
         self.cands = pd.read_csv(candidates) 
@@ -191,7 +191,7 @@ class CandMatcher:
             dm_cond = np.abs(dm_offset) <= DM_limit
 
             pulsar_acc_fit = fit_orbit(pm, pepoch_ref=pepoch_ref, mode='accel')
-            accel_drift = (pulsar_acc_fit[0][1] - self.cands['acc']) * F0*doppler_shift_ref * self.fftsize**2 / const.c.value
+            accel_drift = (pulsar_acc_fit[0][1] - self.cands['acc']) * F0 * doppler_shift_ref * self.fftsize**2 / const.c.value
 
 
             candidates = self.cands[freq_cond & dm_cond]
