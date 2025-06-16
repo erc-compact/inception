@@ -154,7 +154,7 @@ class CandMatcher:
 
         self.cands = pd.read_csv(candidates) if type(candidates) == str else candidates
 
-        self.fb = FilterbankReader(filterbank)
+        self.fb = FilterbankReader(filterbank, stats_samples=0)
         self.fftsize = fftsize
 
         self.setup = SetupManager(injection_report, filterbank, generate=False)
