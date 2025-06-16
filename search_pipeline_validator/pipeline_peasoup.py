@@ -29,6 +29,7 @@ class PeasoupProcess:
         self.calc_args()
         self.generate_chan_mask()
         self.generate_birdie_list()
+        self.create_dm_list()
 
     def get_injection_report(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'

@@ -175,7 +175,7 @@ class FilterbankReader:
 
 class FilterbankWriter: 
     def __init__(self, read_filterbank, write_filterbank_name):
-        self.fb_reader = FilterbankReader(read_filterbank) if type(read_filterbank) == str else read_filterbank
+        self.fb_reader = FilterbankReader(read_filterbank, stats_samples=0) if type(read_filterbank) == str else read_filterbank
 
         self.nbits = self.fb_reader.nbits
         self.write_file = None
@@ -236,7 +236,7 @@ class FilterbankWriter:
 
 
 def merge_filterbanks(filterbanks, output_file, gulp_size=2**11):
-    fb_list = [FilterbankReader(fb) for fb in filterbanks]
+    fb_list = [FilterbankReader(fb, stats_samples=0) for fb in filterbanks]
     writer = FilterbankWriter(fb_list[0], output_file)
 
     for fb in fb_list:
