@@ -90,7 +90,7 @@ def freq_correction(pulsar, pepoch_ref=0.5):
         radial_velocity += binary_radial_velocity
 
     doppler_shift =  1 - radial_velocity/const.c.value
-    return doppler_shift
+    return doppler_shift[0]
 
 
 def DM_curve(pulsar, snr_limit):

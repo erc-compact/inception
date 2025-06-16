@@ -117,9 +117,6 @@ class Observation:
             return obs_sec
     
     def topo2bary_calc(self, topo_time, mjd=True):
-        if type(topo_time) != np.ndarray:
-            topo_time = np.array([topo_time])
-
         time_scale = Time(topo_time, format='mjd', scale='utc')
         L_hat  = self.source.cartesian.xyz.value.astype(np.float64)
 
