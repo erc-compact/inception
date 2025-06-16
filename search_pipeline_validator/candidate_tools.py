@@ -69,7 +69,7 @@ def par_cand2csv(injection_report, work_dir, output):
 def fold_cand2csv(cand_file, output):
     candidates = []
     cand_df = pd.read_csv(cand_file, skiprows=11, engine='python', sep=r'\s+')
-    for i, row in cand_df.items():
+    for _, row in cand_df.iterrows():
         fold_pars = row[['f0_new', 'dm_new', 'acc_new', 'S/N_new']].values
         candidates.append(fold_pars)
     
