@@ -70,7 +70,7 @@ def fold_cand2csv(cand_file, output):
     candidates = []
     cand_df = pd.read_csv(cand_file, skiprows=11, engine='python', sep=r'\s+')
     for _, row in cand_df.iterrows():
-        fold_pars = row[['f0_new', 'dm_new', 'acc_new', 'S/N_new']].values
+        fold_pars = row[['#id', 'f0_new', 'dm_new', 'acc_new', 'S/N_new']].values
         candidates.append(fold_pars)
     
     df_cands = pd.DataFrame(candidates, columns=['ID', 'f0', 'dm', 'acc', 'SNR'])

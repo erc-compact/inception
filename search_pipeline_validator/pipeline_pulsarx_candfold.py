@@ -52,7 +52,9 @@ class PulsarxFoldCandProcess:
             self.candidates = candidates[0]
         else:
             from candidate_tools import merge_cand_file_acc
+            candidates = [cand_file for cand_file in candidates if '_MERGED.candfile' not in cand_file]
             prefix = os.path.commonprefix(candidates)
+
             merged_candidates = f"{prefix}_MERGED.candfile"
             merge_cand_file_acc(candidates, merged_candidates)
             self.candidates = merged_candidates
