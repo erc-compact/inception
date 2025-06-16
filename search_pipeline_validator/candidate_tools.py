@@ -188,6 +188,7 @@ class CandMatcher:
             
             DM_limit = DM_curve(pm, snr_limit)
             dm_offset =  (pm.prop_effect.DM - self.cands['dm'])
+            snr_offset = (pm.SNR - self.cands['snr'])
             dm_cond = np.abs(dm_offset) <= DM_limit
 
             pulsar_acc_fit = fit_orbit(pm, pepoch_ref=pepoch_ref, mode='accel')
@@ -198,7 +199,7 @@ class CandMatcher:
             candidates['nbins_offset'] = nbins_offset[freq_cond & dm_cond]
             candidates['accel_bin_drift'] = accel_drift[freq_cond & dm_cond]
             candidates['dm_offset'] = dm_offset[freq_cond & dm_cond]
-            candidates['snr_offset'] = (pm.SNR - self.cands['snr'])[freq_cond & dm_cond]
+            candidates['snr_offset'] = snr_offset[freq_cond & dm_cond]
     
             candidates_sorted = candidates.sort_values(by='nbins_offset', key=abs)
 

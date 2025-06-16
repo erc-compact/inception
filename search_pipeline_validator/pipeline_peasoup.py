@@ -107,14 +107,19 @@ class PeasoupProcess:
             self.birdie_list = ''
 
     def create_dm_list(self):
+        ddplan_list = inj_tools.create_DDplan(self.processing_args['peasoup_args']['ddplan'])
+        self.ddplan = ddplan_list[self.tscrunch_index]
+        
         if self.processing_args['peasoup_args']['inj_DM']:
             DM_values = [pulsar['DM'] for pulsar in self.injection_report['pulsars']]
-            DM_values.sort()
+            DM_values = DM_values[(DM_values >= self.ddplan.low_dm) & (DM_values <= self.ddplan.high_dm)]
+            if len(DM_values) == 0:
+                print_exe('No DMs to search.')
+                sys.exit(0)
+            else:
+                DM_values.sort()
         else:
-            ddplan_list = inj_tools.create_DDplan(self.processing_args['peasoup_args']['ddplan'])
-            self.ddplan = ddplan_list[self.tscrunch_index]
             n_trial = int(round((self.ddplan.high_dm-self.ddplan.low_dm)/self.ddplan.dm_step))
-
             if self.tscrunch_index == len(ddplan_list)-1:
                 n_trial, endpoint = (n_trial + 1, True)
             else:
@@ -154,7 +159,7 @@ class PeasoupProcess:
             fft_size = self.processing_args['peasoup_args']['cmd'].get('fft_size', self.default_fft_size)
             cand_matcher = CandMatcher(self.report_path, csv_cands, self.data, fft_size, corr_period=True)
 
-            candidate_root = f"{processing_dir}/{self.processing_args['injection_args']['id']}_{self.inj_id}_{match_inj['tag']}"
+            candidate_root = f"{processing_dir}/{self.processing_args['injection_args']['id']}_{self.inj_id}_{match_inj['tag']}_0{self.tscrunch_index+1}"
             cand_matcher.generate_files(candidate_root, max_cand_per_inj=match_inj['n_cands_per_inj'], 
                                         pepoch_ref=0.5, snr_limit=match_inj['DM_snr_limit'], create_candfile=match_inj['create_candfile'])
     
