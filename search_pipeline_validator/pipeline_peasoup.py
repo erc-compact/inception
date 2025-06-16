@@ -51,7 +51,7 @@ class PeasoupProcess:
         self.data = f'{self.work_dir}/{Path(data).name}'
 
     def calc_args(self):
-        fb_reader = FilterbankReader(self.data)
+        fb_reader = FilterbankReader(self.data, stats_samples=0)
         fd = self.processing_args.get('filtool_args', {"cmd": {}})['cmd'].get('fd', 1)
         self.default_dedisp_gulp = int((2048.0 / (fb_reader.nchans/fd)) * 1e6)
 
@@ -65,7 +65,7 @@ class PeasoupProcess:
         if chan_mask_string:
             chan_mask_file = f'{self.work_dir}/channel_mask.ascii'
 
-            fb_reader = FilterbankReader(self.data)
+            fb_reader = FilterbankReader(self.data, stats_samples=0)
             ftop = fb_reader.ftop
             fbottom = fb_reader.fbottom
             nchans = fb_reader.nchans
@@ -122,7 +122,7 @@ class PeasoupProcess:
 
             DM_values = np.linspace(self.ddplan.low_dm, self.ddplan.high_dm, n_trial, endpoint=endpoint)
 
-        DM_file = f'{self.work_dir}/dm_list_T0{int(self.tscrunch)}.ascii'
+        DM_file = f'{self.work_dir}/dm_list_T0{int(self.tscrunch_index)}.ascii'
         np.savetxt(DM_file, DM_values, fmt='%.3f')
         self.DM_file = DM_file
         
@@ -144,12 +144,12 @@ class PeasoupProcess:
         save_csv = self.processing_args['peasoup_args']['save_csv']
         match_inj =self.processing_args['peasoup_args']['candidate_matcher']
         if match_inj['match_inj'] or save_csv:
-            from .candidate_tools import xml2csv
+            from candidate_tools import xml2csv
 
             csv_cands = xml2csv(xml_name_old, f"{processing_dir}/{prefix}.csv", save_csv)
 
         if match_inj['match_inj']:
-            from .candidate_tools import CandMatcher
+            from candidate_tools import CandMatcher
 
             fft_size = self.processing_args['peasoup_args']['cmd'].get('fft_size', self.default_fft_size)
             cand_matcher = CandMatcher(self.report_path, csv_cands, self.data, fft_size, corr_period=True)

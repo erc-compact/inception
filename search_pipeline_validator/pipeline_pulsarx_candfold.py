@@ -76,7 +76,7 @@ class PulsarxFoldCandProcess:
         if self.processing_args['pulsarx_candfold_args']['save_cand']:
             inj_tools.rsync(f'{self.work_dir}/*.cands', results_dir)
         if self.processing_args['pulsarx_candfold_args']['save_csv']:
-            from .candidate_tools import fold_cand2csv
+            from candidate_tools import fold_cand2csv
 
             output = f"{results_dir}/{self.processing_args['injection_args']['id']}_{self.inj_id}_candfold.csv"
             cand_file = glob.glob(f'{self.work_dir}/*.cands')[0]

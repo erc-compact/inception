@@ -152,7 +152,7 @@ class CandMatcher:
         from injector.io_tools import FilterbankReader
         from injector.setup_manager import SetupManager
 
-        self.cands = pd.read_csv(candidates) 
+        self.cands = pd.read_csv(candidates) if type(candidates) == str else candidates
 
         self.fb = FilterbankReader(filterbank)
         self.fftsize = fftsize
