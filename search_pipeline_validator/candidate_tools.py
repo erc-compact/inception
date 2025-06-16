@@ -175,9 +175,9 @@ class CandMatcher:
         pulsar_cands = {}
         for pm in self.setup.pulsar_models:
 
-            doppler_shift_ref = freq_correction(pm, ref=pepoch_ref)
-            doppler_shift_start = freq_correction(pm, ref=0)
-            doppler_shift_end = freq_correction(pm, ref=1)
+            doppler_shift_ref = freq_correction(pm, pepoch_ref=pepoch_ref)
+            doppler_shift_start = freq_correction(pm, pepoch_ref=0)
+            doppler_shift_end = freq_correction(pm, pepoch_ref=1)
 
             fft_bin = 1/self.fftsize
             F0 = pm.FX_list[0]
