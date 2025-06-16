@@ -77,7 +77,7 @@ process pulsarx_candfold {
     script:
     """
     source ${params.singularity_config}
-    source ${params.dependencies_config} ${params.tmp_dir}
+    source ${params.dependencies_config} ${params.tmp_dir} python3.6
 
     python3.6 ${params.pipeline_code}/pipeline_pulsarx_candfold.py --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
 

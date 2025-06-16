@@ -161,7 +161,7 @@ def merge_cand_file_acc(cand_list, cand_file_path):
 
 
 class CandMatcher:
-    def __init__(self, injection_report, candidates, filterbank, fftsize, corr_period=False):
+    def __init__(self, injection_report, candidates, filterbank, fftsize, corr_period=False, override_length=0):
         from injector.io_tools import FilterbankReader
         from injector.setup_manager import SetupManager
 
@@ -170,7 +170,7 @@ class CandMatcher:
         self.fb = FilterbankReader(filterbank, stats_samples=0)
         self.fftsize = fftsize
 
-        self.setup = SetupManager(injection_report, filterbank, generate=False)
+        self.setup = SetupManager(injection_report, filterbank, generate=False, override_length=override_length)
 
         if corr_period:
             self.correct_periods(fftsize)
