@@ -58,7 +58,7 @@ class PulsarxFoldCandProcess:
             self.candidates = merged_candidates
 
     def run_fold(self, ncpus):
-        fold_args = self.processing_args['pulsarx_canfold_args']
+        fold_args = self.processing_args['pulsarx_candfold_args']
 
         cmd = f"{fold_args['mode']} -t {ncpus} -o {self.work_dir}/ -f {self.data} --template {fold_args['template']} --candfile {self.candidates} {self.zap_string}"
     

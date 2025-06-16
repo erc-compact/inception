@@ -151,7 +151,8 @@ def merge_cand_file_acc(cand_list, cand_file_path):
     cand_data = []
     for cand_file in cand_list:
         data = pd.read_csv(cand_file, delimiter=' ')
-        cand_data.append(data.iloc[0].values[1:].tolist())
+        for i, row in data.iterrows():
+            cand_data.append(row.values[1:].tolist())
 
     with open(cand_file_path, 'w') as file:
         file.write("#id DM accel F0 F1 S/N\n")
