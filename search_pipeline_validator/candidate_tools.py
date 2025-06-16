@@ -152,7 +152,7 @@ class CandMatcher:
         from injector.io_tools import FilterbankReader
         from injector.setup_manager import SetupManager
 
-        self.cands = pd.read_csv(candidates) if type(candidates) == str else candidates
+        self.cands = pd.read_csv(candidates, index_col=0) if type(candidates) == str else candidates
 
         self.fb = FilterbankReader(filterbank, stats_samples=0)
         self.fftsize = fftsize
@@ -214,7 +214,7 @@ class CandMatcher:
             candidates = pulsar_cands[pm.ID]
             for i, row in candidates.iterrows():
                 if (i < max_cand_per_inj) or (max_cand_per_inj == -1):
-                    cand_info = pd.DataFrame([pm.ID, *row], columns=cands_df.columns)
+                    cand_info = pd.DataFrame([pm.ID, *row.values], columns=cands_df.columns)
                     cands_df = pd.concat([cands_df, cand_info], ignore_index=True)
                 else:
                     break
