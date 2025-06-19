@@ -159,7 +159,7 @@ class PeasoupProcess:
         if match_inj['match_inj']:
             from candidate_tools import CandMatcher
 
-            fft_size = int(self.processing_args['peasoup_args']['cmd'].get('fft_size', self.default_fft_size))
+            fft_size = int(self.processing_args['peasoup_args']['cmd'].get('fft_size', self.default_fft_size // self.tscrunch) * self.tscrunch)
             cand_matcher = CandMatcher(self.report_path, csv_cands, self.data_inj, fft_size, corr_period=True)
 
             candidate_root = f"{processing_dir}/{self.processing_args['injection_args']['id']}_{self.inj_id}_{match_inj['tag']}_0{self.tscrunch_index+1}"
