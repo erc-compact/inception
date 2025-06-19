@@ -175,7 +175,7 @@ class FilterbankReader:
 
 class FilterbankWriter: 
     def __init__(self, read_filterbank, write_filterbank_name):
-        self.fb_reader = FilterbankReader(read_filterbank, stats_samples=0) if type(read_filterbank) == str else read_filterbank
+        self.fb_reader = FilterbankReader(read_filterbank) if type(read_filterbank) == str else read_filterbank
 
         self.nbits = self.fb_reader.nbits
         self.write_file = None
