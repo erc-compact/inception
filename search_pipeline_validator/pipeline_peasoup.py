@@ -111,7 +111,7 @@ class PeasoupProcess:
     def create_dm_list(self):
         ddplan_list = inj_tools.create_DDplan(self.processing_args['peasoup_args']['ddplan'])
         self.ddplan = ddplan_list[self.tscrunch_index]
-        self.tscrunch = self.ddplan.tscrunch
+        self.tscrunch = int(self.ddplan.tscrunch)
         
         if self.processing_args['peasoup_args']['inj_DM']:
             DM_values = [pulsar['DM'] for pulsar in self.injection_report['pulsars']]
@@ -139,7 +139,7 @@ class PeasoupProcess:
         cmd = f"peasoup -i {self.data} --dm_file {self.DM_file} -o {self.work_dir} {self.channel_mask} {self.birdie_list}" 
 
         cmd_args = self.processing_args['peasoup_args']['cmd']
-        cmd_args['fft_size'] = cmd_args.get('fft_size', self.default_fft_size) // self.tscrunch
+        cmd_args['fft_size'] = int(cmd_args.get('fft_size', self.default_fft_size) // self.tscrunch)
         cmd_args['dedisp_gulp'] = cmd_args.get('dedisp_gulp', self.default_dedisp_gulp)
         cmd_args['ram_limit_gb'] = cmd_args.get('ram_limit_gb', self.default_ram_limit_gb)
 
@@ -159,7 +159,7 @@ class PeasoupProcess:
         if match_inj['match_inj']:
             from candidate_tools import CandMatcher
 
-            fft_size = self.processing_args['peasoup_args']['cmd'].get('fft_size', self.default_fft_size)
+            fft_size = int(self.processing_args['peasoup_args']['cmd'].get('fft_size', self.default_fft_size))
             cand_matcher = CandMatcher(self.report_path, csv_cands, self.data_inj, fft_size, corr_period=True)
 
             candidate_root = f"{processing_dir}/{self.processing_args['injection_args']['id']}_{self.inj_id}_{match_inj['tag']}_0{self.tscrunch_index+1}"
