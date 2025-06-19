@@ -231,7 +231,7 @@ class CandMatcher:
         pulsar_cands = self.match_candidates(pepoch_ref=pepoch_ref, snr_limit=snr_limit)
         cands_data = []
         for pm in self.setup.pulsar_models:
-            candidates = pulsar_cands[pm.ID]
+            candidates = pulsar_cands[pm.ID].reset_index(drop=True)
             for i, row in candidates.iterrows():
                 if (i < max_cand_per_inj) or (max_cand_per_inj == -1):
                     cands_data.append([pm.ID, *row.values])
