@@ -164,7 +164,7 @@ def merge_cand_file_acc(cand_list, cand_file_path):
 
 
 class CandMatcher:
-    def __init__(self, injection_report, candidates, filterbank, fftsize, corr_period=False, override_length=0):
+    def __init__(self, injection_report, candidates, filterbank, fftsize, ephem, corr_period=False, override_length=0):
         from injector.io_tools import FilterbankReader
         from injector.setup_manager import SetupManager
 
@@ -173,13 +173,14 @@ class CandMatcher:
         self.fb = FilterbankReader(filterbank, stats_samples=0)
         self.fftsize = fftsize
 
-        self.setup = SetupManager(injection_report, filterbank, generate=False, override_length=override_length)
+        self.setup = SetupManager(injection_report, filterbank, ephem, generate=False, override_length=override_length)
 
         if corr_period:
-            self.correct_periods(fftsize)
+            self.correct_periods(fftsize, override_length)
 
-    def correct_periods(self, fftsize):
-        new_periods = correct_fftsize_offset(self.cands['period'], self.cands['acc'], fftsize, self.fb.n_samples, self.fb.dt)
+    def correct_periods(self, fftsize, override_length):
+        n_samples = override_length if override_length else self.fb.n_samples
+        new_periods = correct_fftsize_offset(self.cands['period'], self.cands['acc'], fftsize, n_samples, self.fb.dt)
 
         self.cands = self.cands.rename(columns={'period': 'period_input'})
         self.cands['period'] = new_periods
@@ -202,7 +203,7 @@ class CandMatcher:
             nbins_offset = (F0*doppler_shift_ref - 1/self.cands['period']) / fft_bin
 
             F_min, F_max = min(F0*doppler_shift_min_vel, F0*doppler_shift_max_vel), max(F0*doppler_shift_min_vel, F0*doppler_shift_max_vel)
-            freq_cond = (1/self.cands['period'] >= F_min) & (1/self.cands['period'] <= F_max)
+            freq_cond = ((1/self.cands['period'] >= F_min) & (1/self.cands['period'] <= F_max)) | (np.abs(nbins_offset) < 1)
             
             DM_limit = DM_curve(pm, snr_limit)
             dm_offset =  (pm.prop_effect.DM - self.cands['dm'])
