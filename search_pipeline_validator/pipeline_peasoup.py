@@ -39,6 +39,7 @@ class PeasoupProcess:
 
     def transfer_data(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
+        self.data_inj = glob.glob(f"{results_dir}/*_{self.inj_id}.fil")[0]
 
         if self.processing_args['peasoup_args']['filtool']:
             data = glob.glob(f"{results_dir}/processing/*_{self.inj_id}_FILTOOL_0{self.tscrunch_index+1}.fil")[0]
@@ -49,9 +50,10 @@ class PeasoupProcess:
             inj_tools.rsync(data, self.work_dir)
 
         self.data = f'{self.work_dir}/{Path(data).name}'
+        
 
     def calc_args(self):
-        fb_reader = FilterbankReader(self.data, stats_samples=0)
+        fb_reader = FilterbankReader(self.data_inj, stats_samples=0)
         fd = self.processing_args.get('filtool_args', {"cmd": {}})['cmd'].get('fd', 1)
         self.default_dedisp_gulp = int((2048.0 / (fb_reader.nchans/fd)) * 1e6)
 
@@ -109,6 +111,7 @@ class PeasoupProcess:
     def create_dm_list(self):
         ddplan_list = inj_tools.create_DDplan(self.processing_args['peasoup_args']['ddplan'])
         self.ddplan = ddplan_list[self.tscrunch_index]
+        self.tscrunch = self.ddplan.tscrunch
         
         if self.processing_args['peasoup_args']['inj_DM']:
             DM_values = [pulsar['DM'] for pulsar in self.injection_report['pulsars']]
@@ -136,7 +139,7 @@ class PeasoupProcess:
         cmd = f"peasoup -i {self.data} --dm_file {self.DM_file} -o {self.work_dir} {self.channel_mask} {self.birdie_list}" 
 
         cmd_args = self.processing_args['peasoup_args']['cmd']
-        cmd_args['fft_size'] = cmd_args.get('fft_size', self.default_fft_size)
+        cmd_args['fft_size'] = cmd_args.get('fft_size', self.default_fft_size) // self.tscrunch
         cmd_args['dedisp_gulp'] = cmd_args.get('dedisp_gulp', self.default_dedisp_gulp)
         cmd_args['ram_limit_gb'] = cmd_args.get('ram_limit_gb', self.default_ram_limit_gb)
 
@@ -157,7 +160,7 @@ class PeasoupProcess:
             from candidate_tools import CandMatcher
 
             fft_size = self.processing_args['peasoup_args']['cmd'].get('fft_size', self.default_fft_size)
-            cand_matcher = CandMatcher(self.report_path, csv_cands, self.data, fft_size, corr_period=True)
+            cand_matcher = CandMatcher(self.report_path, csv_cands, self.data_inj, fft_size, corr_period=True)
 
             candidate_root = f"{processing_dir}/{self.processing_args['injection_args']['id']}_{self.inj_id}_{match_inj['tag']}_0{self.tscrunch_index+1}"
             cand_matcher.generate_files(candidate_root, max_cand_per_inj=match_inj['n_cands_per_inj'], 
