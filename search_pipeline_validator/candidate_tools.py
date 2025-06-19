@@ -203,7 +203,7 @@ class CandMatcher:
             nbins_offset = (F0*doppler_shift_ref - 1/self.cands['period']) / fft_bin
 
             F_min, F_max = min(F0*doppler_shift_min_vel, F0*doppler_shift_max_vel), max(F0*doppler_shift_min_vel, F0*doppler_shift_max_vel)
-            freq_cond = ((1/self.cands['period'] >= F_min) & (1/self.cands['period'] <= F_max)) | (np.abs(nbins_offset) < 1)
+            freq_cond = ((1/self.cands['period'] >= F_min-fft_bin) & (1/self.cands['period'] <= F_max+fft_bin)) 
             
             DM_limit = DM_curve(pm, snr_limit)
             dm_offset =  (pm.prop_effect.DM - self.cands['dm'])

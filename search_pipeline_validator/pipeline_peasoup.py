@@ -164,7 +164,7 @@ class PeasoupProcess:
             if ephem != 'builtin':
                 inj_tools.rsync(ephem, self.work_dir)
                 ephem = f'./{Path(ephem).name}'
-            cand_matcher = CandMatcher(self.report_path, csv_cands, self.data_inj, fft_size, corr_period=True)
+            cand_matcher = CandMatcher(self.report_path, csv_cands, self.data_inj, fft_size, ephem, corr_period=True)
 
             candidate_root = f"{processing_dir}/{self.processing_args['injection_args']['id']}_{self.inj_id}_{match_inj['tag']}_0{self.tscrunch_index+1}"
             cand_matcher.generate_files(candidate_root, max_cand_per_inj=match_inj['n_cands_per_inj'], 
