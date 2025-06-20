@@ -186,7 +186,7 @@ class CandMatcher:
         self.cands['period'] = new_periods
 
 
-    def match_candidates(self, pepoch_ref=0.5, snr_limit=3):
+    def match_candidates(self, pepoch_ref=0.5, snr_limit=3, max_harmonic=4):
         self.cands['cand_id'] = np.arange(len(self.cands))
 
         pulsar_cands = {}
@@ -200,10 +200,15 @@ class CandMatcher:
 
             fft_bin = 1/(self.fftsize*pm.obs.dt)
             F0 = pm.FX_list[0]
-            nbins_offset = (F0*doppler_shift_ref - 1/self.cands['period']) / fft_bin
+            cands_F = (1/self.cands['period'])
+            harmonic_div = np.round(((cands_F/F0)))    
+            harmonic_div[harmonic_div > max_harmonic] =1
+            cands_F /= harmonic_div
+
+            nbins_offset = (F0*doppler_shift_ref - cands_F) / fft_bin
 
             F_min, F_max = min(F0*doppler_shift_min_vel, F0*doppler_shift_max_vel), max(F0*doppler_shift_min_vel, F0*doppler_shift_max_vel)
-            freq_cond = ((1/self.cands['period'] >= F_min-fft_bin) & (1/self.cands['period'] <= F_max+fft_bin)) 
+            freq_cond = ((cands_F >= F_min-fft_bin) & (cands_F <= F_max+fft_bin)) 
             
             DM_limit = DM_curve(pm, snr_limit)
             dm_offset =  (pm.prop_effect.DM - self.cands['dm'])
@@ -227,8 +232,8 @@ class CandMatcher:
         return pulsar_cands
 
 
-    def generate_files(self, candidate_root, max_cand_per_inj=-1, pepoch_ref=0.5, snr_limit=3, create_candfile=True):
-        pulsar_cands = self.match_candidates(pepoch_ref=pepoch_ref, snr_limit=snr_limit)
+    def generate_files(self, candidate_root, max_cand_per_inj=-1, pepoch_ref=0.5, snr_limit=3, max_harmonic=4, create_candfile=True):
+        pulsar_cands = self.match_candidates(pepoch_ref=pepoch_ref, snr_limit=snr_limit, max_harmonic=max_harmonic)
         cands_data = []
         for pm in self.setup.pulsar_models:
             candidates = pulsar_cands[pm.ID].reset_index(drop=True)

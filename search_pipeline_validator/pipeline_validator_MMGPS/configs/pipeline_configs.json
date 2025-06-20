@@ -51,7 +51,8 @@
             "create_candfile": true,
             "tag" : "PEASOUP",
             "n_cands_per_inj": -1,
-            "DM_snr_limit": 3
+            "DM_snr_limit": 3,
+            "max_harmonic": 4
         },
         
         "ddplan": " 0.000 103.800 0.03 1 3460 0.7544\r\n 103.800 167.300 0.05 2 1270 0.1384\r\n 167.300 318.500 0.10 4 1512 0.08242\r\n 318.500 500.100 0.20 8 908 0.02475",

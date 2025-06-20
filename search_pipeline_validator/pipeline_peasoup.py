@@ -167,8 +167,9 @@ class PeasoupProcess:
             cand_matcher = CandMatcher(self.report_path, csv_cands, self.data_inj, fft_size, ephem, corr_period=True)
 
             candidate_root = f"{processing_dir}/{self.processing_args['injection_args']['id']}_{self.inj_id}_{match_inj['tag']}_0{self.tscrunch_index+1}"
-            cand_matcher.generate_files(candidate_root, max_cand_per_inj=match_inj['n_cands_per_inj'], 
-                                        pepoch_ref=0.5, snr_limit=match_inj['DM_snr_limit'], create_candfile=match_inj['create_candfile'])
+            cand_matcher.generate_files(candidate_root, max_cand_per_inj=match_inj.get('n_cands_per_inj', 1), 
+                                        pepoch_ref=0.5, snr_limit=match_inj.get('DM_snr_limit', 3), max_harmonic=match_inj.get('max_harmonic', 4),
+                                        create_candfile=match_inj.get('create_candfile', True))
     
 
     def transfer_products(self):
