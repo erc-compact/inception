@@ -76,7 +76,7 @@ class PulsarxFoldParProcess:
                 harmonic = 1
 
             par_df = pd.read_csv(par_file, sep='\t', index_col=0, header=None)
-            par_df.T.iloc[0]['F0'] = np.float64(par_df.T.iloc[0]['F0'])*harmonic
+            par_df.T.iloc[0]['F0'] = np.float64(par_df.T.iloc[0]['F0'])/harmonic
 
             new_par = f"{self.work_dir}/{psr['ID']}.par"
             par_df.to_csv(new_par, sep='\t', header=False)
