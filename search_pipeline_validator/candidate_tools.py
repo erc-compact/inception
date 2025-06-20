@@ -202,7 +202,7 @@ class CandMatcher:
             F0 = pm.FX_list[0]
             cands_F = (1/self.cands['period'])
             harmonic_div = np.round(((cands_F/F0)))    
-            harmonic_div[harmonic_div > max_harmonic] =1
+            harmonic_div[harmonic_div > max_harmonic] = 1
             cands_F /= harmonic_div
 
             nbins_offset = (F0*doppler_shift_ref - cands_F) / fft_bin

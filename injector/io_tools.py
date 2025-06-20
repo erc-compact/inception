@@ -174,8 +174,8 @@ class FilterbankReader:
 
 
 class FilterbankWriter: 
-    def __init__(self, read_filterbank, write_filterbank_name):
-        self.fb_reader = FilterbankReader(read_filterbank) if type(read_filterbank) == str else read_filterbank
+    def __init__(self, read_filterbank, write_filterbank_name, gulp_size_GB=0.01, stats_samples=0, load_fb_stats=[]):
+        self.fb_reader = FilterbankReader(read_filterbank, gulp_size_GB, stats_samples, load_fb_stats) if type(read_filterbank) == str else read_filterbank
 
         self.nbits = self.fb_reader.nbits
         self.write_file = None

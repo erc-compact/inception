@@ -13,7 +13,7 @@
         {   
             "ID": "c",
             "P0": {"rng": "uniform",  "low": 0.5, "high": 10},
-            "SNR": {"rng": "uniform", "low": 8, "high": 40},
+            "SNR": {"rng": "uniform", "low": 10, "high": 40},
             "DM": {"rng": "uniform", "low": 5, "high": 500},
             "duty_cycle": {"rng": "uniform", "low": 0.01, "high": 0.3},
             "spectral_index": {"rng": "normal", "mean": -2, "sigma": 0.2},
@@ -22,7 +22,7 @@
         {   
             "ID": {"replicate": 8, "prefix": "d"},
             "P0": {"rng": "uniform",  "low": 0.001, "high": 0.03},
-            "SNR": {"rng": "uniform", "low": 8, "high": 40},
+            "SNR": {"rng": "uniform", "low": 10, "high": 40},
             "DM": {"rng": "uniform", "low": 5, "high": 500},
             "duty_cycle": {"rng": "uniform", "low": 0.01, "high": 0.3},
             "spectral_index": {"rng": "normal", "mean": -2, "sigma": 0.2},

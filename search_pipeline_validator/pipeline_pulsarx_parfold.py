@@ -57,11 +57,38 @@ class PulsarxFoldParProcess:
             block_size = input_blocksize
         return block_size
 
+    def get_parfile(self, psr):
+        par_file =  f"{self.out_dir}/inj_{self.injection_number:06}/inj_pulsars/{psr['ID']}.par"
+        harmonic_pars = self.processing_args['pulsarx_parfold_args'].get('harmonic_fold', None)
+        if harmonic_pars:
+            import pandas as pd
+            import numpy as np
+        
+            max_duty_cycle = harmonic_pars.get('max_duty_cycle', 1)
+            values = harmonic_pars.get('values', [1])
+            weights =  harmonic_pars.get('weights', [1])
+
+            if psr['duty_cycle'] <= max_duty_cycle:
+                rng = np.random.default_rng(self.injection_number)
+                p = np.array(weights)/np.sum(weights)
+                harmonic = rng.choice(values, p=p)
+            else:
+                harmonic = 1
+
+            par_df = pd.read_csv(par_file, sep='\t', index_col=0, header=None)
+            par_df.T.iloc[0]['F0'] = np.float64(par_df.T.iloc[0]['F0'])*harmonic
+
+            new_par = f"{self.work_dir}/{psr['ID']}.par"
+            par_df.to_csv(new_par, sep='\t', header=False)
+            return new_par
+        else:
+            return par_file 
+
     def run_parfold(self, psr):
         fold_args = self.processing_args['pulsarx_parfold_args']
 
         psr_id = psr['ID']
-        par_file =  f'{self.out_dir}/inj_{self.injection_number:06}/inj_pulsars/{psr_id}.par'
+        par_file =  self.get_parfile(psr)
         block_size = self.set_blocksize(psr)
 
         tmp_cwd = f'{self.work_dir}/process_{psr_id}'

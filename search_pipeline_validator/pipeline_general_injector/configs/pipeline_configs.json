@@ -20,6 +20,11 @@
         "channel_mask": "856.0:863.94140625",
         "template": "/hercules/u/rsenzel/pulsar_inject/fold_code/meerkat_fold.template",
         "blocksize_plan": [2, 10, 0.1],
+        "harmonic_fold": {
+            "max_duty_cycle": 0.08,
+            "values": [1, 2, 3, 4],
+            "weights": [0.8, 0.15, 0.03, 0.02]
+        },
 
         "cmd": {
             "nbin": 64,
