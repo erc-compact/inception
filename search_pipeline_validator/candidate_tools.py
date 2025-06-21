@@ -225,7 +225,7 @@ class CandMatcher:
             candidates['dm_offset'] = dm_offset[freq_cond & dm_cond]
             candidates['snr_offset'] = snr_offset[freq_cond & dm_cond]
     
-            candidates_sorted = candidates.sort_values(by='nbins_offset', key=abs)
+            candidates_sorted = candidates.sort_values(by='snr', key=abs, ascending=False)
 
             pulsar_cands[pm.ID] = candidates_sorted
 

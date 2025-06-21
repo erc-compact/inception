@@ -89,8 +89,9 @@ class PulsarxFoldCandProcess:
             from candidate_tools import fold_cand2csv
 
             output = f"{results_dir}/{self.processing_args['injection_args']['id']}_{self.inj_id}_candfold.csv"
-            cand_file = glob.glob(f'{self.work_dir}/*.cands')[0]
-            fold_cand2csv(cand_file, output)
+            cand_file = glob.glob(f'{self.work_dir}/*.cands')
+            if cand_file:
+                fold_cand2csv(cand_file[0], output)
 
         if self.processing_args['pulsarx_candfold_args']['delete_inj_fb']:
             os.remove(f'{self.out_dir}/inj_{self.injection_number:06}/{Path(self.data).name}')
