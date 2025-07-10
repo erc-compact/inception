@@ -90,7 +90,7 @@ class PulsarModel:
             Vel_symbolic = sum([AX[n]*t**(n+1)/factorial(n+1) for n in range(n_accel)])
             spin_doppler = spin_symbolic * (1 - Vel_symbolic/c)
             phase_symbolic = spin_doppler.integrate(t)  
-            phase_func_abs = lambdify([t, c], phase_symbolic.subs(freq_derivs | accel_derivs))
+            phase_func_abs = lambdify([t, c], phase_symbolic.subs({**freq_derivs, **accel_derivs}))
             self.phase_func = lambda t: phase_func_abs(t, const.c.value) + phase_offset
 
         else:

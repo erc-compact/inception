@@ -83,3 +83,43 @@ process pulsarx_candfold {
 
     """
 }
+
+process candidate_filter {
+    label "candidate_filter"
+    container params.candidate_filter_image
+
+    input:
+        val injection_number
+
+    output:
+        val injection_number
+    
+    scratch params.tmp_dir
+
+    script:
+    """
+    source ${params.singularity_config}
+    
+    python3.6 ${params.pipeline_code}/MMGPS_candidate_filter.py --processing_args=${params.config_params} --out_dir=${params.output_dir} --injection_number=${injection_number}
+    
+    """
+}
+
+process pics_scorer {
+    label "pics_scorer"
+    container params.pics_scorer_image
+
+    input:
+        val inj_cand
+
+    output:
+        val inj_cand
+
+    scratch params.tmp_dir
+
+    script:
+    """
+    python3.6 ${params.pipeline_code}/MMGPS_PICS_scorer.py --pics_models=${params.pics_models} --injection_number=${inj_cand}  --out_dir=${params.output_dir}
+
+    """
+}

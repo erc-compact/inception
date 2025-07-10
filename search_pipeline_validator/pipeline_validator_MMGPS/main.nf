@@ -5,6 +5,8 @@ include { injection } from './processes'
 include { filtool } from './processes'
 include { pulsarx_parfold } from './processes'
 include { pulsarx_candfold } from './processes'
+include { candidate_filter } from './processes'
+include { pics_scorer } from './processes'
 
 include { peasoup0 } from './peasoup_processes'
 include { peasoup1 } from './peasoup_processes'
@@ -38,9 +40,10 @@ workflow injection_pipeline {
     inj_filtool = filtool(inj_pulsars)
     inj_fold_par = pulsarx_parfold(inj_pulsars)
     inj_peasoup = peasoup_spawner(inj_filtool)
+    inj_filter = candidate_filter(inj_peasoup)
     inj_fold_cand = pulsarx_candfold(inj_peasoup)
-}   
-
+    inj_pics = pics_scorer(inj_fold_cand)
+}
 
 workflow {
     injection_batch = Channel.from(1..params.n_injections) 

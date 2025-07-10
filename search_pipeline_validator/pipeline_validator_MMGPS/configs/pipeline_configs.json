@@ -148,7 +148,16 @@
     },
 
     "MMGPS_candidate_filter": {
-        
+        "n_cbeams": 479,
+        "n_ibeams": 1,
+
+        "p_tol": 0.0005,
+        "dm_tol": 0.01,
+        "snr_cutoff": 8.5
+    },
+
+    "PICS_scorer": {
+
     },
 
     "data": [
