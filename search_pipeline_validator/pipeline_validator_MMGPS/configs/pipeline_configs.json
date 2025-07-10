@@ -157,8 +157,10 @@
     },
 
     "PICS_scorer": {
-
+        "code_path": "./pipeline_validator_MMGPS/PICS_python2.py",
+        "models_dir": "./pipeline_validator_MMGPS/configs/pics_models"
     },
+
 
     "data": [
         ["/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00011/2024-09-15-14:13:59_cfbf00011_0000000000000000.fil",

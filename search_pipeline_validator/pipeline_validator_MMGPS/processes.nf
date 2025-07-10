@@ -119,7 +119,7 @@ process pics_scorer {
 
     script:
     """
-    python3.6 ${params.pipeline_code}/MMGPS_PICS_scorer.py --pics_models=${params.pics_models} --injection_number=${inj_cand}  --out_dir=${params.output_dir}
+    python3.6 ${params.pipeline_code}/MMGPS_PICS_scorer.py --processing_args=${params.processing_args} --injection_number=${inj_cand}  --out_dir=${params.output_dir}
 
     """
 }
