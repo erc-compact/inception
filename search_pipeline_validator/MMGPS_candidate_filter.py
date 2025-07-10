@@ -42,7 +42,7 @@ class CandidateFilterProcess:
             else:
                 fb_path = fb
             if obs_id in fb_path:
-                beam_path.append(fb)
+                beam_path.append(fb_path)
 
         self.xml_dir = f'{str(Path(beam_path[0]).parent.parent)}/XML_FILES'
 
