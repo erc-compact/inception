@@ -105,21 +105,22 @@ process candidate_filter {
     """
 }
 
+
 process pics_scorer {
     label "pics_scorer"
     container params.pics_scorer_image
 
     input:
-        val inj_cand
+        val injection_number
 
     output:
-        val inj_cand
+        val injection_number
 
     scratch params.tmp_dir
 
     script:
     """
-    python3.6 ${params.pipeline_code}/MMGPS_PICS_scorer.py --processing_args=${params.processing_args} --injection_number=${inj_cand}  --out_dir=${params.output_dir}
+    python3.6 ${params.pipeline_code}/MMGPS_PICS_scorer.py --processing_args=${params.config_params} --injection_number=${injection_number}  --out_dir=${params.output_dir}
 
     """
 }

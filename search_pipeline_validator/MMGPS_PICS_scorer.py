@@ -8,7 +8,7 @@ import pipeline_tools as inj_tools
 
 
 class PICSScorer:
-    def __init__(self,  processing_args, injection_number, out_dir, work_dir):
+    def __init__(self, processing_args, injection_number, out_dir, work_dir):
         self.processing_args_path = processing_args
         self.processing_args = inj_tools.parse_JSON(processing_args)
 
@@ -42,7 +42,7 @@ class PICSScorer:
 if __name__=='__main__':
     parser = argparse.ArgumentParser(prog='MMGPS PICS scorer for INCEPTION',
                                      epilog='Feel free to contact me if you have questions - rsenzel@mpifr-bonn.mpg.de')
-    parser.add_argument('--processing_args', metavar='dir', required=True, help='path to trained PICS models')
+    parser.add_argument('--processing_args', metavar='file', required=True, help='JSON file with search parameters')
     parser.add_argument('--injection_number', metavar='int', required=True, type=int, help='injection process number')
     parser.add_argument('--out_dir', metavar='dir', required=False, default='cwd', help='output directory')
     parser.add_argument('--work_dir', metavar='dir', required=False, default='cwd', help='work directory')
