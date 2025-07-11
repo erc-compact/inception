@@ -1,4 +1,5 @@
 import os
+import sys
 import glob
 import argparse
 import subprocess
@@ -32,10 +33,13 @@ class PulsarxFoldCandProcess:
     def transfer_data(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
 
-        data = glob.glob(f"{results_dir}/*_{self.inj_id}.fil")[0]
-        inj_tools.rsync(data, self.work_dir)
+        data = glob.glob(f"{results_dir}/*_{self.inj_id}.fil")
+        if data:
+            inj_tools.rsync(data[0], self.work_dir)
 
-        self.data = f'{self.work_dir}/{Path(data).name}'
+            self.data = f'{self.work_dir}/{Path(data[0]).name}'
+        else:
+            sys.exit(0)
 
     def create_zap_sting(self):
         cmask = self.processing_args['pulsarx_candfold_args'].get('channel_mask', '')
