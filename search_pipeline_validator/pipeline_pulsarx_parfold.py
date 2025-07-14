@@ -1,5 +1,6 @@
 import os
 import glob
+import hashlib
 import argparse
 import subprocess
 import numpy as np
@@ -18,7 +19,6 @@ class PulsarxFoldParProcess:
         self.work_dir = os.getcwd() if work_dir == 'cwd' else work_dir
         
         self.injection_number = injection_number
-        self.rng = np.random.default_rng(self.injection_number)
 
     def fold_setup(self):
         self.get_injection_report()
@@ -58,6 +58,12 @@ class PulsarxFoldParProcess:
         else:
             block_size = input_blocksize
         return block_size
+    
+    @staticmethod
+    def string2seed(s):
+        hash_object = hashlib.sha256(s.encode())
+        hash_int = int(hash_object.hexdigest(), 16)
+        return hash_int % (10**12)
 
     def get_parfile(self, psr):
         par_file =  f"{self.out_dir}/inj_{self.injection_number:06}/inj_pulsars/{psr['ID']}.par"
@@ -71,9 +77,10 @@ class PulsarxFoldParProcess:
                 weights =  harmonic_pars.get('weights', [1])
 
                 if psr['duty_cycle'] <= max_duty_cycle:
-                    
+                    id_hash = self.string2seed(psr['ID'])
+                    rng = np.random.default_rng(self.injection_number+id_hash)
                     p = np.array(weights)/np.sum(weights)
-                    harmonic = self.rng.choice(values, p=p)
+                    harmonic = rng.choice(values, p=p)
                 else:
                     harmonic = 1
 
