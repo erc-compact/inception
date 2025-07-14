@@ -2,6 +2,7 @@ import os
 import glob
 import argparse
 import subprocess
+import numpy as np
 from pathlib import Path
 from multiprocessing import Pool
 
@@ -17,6 +18,7 @@ class PulsarxFoldParProcess:
         self.work_dir = os.getcwd() if work_dir == 'cwd' else work_dir
         
         self.injection_number = injection_number
+        self.rng = np.random.default_rng(self.injection_number)
 
     def fold_setup(self):
         self.get_injection_report()
@@ -63,16 +65,15 @@ class PulsarxFoldParProcess:
             harmonic_pars = self.processing_args['pulsarx_parfold_args'].get('harmonic_fold', None)
             if harmonic_pars:
                 import pandas as pd
-                import numpy as np
             
                 max_duty_cycle = harmonic_pars.get('max_duty_cycle', 1)
                 values = harmonic_pars.get('values', [1])
                 weights =  harmonic_pars.get('weights', [1])
 
                 if psr['duty_cycle'] <= max_duty_cycle:
-                    rng = np.random.default_rng(self.injection_number)
+                    
                     p = np.array(weights)/np.sum(weights)
-                    harmonic = rng.choice(values, p=p)
+                    harmonic = self.rng.choice(values, p=p)
                 else:
                     harmonic = 1
 
