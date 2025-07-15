@@ -16,6 +16,12 @@
 
     "pulsarx_parfold_args": {
         "mode": "psrfold_fil",
+        "tol": {
+            "p0": 0.01,
+            "dm": 5,
+            "snr_upp": 1.1,
+            "snr_low": 0.1
+        },
 
         "channel_mask": "856.0:863.94140625",
         "template": "/hercules/u/rsenzel/pulsar_inject/fold_code/meerkat_fold.template",
@@ -31,7 +37,7 @@
             "nbinplan": "0.1 128",
             "tsubint": 10.0,
             "nsubband": 64,
-            "clfd": 8,
+            "clfd": 2,
             "fillPatch": "rand",
             "rfi": "zdot"
         },

@@ -138,7 +138,11 @@ class PulsarxFoldParProcess:
             from candidate_tools import par_cand2csv
 
             output = f"{results_dir}/{self.processing_args['injection_args']['id']}_{self.inj_id}_parfold.csv"
-            par_cand2csv(self.injection_report, self.work_dir, output)
+            tol = self.processing_args['pulsarx_parfold_args'].get('tol', [])
+            if tol:
+                par_cand2csv(self.injection_report, self.work_dir, output, match=[self.injection_report, tol])
+            else:
+                par_cand2csv(self.injection_report, self.work_dir, output)
 
         if self.processing_args['pulsarx_parfold_args']['delete_inj_fb']:
             os.remove(f'{self.out_dir}/inj_{self.injection_number:06}/{Path(self.data).name}')
