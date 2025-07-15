@@ -68,7 +68,7 @@ def par_cand2csv(injection_report, work_dir, output, match=[]):
         report, tol = match
         for i, row in df_cands.iterrows():
             ID, f0, dm, acc, SNR = row
-            psr = report['pulsars'][ID]
+            psr = report['pulsars'][i]
 
             p_cond = np.abs(psr['PX'][0] - 1/f0) <= tol['p0']
             dm_cond = np.abs(psr['DM'][0] - dm) <= tol['dm']
