@@ -71,7 +71,7 @@ def par_cand2csv(injection_report, work_dir, output, match=[]):
             psr = report['pulsars'][i]
 
             p_cond = np.abs(psr['PX'][0] - 1/f0) <= tol['p0']
-            dm_cond = np.abs(psr['DM'][0] - dm) <= tol['dm']
+            dm_cond = np.abs(psr['DM'] - dm) <= tol['dm']
             snr_cond= (psr['SNR']/SNR <= tol['snr_upp']) and (psr['SNR']/SNR >= tol['snr_low'])
 
             if p_cond and dm_cond and snr_cond:
