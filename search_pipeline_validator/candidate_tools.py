@@ -72,7 +72,7 @@ def par_cand2csv(injection_report, work_dir, output, match=[]):
 
             p_cond = np.abs(psr['PX'][0] - 1/f0) <= tol['p0']
             dm_cond = np.abs(psr['DM'] - dm) <= tol['dm']
-            snr_cond= (psr['SNR']/SNR <= tol['snr_upp']) and (psr['SNR']/SNR >= tol['snr_low'])
+            snr_cond= (SNR/psr['SNR'] <= tol['snr_upp']) and (SNR/psr['SNR'] >= tol['snr_low'])
 
             if p_cond and dm_cond and snr_cond:
                 matched.append(True)
