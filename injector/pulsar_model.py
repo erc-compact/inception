@@ -195,6 +195,24 @@ class PulsarModel:
 
         phase = np.linspace(0, 1, nbins)
         self.SNR_scale = get_pulse_scale(self.SNR) * beam_scale
+
+    def calculate_SNR_test(self, pulsar_pars):
+
+        beam_scale = self.obs.get_beam_snr() 
+
+        n_chan = self.obs.n_chan
+        p0 = self.PX_list[0]
+        n_pulse = self.obs.obs_len/p0
+
+        nbins = int(np.round(p0/self.obs.dt))
+        phase = np.linspace(0, 1, nbins)
+        intrinsic_profile_sum = np.sum([self.intrinsic_profile_chan(phase, chan) for chan in range(n_chan)], axis=0)/n_chan
+        profile_energy = np.sum(intrinsic_profile_sum**2)
+        noise_energy = self.obs.fb_std * np.sqrt(n_pulse*n_chan)
+        snr = profile_energy/self.obs.fb_std * np.sqrt(n_pulse*n_chan)
+
+        
+        self.SNR_scale = self.SNR/snr * beam_scale
      
     def vectorise_observed_profile(self):
         phases = self.prop_effect.phase
