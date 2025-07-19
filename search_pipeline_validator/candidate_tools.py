@@ -65,12 +65,12 @@ def par_cand2csv(injection_report, work_dir, output, match=[]):
     df_cands = pd.DataFrame(psr_candfiles, columns=['ID', 'f0', 'dm', 'acc', 'SNR'])
     if match:
         matched = []
-        report, tol = match
+        report, tol, harmonic_log = match
         for i, row in df_cands.iterrows():
             ID, f0, dm, acc, SNR = row
             psr = report['pulsars'][i]
-
-            p_cond = np.abs(psr['PX'][0]-1/f0)/psr['PX'][0] <= tol['p0']
+            p0 = 1/(f0 * harmonic_log[ID])
+            p_cond = np.abs(psr['PX'][0]-p0)/psr['PX'][0] <= tol['p0']
             dm_cond = np.abs(psr['DM'] - dm) <= tol['dm']
             snr_cond= (SNR/psr['SNR'] <= tol['snr_upp']) and (SNR/psr['SNR'] >= tol['snr_low'])
 

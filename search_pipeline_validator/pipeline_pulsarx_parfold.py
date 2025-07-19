@@ -20,6 +20,8 @@ class PulsarxFoldParProcess:
         
         self.injection_number = injection_number
 
+        self.harmonic_log = {}
+
     def fold_setup(self):
         self.get_injection_report()
         self.transfer_data()
@@ -89,6 +91,8 @@ class PulsarxFoldParProcess:
 
                 new_par = f"{self.work_dir}/{psr['ID']}.par"
                 par_df.to_csv(new_par, sep='\t', header=False)
+
+                self.harmonic_log[psr['ID']] = harmonic
                 return new_par, '--parfile'
             else:
                 return par_file, '--parfile' 
@@ -140,7 +144,7 @@ class PulsarxFoldParProcess:
             output = f"{results_dir}/{self.processing_args['injection_args']['id']}_{self.inj_id}_parfold.csv"
             tol = self.processing_args['pulsarx_parfold_args'].get('tol', [])
             if tol:
-                par_cand2csv(self.injection_report, self.work_dir, output, match=[self.injection_report, tol])
+                par_cand2csv(self.injection_report, self.work_dir, output, match=[self.injection_report, tol, self.harmonic_log])
             else:
                 par_cand2csv(self.injection_report, self.work_dir, output)
 
