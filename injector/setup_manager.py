@@ -69,6 +69,7 @@ class SetupManager:
             if self.seed == 'random':
                 self.seed = np.random.randint(1e11, 1e12)
             self.inj_ID = global_list.pop('injection_id', f'inj_{self.seed}')
+            global_list = self.random_resolver(global_list, self.seed)
 
             pulsar_list = read_inject_file.get('pulsars', None)
             pulsar_list, ID_list = self.resolve_ID(pulsar_list, pulsar_data_path)
@@ -110,40 +111,60 @@ class SetupManager:
                     psr_pars = rng_pars.copy()
                     psr_pars['ID'] = f'{pulsar_prefix}_R{j}'
                     psr_pars['seed'] = seed
-                    psr_pars = self.resolve_random(psr_pars)
+                    psr_pars = self.random_resolve_pulsar(psr_pars)
                     pulsar_list_resolved.append(psr_pars)
             else:
                 psr_pars = pulsar_list[i]
-                psr_pars = self.resolve_random(psr_pars)
+                psr_pars = self.random_resolve_pulsar(psr_pars)
                 pulsar_list_resolved.append(psr_pars)
 
         return pulsar_list_resolved, ID_list
+    
+    def random_resolver(self, params, seed):
 
-    def resolve_random(self, pulsar_pars):
+        def resolver(value):
+            units = value.get('units', 1)
+            if units == 'T_obs_hour':
+                units = self.fb.dt * self.fb.n_samples / 3600
+            elif units == 'dt':
+                units = self.fb.dt
+
+            if value['rng'] == 'choice':
+                p = value.get('weights', np.ones_like(value['samples']))
+                return rng.choice(a=value['samples'], p=p/np.sum(p))
+
+            elif value['rng'] == 'uniform':
+                return rng.uniform(low=value['low']*units, high=value['high']*units)
+
+            elif value['rng'] == 'loguniform':
+                return np.exp(rng.uniform(low=np.log(value['low']*units), high=np.log(value['high']*units)))
+
+            elif value['rng'] == 'normal':
+                return rng.normal(loc=value['mean']*units, scale=value['sigma']*units)
+
+        rng = np.random.default_rng(seed)
+        for key, value in params.items():
+            
+            if (key == "profile") and (type(value) == dict):
+                if value.get('n_components', False):
+                    profile = {'phase': [], 'duty_cycle': [], 'amp': []}
+                    for i in range(value.get('n_components', 1)):
+                        for profile_key in profile.keys():
+                            if type(value[profile_key]) == dict:
+                                profile[profile_key].append(resolver(value[profile_key]))
+                            else:
+                                profile[profile_key].append(value[profile_key][i])
+                    params['profile'] = profile
+
+            elif type(value) == dict:
+                params[key] = resolver(value)
+            
+        return params
+
+    def random_resolve_pulsar(self, pulsar_pars):
         seed = pulsar_pars.get('seed', self.seed)
         pulsar_pars['seed'] = seed
-        rng = np.random.default_rng(seed)
-        for key, value in pulsar_pars.items():
-            
-            if type(value) == dict:
-                units = value.get('units', 1)
-                if units == 'T_obs_hour':
-                    units = self.fb.dt * self.fb.n_samples / 3600
-                elif units == 'dt':
-                    units = self.fb.dt
-
-                if value['rng'] == 'choice':
-                    p = value.get('weights', np.ones_like(value['samples']))
-                    pulsar_pars[key] = rng.choice(a=value['samples'], p=p/np.sum(p))
-
-                elif value['rng'] == 'uniform':
-                    pulsar_pars[key] = rng.uniform(low=value['low']*units, high=value['high']*units)
-
-                elif value['rng'] == 'loguniform':
-                    pulsar_pars[key] = np.exp(rng.uniform(low=np.log(value['low']*units), high=np.log(value['high']*units)))
-
-                elif value['rng'] == 'normal':
-                    pulsar_pars[key] = rng.normal(loc=value['mean']*units, scale=value['sigma']*units)
+        pulsar_pars = self.random_resolver(pulsar_pars, seed)
 
         return pulsar_pars
 

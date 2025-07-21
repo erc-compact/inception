@@ -4,6 +4,7 @@ import pandas as pd
 from pathlib import Path
 import astropy.units as u
 from math import factorial
+from scipy.stats import norm
 import astropy.constants as const
 from sympy import lambdify, symbols
 from scipy.interpolate import interp1d, RegularGridInterpolator
@@ -117,6 +118,18 @@ class PulsarModel:
             spectral_index = pulsar_pars['spectral_index']
             return lambda freq: (freq/self.obs.f0)**float(spectral_index)
     
+    @staticmethod
+    def parse_profile(profile, pulse_i):
+        dc = profile['duty_cycle'][pulse_i]
+        phase = profile['phase'][pulse_i]
+        amp =  profile['amp'][pulse_i]
+
+        phase_range = np.linspace(0, 1, 1000)
+        pulse_sigma = (dc)/(2*np.sqrt(2*np.log(2)))
+        pulse = norm(phase, pulse_sigma).pdf(phase_range)
+        pulse /= np.max(pulse)
+        return pulse * amp
+    
     def get_intrinsic_profile(self, pulsar_pars):
         profile = pulsar_pars['profile']
         if profile == 'default':
@@ -127,21 +140,30 @@ class PulsarModel:
                 return np.exp(-(phase-0.5)**2/(2*(pulse_sigma)**2)) * self.spectra(self.obs.freq_arr[chan_num])
             
         else:
-            suffix = Path(profile).suffix
-            if suffix == '.npy':
-                try:
-                    profile_arr = np.load(profile)
-                except FileNotFoundError:
-                    sys.exit(f'Unable to load {profile} numpy pulse profile for pulsar {self.ID}.')
-            elif suffix == '.txt':
-                try:
-                    epn_profile = pd.read_csv(profile, delimiter=' ', 
-                                            names=['col0', 'col1', 'col2', 'intensity'])
-                    profile_arr = epn_profile['intensity'].values
-                except (FileNotFoundError, KeyError, ValueError):
-                    sys.exit(f'Unable to load {profile} EPN pulse profile for pulsar {self.ID}.')
+            if type(profile) == str:
+                suffix = Path(profile).suffix
+                if suffix == '.npy':
+                    try:
+                        profile_arr = np.load(profile)
+                    except FileNotFoundError:
+                        sys.exit(f'Unable to load {profile} numpy pulse profile for pulsar {self.ID}.')
+                elif suffix == '.txt':
+                    try:
+                        epn_profile = pd.read_csv(profile, delimiter=' ', 
+                                                names=['col0', 'col1', 'col2', 'intensity'])
+                        profile_arr = epn_profile['intensity'].values
+                    except (FileNotFoundError, KeyError, ValueError):
+                        sys.exit(f'Unable to load {profile} EPN pulse profile for pulsar {self.ID}.')
+                else:
+                    sys.exit(f'Pulsar {self.ID} has an invalid profile file extension: {profile}. Must be a numpy .npy or EPN .txt file.')
+
+            elif type(profile) == dict:
+                profile_arr = np.zeros(1000)
+                for pulse_i in range(len(profile['phase'])):
+                    profile_arr += self.parse_profile(profile, pulse_i)
+
             else:
-                sys.exit(f'Pulsar {self.ID} has an invalid profile file extension: {profile}. Must be a numpy .npy or EPN .txt file.')
+                sys.exit(f'Invalid pulse profile for pulsar {self.ID}.')
 
             if profile_arr.ndim == 1:
                 phase_range = np.linspace(0, 1, len(profile_arr))

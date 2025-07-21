@@ -35,7 +35,11 @@
             "SNR": 400,
             "DM": 34,
             "spectral_index": -2,
-            "duty_cycle": 0.08,       
+            "profile": {
+                "phase": [0.25, 0.34],
+                "duty_cycle": [0.07, 0.05],
+                "amp": [1, 0.7]
+            },     
             "phase_offset": 0           
         },
         {

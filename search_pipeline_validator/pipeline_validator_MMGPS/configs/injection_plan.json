@@ -24,7 +24,12 @@
             "P0": {"rng": "uniform",  "low": 0.001, "high": 0.03},
             "SNR": {"rng": "uniform", "low": 10, "high": 40},
             "DM": {"rng": "uniform", "low": 5, "high": 500},
-            "duty_cycle": {"rng": "uniform", "low": 0.01, "high": 0.3},
+            "profile":{
+                "n_components": 2,
+                "phase" : [0.45, 0.55],
+                "duty_cycle" : {"rng": "normal", "mean": 0.06, "sigma": 0.01},
+                "amp" : {"rng": "uniform", "low": 0.5, "high": 1}
+            },
             "spectral_index": {"rng": "normal", "mean": -2, "sigma": 0.2},
             "phase_offset": {"rng": "uniform", "low": 0, "high": 1},
             "binary_period": {"rng": "uniform", "low": 10, "high": 30, "units": "T_obs_hour"},
