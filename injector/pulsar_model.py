@@ -38,7 +38,7 @@ class PulsarModel:
 
         if generate:
             self.observed_profile_chan = self.get_observed_profile()
-            self.calculate_SNR(pulsar_pars)
+            self.calculate_SNR()
             self.observed_profile = self.vectorise_observed_profile()
 
 
@@ -164,39 +164,8 @@ class PulsarModel:
                 sys.exit(f'Unable to interpret {profile} numpy pulse profile for pulsar {self.ID}.')
 
         return intrinsic_pulse
-    
-    def calculate_SNR(self, pulsar_pars):
 
-        def get_pulse_scale(SNR):
-
-            def get_SNR(scale):
-                intrinsic_profile_sum = np.sum([self.intrinsic_profile_chan(phase, chan) for chan in range(n_chan)], axis=0)
-                profile = noise + intrinsic_profile_sum*n_pulse*scale
-                return 1/(fb_std*np.sqrt(Weq)) * np.sum(profile-fb_mean)
-            
-            out = fsolve(lambda x: np.round(get_SNR(x) - SNR, 2), 0.1)
-            return out[0]
-
-        rng = np.random.default_rng(self.seed)
-        beam_scale = self.obs.get_beam_snr() 
-
-        n_samp = self.obs.n_samples
-        n_chan = self.obs.n_chan
-        p0 = self.PX_list[0]
-        n_pulse = self.obs.obs_len/p0
-        duty_cycle = pulsar_pars['duty_cycle']
-
-        nbins = int(np.round(p0/self.obs.dt))
-        Weq = duty_cycle * nbins * np.sqrt(2*np.pi)/(2*np.sqrt(2*np.log(2)))
-        
-        fb_std = self.obs.fb_std * np.sqrt(n_samp*n_chan/nbins)
-        fb_mean = self.obs.fb_mean * (n_samp*n_chan)/nbins
-        noise = rng.normal(fb_mean, fb_std, size=nbins)
-
-        phase = np.linspace(0, 1, nbins)
-        self.SNR_scale = get_pulse_scale(self.SNR) * beam_scale
-
-    def calculate_SNR_test(self):
+    def calculate_SNR(self):
 
         beam_scale = self.obs.get_beam_snr() 
 
