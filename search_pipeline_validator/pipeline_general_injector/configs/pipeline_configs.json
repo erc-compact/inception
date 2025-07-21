@@ -4,8 +4,8 @@
         "ephem": "/hercules/u/rsenzel/pulsar_inject/ephem/de440.bsp",
         "python": "python3",
         "filterbank" : "random",
-        "gulp_size_GB": 1,
-        "stats_samples": 1e5,
+        "gulp_size_GB": 0.01,
+        "stats_samples": 1e6,
 
         "save_merged_fb": true,
         "save_inj_fb": true,

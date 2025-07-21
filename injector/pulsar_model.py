@@ -1,14 +1,11 @@
 import sys
-import warnings
 import numpy as np 
 import pandas as pd
 from pathlib import Path
 import astropy.units as u
 from math import factorial
 import astropy.constants as const
-from scipy.optimize import fsolve
 from sympy import lambdify, symbols
-from scipy.integrate import quad, IntegrationWarning
 from scipy.interpolate import interp1d, RegularGridInterpolator
 
 from .propagation_effects import PropagationEffects
@@ -245,10 +242,6 @@ class PulsarModel:
         timeseries = np.linspace(self.obs.dt*sample_start, self.obs.dt*(n_samples+sample_start-1), n_samples)
         DM_array = np.tile(self.prop_effect.DM_delays, (len(timeseries),1))
         obs_freq_array = np.tile(self.obs.freq_arr, (len(timeseries),1))
-
-        # topo_times = self.obs.sec2mjd(timeseries)
-        # # bary_times = self.obs.topo2bary(topo_times, mjd=False, interp=True)
-        # topo_times = (topo_times - self.obs.obs_start)*u.day.to(u.s)
         bary_array = np.tile(timeseries, (len(self.obs.freq_arr),1)).T
 
         phase_array = self.get_phase(bary_array + DM_array)
