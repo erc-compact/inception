@@ -42,7 +42,7 @@ class PulsarParParser:
         parser.add_argument('--PSD', metavar='(file)', required=False, type=str, help='NumPy .npy file containing a pulsar power spectrum (1D)')
         parser.add_argument('--spectral_index', metavar='(-)', required=False, default=0, type=float, help='Spectral index of pulsar')
         parser.add_argument('--duty_cycle', metavar='(phase)', required=False, default=0.1, type=float, help='Duty cycle of default gaussian pulse profile')
-        parser.add_argument('--profile', metavar='(file)', required=False, default='default', help='NumPy .npy or EPN .txt file containing a custom pulsar pulse profile (1D or 2D), or multi-component dictionary')
+        parser.add_argument('--profile', metavar='(file/dict)', required=False, default='default', help='NumPy .npy or EPN .txt file containing a custom pulsar pulse profile (1D or 2D), or multi-component dictionary')
         parser.add_argument('--micro_structure', metavar='(microsec)', required=False, default=0, type=float, help='Mean timescale of pulse microstructure')
         parser.add_argument('--scattering_time', metavar='(millisec)', required=False, default=0, type=float, help='Scattering timescale due to ISM')
         parser.add_argument('--scattering_index', metavar='(-)', required=False, default=-4, type=float, help='Scattering index to describe frequency evolution')
