@@ -33,7 +33,7 @@ class PulsarParParser:
         parser.add_argument('--FX', metavar='(Hz)', required=False, type=list, help='Xth frequency derivative of pulsar spin')
         parser.add_argument('--PX', metavar='(sec)', required=False, type=list, help='Xth period derivative of pulsar spin')
         parser.add_argument('--AX', metavar='(m/s^(2+X))', required=False, type=list, help='Xth acceleration derivative')
-        parser.add_argument('--ACCEPOCH', metavar='obs phase', required=False,  default=0.5, type=list, help='Reference epoch for AX, (0 - 1) T_obs')
+        parser.add_argument('--ACCEPOCH', metavar='(obs phase)', required=False,  default=0.5, type=float, help='Reference epoch for AX, (0 - 1) T_obs')
         parser.add_argument('--presto_z', metavar='(z)', required=False, type=float, help='presto acceleration')
         parser.add_argument('--presto_w', metavar='(w)', required=False, type=float, help='presto jerk')
         parser.add_argument('--phase_offset', metavar='(phase)', required=False, default=0, type=float, help='Phase offset from PEPOCH')
