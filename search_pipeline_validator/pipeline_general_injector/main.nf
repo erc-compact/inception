@@ -16,7 +16,7 @@ workflow injection_pipeline {
 }   
 
 workflow {
-    injection_batch = Channel.from(1..params.n_injections) 
+    injection_batch = Channel.from(params.start..params.end) 
     inj_results = injection_batch | injection_pipeline
 }
 

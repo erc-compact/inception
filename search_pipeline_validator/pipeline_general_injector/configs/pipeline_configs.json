@@ -19,8 +19,8 @@
         "tol": {
             "p0": 0.01,
             "dm": 5,
-            "snr_upp": 1.1,
-            "snr_low": 0.1
+            "snr_upp": 1.5,
+            "snr_low": 0.5
         },
 
         "channel_mask": "856.0:863.94140625",

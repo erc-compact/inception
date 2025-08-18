@@ -55,6 +55,7 @@ class PulsarModel:
 
     def get_epochs(self, pulsar_pars):
         pepoch = pulsar_pars['PEPOCH'] if pulsar_pars['PEPOCH'] else self.obs.obs_start_bary
+        
         # posepoch = pulsar_pars['POSEPOCH'] if pulsar_pars['POSEPOCH'] else pepoch
         T0 = pulsar_pars['T0'] if pulsar_pars['T0'] else self.obs.obs_start_bary
 
@@ -68,6 +69,7 @@ class PulsarModel:
         self.spin_ref = spin_ref
         # self.pos_ref = pos_ref
         self.orbit_ref = orbit_ref
+        self.accepoch = pulsar_pars['ACCEPOCH'] * self.obs.obs_len
     
     def get_spin_functions(self, pulsar_pars):
         t, c = symbols('t, c')
@@ -89,7 +91,7 @@ class PulsarModel:
             spin_doppler = spin_symbolic * (1 - Vel_symbolic/c)
             phase_symbolic = spin_doppler.integrate(t)  
             phase_func_abs = lambdify([t, c], phase_symbolic.subs({**freq_derivs, **accel_derivs}))
-            self.phase_func = lambda t: phase_func_abs(t, const.c.value) + phase_offset
+            self.phase_func = lambda t: phase_func_abs(t - self.accepoch, const.c.value) + phase_offset
 
         else:
             phase_symbolic = sum([FX[n]*t**(n+1)/factorial(n+1) for n in range(n_freq)])
