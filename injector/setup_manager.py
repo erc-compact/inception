@@ -294,20 +294,25 @@ class SetupManager:
         F0_bary = pm.FX_list[0]
         F0 = F0_bary * (1 - pm.obs.earth_radial_velocity(pm.obs.obs_start)/const.c.value)[0]
 
-        if len(pm.FX_list) > 1:
-            F1 = pm.FX_list[1]
-        else:
-            F1 = 0
+        # if len(pm.FX_list) > 1:
+        #     F1 = pm.FX_list[1]
+        # else:
+        #     F1 = 0
 
-        if len(pm.AX_list):
+        if len(pm.AX_list) == 1:
             accel = pm.AX_list[0]
+            F2 = 0
+        elif len(pm.AX_list) >= 2:
+            accel = pm.AX_list[0]
+            jerk = pm.AX_list[1]
+            F2 = F0 * (accel/const.c.value)**2 - (jerk*F0/const.c.value)
         else:
             accel = 0
 
         cand_file_path = self.output_path+f'/{pm.ID}.candfile'
         with open(cand_file_path, 'w') as file:
-            file.write("#id DM accel F0 F1 S/N\n")
-            file.write(f"{0} {pm.prop_effect.DM} {accel} {F0} {F1} {pm.SNR}\n")
+            file.write("#id DM accel F0 F1 F2 S/N\n")
+            file.write(f"{0} {pm.prop_effect.DM} {accel} {F0} 0 {F2} {pm.SNR}\n")
         return cand_file_path
 
     def create_presto_candfile(self, i):
