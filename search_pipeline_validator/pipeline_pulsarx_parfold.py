@@ -133,9 +133,21 @@ class PulsarxFoldParProcess:
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}/inj_pulsars'
 
         if self.processing_args['pulsarx_parfold_args']['save_png']:
+            psr_ids = [arg['ID'] for arg in self.injection_report['pulsars']]
+            for pID in psr_ids:
+                png = glob.glob(f'{self.work_dir}/{pID}*.png')
+                if png:
+                    os.rename(png[0], f"{Path(png[0]).parent}/{pID}_{self.processing_args['injection_args']['id']}_{self.inj_id}_inj_{self.injection_number:06}.png")
             inj_tools.rsync(f'{self.work_dir}/*.png', results_dir)
+
         if self.processing_args['pulsarx_parfold_args']['save_ar']:
+            psr_ids = [arg['ID'] for arg in self.injection_report['pulsars']]
+            for pID in psr_ids:
+                arc = glob.glob(f'{self.work_dir}/{pID}*.ar')
+                if arc:
+                    os.rename(arc[0], f"{Path(arc[0]).parent}/{pID}_{self.processing_args['injection_args']['id']}_{self.inj_id}_inj_{self.injection_number:06}.ar")
             inj_tools.rsync(f'{self.work_dir}/*.ar', results_dir)
+
         if self.processing_args['pulsarx_parfold_args']['save_cand']:
             inj_tools.rsync(f'{self.work_dir}/*.cands', results_dir)
         if self.processing_args['pulsarx_parfold_args']['save_csv']:

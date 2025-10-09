@@ -84,6 +84,11 @@ class PulsarxFoldCandProcess:
         os.makedirs(results_dir, exist_ok=True)
 
         if self.processing_args['pulsarx_candfold_args']['save_png']:
+            # pngs = glob.glob(f'{self.work_dir}/*.png')
+            # for png in pngs:
+            #     psr_ID = 
+            #     os.rename(png, f"{Path(png).parent}/{psr_ID}_{self.processing_args['injection_args']['id']}_{self.inj_id}_inj_{self.injection_number:06}.png")
+
             inj_tools.rsync(f'{self.work_dir}/*.png', results_dir)
         if self.processing_args['pulsarx_candfold_args']['save_ar']:
             inj_tools.rsync(f'{self.work_dir}/*.ar', results_dir)

@@ -18,6 +18,7 @@
             "duty_cycle": {"rng": "uniform", "low": 0.01, "high": 0.3},
             "spectral_index": {"rng": "normal", "mean": -2, "sigma": 0.2},
             "phase_offset": {"rng": "uniform", "low": 0, "high": 1}
+
         },
         {   
             "ID": {"replicate": 8, "prefix": "d"},
