@@ -131,9 +131,9 @@ class PulsarxFoldParProcess:
 
     def transfer_products(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}/inj_pulsars'
+        psr_ids = [arg['ID'] for arg in self.injection_report['pulsars']]
 
         if self.processing_args['pulsarx_parfold_args']['save_png']:
-            psr_ids = [arg['ID'] for arg in self.injection_report['pulsars']]
             for pID in psr_ids:
                 png = glob.glob(f'{self.work_dir}/{pID}*.png')
                 if png:
@@ -141,7 +141,6 @@ class PulsarxFoldParProcess:
             inj_tools.rsync(f'{self.work_dir}/*.png', results_dir)
 
         if self.processing_args['pulsarx_parfold_args']['save_ar']:
-            psr_ids = [arg['ID'] for arg in self.injection_report['pulsars']]
             for pID in psr_ids:
                 arc = glob.glob(f'{self.work_dir}/{pID}*.ar')
                 if arc:
