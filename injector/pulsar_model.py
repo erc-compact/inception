@@ -195,7 +195,7 @@ class PulsarModel:
         n_pulse = self.obs.obs_len/p0
 
         # nbins = int(np.round(p0/self.obs.dt))
-        nbins=1000
+        nbins = self.profile_length
         phase = np.linspace(0, 1, nbins)
         intrinsic_profile_sum = np.sum([self.intrinsic_profile_chan(phase, chan) for chan in range(n_chan)], axis=0) 
         profile_energy_scale = np.sum((intrinsic_profile_sum*n_pulse)**2)
