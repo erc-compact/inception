@@ -200,7 +200,7 @@ class PulsarModel:
         intrinsic_profile_sum = np.sum([self.intrinsic_profile_chan(phase, chan) for chan in range(n_chan)], axis=0) 
         profile_energy_scale = np.sum((intrinsic_profile_sum*n_pulse)**2)
 
-        samples_per_bin = (p0 / self.obs.dt) / nbins
+        samples_per_bin =  nbins / (p0 / self.obs.dt)
         noise_energy = self.obs.fb_std ** 2 * (n_pulse * n_chan) * samples_per_bin
         snr = profile_energy_scale/noise_energy
 
