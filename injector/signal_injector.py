@@ -110,6 +110,9 @@ class InjectSignal:
         for pulsar_model in models:
             pulsar_signal += pulsar_model.generate_signal(block_size, sample_start)
 
+        channel_sigma = np.std(block, axis=0)
+        pulsar_signal.T[channel_sigma==0] = 0
+
         analog_block = self.de_digitize(reader, block)
         filterbank.write_block(np.round(analog_block + pulsar_signal))
 
