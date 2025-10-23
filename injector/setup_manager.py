@@ -250,8 +250,8 @@ class SetupManager:
     
     def create_parfile(self, i):
         pulsar_model = self.pulsar_models[i]
-        if Path(pulsar_model['polycos']).suffix == '.par':
-            par_file_path = pulsar_model['polycos']
+        if Path(pulsar_model.pulsar_pars['polycos']).suffix == '.par':
+            par_file_path = pulsar_model.pulsar_pars['polycos']
             new_path =  self.output_path+f'/{pulsar_model.ID}.par'
             shutil.copy(par_file_path, new_path)
             return new_path
