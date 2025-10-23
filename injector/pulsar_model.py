@@ -15,13 +15,13 @@ from .micro_structure import MicroStructure
 
 class PulsarModel:
     def __init__(self, obs, binary, pulsar_pars, generate=True):
-        self.get_mode(pulsar_pars, generate)
         self.ID = pulsar_pars['ID']
         self.seed = pulsar_pars['seed']
         self.SNR = pulsar_pars['SNR']
         self.pulsar_pars = pulsar_pars
         self.obs = obs
         self.binary = binary
+        
         
         self.get_epochs(pulsar_pars)
         self.PX_list = pulsar_pars['PX']
@@ -35,21 +35,23 @@ class PulsarModel:
         self.prop_effect = PropagationEffects(self.obs, pulsar_pars, self.profile_length, self.period, self.spectra)
 
         if generate:
+            self.get_mode(pulsar_pars)
+
             self.observed_profile_chan = self.get_observed_profile()
             self.calculate_SNR()
+            
             self.observed_profile = self.vectorise_observed_profile()
 
 
     def get_mode(self, pulsar_pars, generate):
         self.mode = pulsar_pars['mode'] if pulsar_pars['mode'] else 'python'
-        
-        if generate:
-            if self.mode == 'python':
-                self.generate_signal = self.generate_signal_python
-            elif self.mode == 'pint':
-                self.polycos_path = pulsar_pars['polycos']
-                self.get_polyco_interp()
-                self.generate_signal = self.generate_signal_polcos
+
+        if self.mode == 'python':
+            self.generate_signal = self.generate_signal_python
+        elif self.mode == 'pint':
+            self.polycos_path = pulsar_pars['polycos']
+            self.get_polyco_interp()
+            self.generate_signal = self.generate_signal_polcos
 
     def get_observed_profile(self):
         scatterd_profile = self.prop_effect.ISM_scattering(self.intrinsic_profile_chan)
