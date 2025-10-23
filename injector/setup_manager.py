@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import shutil
 import numpy as np
 import pandas as pd
 from pathlib import Path 
@@ -249,6 +250,12 @@ class SetupManager:
     
     def create_parfile(self, i):
         pulsar_model = self.pulsar_models[i]
+        if Path(pulsar_model['polycos']).suffix == '.par':
+            par_file_path = pulsar_model['polycos']
+            new_path =  self.output_path+f'/{pulsar_model.ID}.par'
+            shutil.copy(par_file_path, new_path)
+            return new_path
+
         parfile_params = {'PSR': f'0000+{i+1:04}i'}
         parfile_params['RAJ'], parfile_params['DECJ'] = self.source2str(pulsar_model.obs.source)
         # parfile_params['POSEPOCH'] = pulsar_model.posepoch
