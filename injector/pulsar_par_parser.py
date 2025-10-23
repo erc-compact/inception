@@ -22,7 +22,8 @@ class PulsarParParser:
         parser.add_argument('--ID', metavar='(str)', required=True, type=str, help='Identifier for injected pulsar')
         parser.add_argument('--seed', metavar='(positive int)', required=False, default=0, type=int, help='Random number generator seed for pulsar')
         parser.add_argument('--create_parfile', metavar='(0 or 1)', required=False, default='1', type=str, help="If '1', then create a TEMPO style parfile for injected pulsar")
-        
+        parser.add_argument('--frame', metavar='(topo or bary)', required=False, default='bary', type=str, help="barycentric/topocentric injection")
+
         parser.add_argument('--RAJ', metavar='(hh:mm:ss)', required=False, type=str, help='Right Ascension (J2000) (default: beam centre)')
         parser.add_argument('--DECJ', metavar='(dd:mm:ss)', required=False, type=str, help='Declination (J2000) (default: beam centre)')
         parser.add_argument('--separation', metavar='(arcmin)', required=False, default=0, type=float, help='Pulsar offset from beam centre')
@@ -63,7 +64,7 @@ class PulsarParParser:
         parser.add_argument('--mode', metavar='(str)', required=False, default='python', type=str, help="Inject using analytical 'python' code or polycos from 'pint'")
         parser.add_argument('--pint_N', metavar='(-)', required=False, default=12, type=int, help='Number of coefficients per timestep for polycos generation')
         parser.add_argument('--pint_T', metavar='(min)', required=False, default=5, type=float, help='Timestep for polycos generation')
-        parser.add_argument('--polycos', metavar='(file)', required=False, type=str, help='Polycos file defining Pulsar phase. If supplied, Pint will use this file instead of making one.')
+        parser.add_argument('--polycos', metavar='(file)', required=False, type=str, help='.polycos: Pint will use this file, .par: Pint will make polycos from par file, (None) Pint will make from injection params.')
 
         self.parser = parser
     
