@@ -77,7 +77,7 @@ class InjectSignal:
         for pulsar_data in self.pulsars:
             obs = Observation(fb, self.ephem, pulsar_data, generate=generate_range)
             binary = BinaryModel(pulsar_data, generate=True)
-            pulsar_model = PulsarModel(obs, binary, pulsar_data, generate=True)
+            pulsar_model = PulsarModel(obs, binary, pulsar_data, generate=generate_range)
             pulsar_models.append(pulsar_model)
 
         return pulsar_models
