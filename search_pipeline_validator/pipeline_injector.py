@@ -105,6 +105,7 @@ class InjectorProcess:
             inj_tools.rsync(injection_report, results_dir)
         if self.processing_args['injection_args']['save_pars']:
             inj_tools.rsync(f'{self.work_dir}/*.par', par_dir)
+            inj_tools.rsync(f'{self.work_dir}/*.polycos', par_dir)
             inj_tools.rsync(f'{self.work_dir}/*.candfile', par_dir)
         
 

@@ -46,6 +46,7 @@ class PulsarModel:
         if self.mode == 'python':
             self.generate_signal = self.generate_signal_python
         elif self.mode == 'pint':
+            self.get_polyco_interp()
             self.generate_signal = self.generate_signal_polcos
 
     def get_observed_profile(self):

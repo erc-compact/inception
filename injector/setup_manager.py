@@ -392,7 +392,8 @@ class SetupManager:
                                             polycos_tspan, polycos_coeff, 
                                             obs.f0, progress=False)
         
-        polycos_path = str(Path(par_file).with_suffix('.polycos'))
+        
+        polycos_path = f"{self.output_path}/{pulsar_pars['ID']}.polycos"
         gen_poly.write_polyco_file(polycos_path)
         return polycos_path
     
