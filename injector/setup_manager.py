@@ -372,11 +372,11 @@ class SetupManager:
                 else:
                     
                     if (not polycos_path):
-                        polyco_path = self.polycos_creator(self.parfile_paths[i], pulsar_pars, self.pulsar_models[i].obs,  pint_func=[models, Polycos])
-                        self.pulsars[i]['polycos'] = polyco_path
-                    elif (Path(polyco_path).suffix == '.par'):
-                        polyco_path = self.polycos_creator(polyco_path, pulsar_pars, self.pulsar_models[i].obs,  pint_func=[models, Polycos])
-                        self.pulsars[i]['polycos'] = polyco_path
+                        created_polyco_path = self.polycos_creator(self.parfile_paths[i], pulsar_pars, self.pulsar_models[i].obs,  pint_func=[models, Polycos])
+                        self.pulsars[i]['polycos'] = created_polyco_path
+                    elif (Path(polycos_path).suffix == '.par'):
+                        created_polyco_path = self.polycos_creator(polycos_path, pulsar_pars, self.pulsar_models[i].obs,  pint_func=[models, Polycos])
+                        self.pulsars[i]['polycos'] = created_polyco_path
 
     def polycos_creator(self, par_file, pulsar_pars, obs, pint_func): 
         models, Polycos = pint_func
