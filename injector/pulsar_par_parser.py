@@ -64,7 +64,7 @@ class PulsarParParser:
         parser.add_argument('--mode', metavar='(str)', required=False, default='python', type=str, help="Inject using analytical 'python' code or polycos from 'pint'")
         parser.add_argument('--pint_N', metavar='(-)', required=False, default=12, type=int, help='Number of coefficients per timestep for polycos generation')
         parser.add_argument('--pint_T', metavar='(min)', required=False, default=5, type=float, help='Timestep for polycos generation')
-        parser.add_argument('--polycos', metavar='(file)', required=False, type=str, help='.polycos: Pint will use this file, .par: Pint will make polycos from par file, (None) Pint will make from injection params.')
+        parser.add_argument('--polycos', metavar='(file)', required=False, default='', type=str, help='.polycos: Pint will use this file, .par: Pint will make polycos from par file, (None) Pint will make from injection params.')
 
         self.parser = parser
     

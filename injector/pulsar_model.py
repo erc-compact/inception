@@ -226,7 +226,7 @@ class PulsarModel:
     def get_polyco_interp(self, generate_range):
         from pint.polycos import Polycos # type: ignore
         polycos_model = Polycos.read(self.polycos_path)
-        interp_topo_mjd = self.obs.observation_span(generate_range, n_samples=10**6)
+        interp_topo_mjd = self.obs.observation_span(generate_range, n_samples=10**5)
         abs_phase_interp = polycos_model.eval_abs_phase(interp_topo_mjd).value
 
         self.polycos = interp1d(interp_topo_mjd.astype(np.float64), abs_phase_interp.astype(np.float64))
@@ -255,7 +255,7 @@ class PulsarModel:
         phase_array = np.tile(topo_times, (len(self.obs.freq_arr),1)).T
         phase_time = (phase_array + DM_array*u.s.to(u.day))
         
-        phase = self.polycos(phase_time)
+        phase = self.polycos(phase_time) + self.pulsar_pars['phase_offset']
         return self.get_pulse(phase, freq_array)
         
     def generate_signal_python(self, n_samples, sample_start=0):

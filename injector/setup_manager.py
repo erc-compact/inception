@@ -380,10 +380,10 @@ class SetupManager:
 
     def polycos_creator(self, par_file, pulsar_pars, obs, pint_func): 
         models, Polycos = pint_func
-        timing_model = models.get_model(par_file, EPHEM=obs.ephem)
+        timing_model = models.get_model(par_file)
 
         t_mid = obs.obs_start + obs.obs_len/2 * u.s.to(u.day)
-        polco_range = obs.obs_len/2 + 10*u.min.to(u.s)
+        polco_range = obs.obs_len/2 + 100*u.min.to(u.s)
         start, end = t_mid - polco_range*u.s.to(u.day), t_mid + polco_range*u.s.to(u.day)
 
         polycos_coeff = max(1, pulsar_pars['pint_N'])
