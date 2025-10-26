@@ -49,6 +49,10 @@ class PeasoupProcess:
             data = glob.glob(f"{results_dir}/*_{self.inj_id}.fil")[0]
             inj_tools.rsync(data, self.work_dir)
 
+            results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
+            filtool_out_dir = f'{results_dir}/processing'
+            os.makedirs(filtool_out_dir, exist_ok=True)
+
         self.data = f'{self.work_dir}/{Path(data).name}'
         
 
