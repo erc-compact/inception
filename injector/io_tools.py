@@ -23,7 +23,7 @@ class FilterbankReader:
         self.read_header(filterbank)
         self.dt = self.header['tsamp']
         self.nchans = int(self.header['nchans'])
-        self.nbits = self.header['nbits']
+        self.nbits = int(self.header['nbits'])
         self.bandwidth = abs(self.header['foff']) * self.header['nchans']
         self.ftop = self.header['fch1'] - 0.5 * self.header['foff']
         self.fbottom = self.ftop + self.header['foff'] * self.header['nchans']

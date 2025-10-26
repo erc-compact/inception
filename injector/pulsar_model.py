@@ -15,6 +15,8 @@ from .micro_structure import MicroStructure
 
 class PulsarModel:
     def __init__(self, obs, binary, pulsar_pars, generate=True):
+        self.mode = pulsar_pars['mode'] if pulsar_pars['mode'] else 'python'
+
         self.ID = pulsar_pars['ID']
         self.seed = pulsar_pars['seed']
         self.SNR = pulsar_pars['SNR']
@@ -35,7 +37,7 @@ class PulsarModel:
         self.prop_effect = PropagationEffects(self.obs, pulsar_pars, self.profile_length, self.period, self.spectra)
 
         if generate:
-            self.get_mode(pulsar_pars, generate)
+            self.get_mode_generators(pulsar_pars, generate)
 
             self.observed_profile_chan = self.get_observed_profile()
             self.calculate_SNR()
@@ -43,9 +45,7 @@ class PulsarModel:
             self.observed_profile = self.vectorise_observed_profile()
 
 
-    def get_mode(self, pulsar_pars, generate):
-        self.mode = pulsar_pars['mode'] if pulsar_pars['mode'] else 'python'
-
+    def get_mode_generators(self, pulsar_pars, generate):
         if self.mode == 'python':
             self.generate_signal = self.generate_signal_python
         elif self.mode == 'pint':
@@ -60,6 +60,8 @@ class PulsarModel:
 
     def get_epochs(self, pulsar_pars):
         pepoch = pulsar_pars['PEPOCH'] if pulsar_pars['PEPOCH'] else self.obs.obs_start_bary
+        if np.abs(pepoch) <= 1:
+            pepoch = self.obs.obs_start_bary + pulsar_pars['PEPOCH'] * self.obs.obs_len * u.s.to(u.day)
         
         # posepoch = pulsar_pars['POSEPOCH'] if pulsar_pars['POSEPOCH'] else pepoch
         T0 = pulsar_pars['T0'] if pulsar_pars['T0'] else self.obs.obs_start_bary
@@ -100,6 +102,10 @@ class PulsarModel:
 
         else:
             phase_symbolic = sum([FX[n]*t**(n+1)/factorial(n+1) for n in range(n_freq)])
+
+            if self.mode == 'pint':
+                freq_derivs['F0'] = 0
+
             phase_func_abs = lambdify(t, phase_symbolic.subs(freq_derivs))
             self.phase_func = lambda t: phase_func_abs(t) + phase_offset
 
@@ -254,8 +260,11 @@ class PulsarModel:
         topo_times = self.obs.sec2mjd(timeseries)
         phase_array = np.tile(topo_times, (len(self.obs.freq_arr),1)).T
         phase_time = (phase_array + DM_array*u.s.to(u.day))
-        
-        phase = self.polycos(phase_time) + self.pulsar_pars['phase_offset']
+
+        bary_times = self.obs.topo2bary(topo_times, mjd=False, interp=True)
+        bary_array = np.tile(bary_times, (len(self.obs.freq_arr),1)).T
+
+        phase = self.polycos(phase_time) + self.get_phase(bary_array + DM_array)
         return self.get_pulse(phase, freq_array)
         
     def generate_signal_python(self, n_samples, sample_start=0):
