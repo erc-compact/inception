@@ -172,7 +172,7 @@ class InjectSignal:
         filterbank_main.fb_reader.read_file.close()
         filterbank_main.write_file.close()
 
-        print_exe(f'bits flipped: {np.sum(self.bits_flipped)}/{self.n_samples*self.nchans} ({np.sum(self.bits_flipped)/(self.n_samples*self.nchans)*100:.3f}%)')
+        print(f'bits flipped: {np.sum(self.bits_flipped)}/{self.n_samples*self.nchans} ({np.sum(self.bits_flipped)/(self.n_samples*self.nchans)*100:.3f}%)')
 
     
 
