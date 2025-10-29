@@ -3,7 +3,7 @@ import sys
 import numpy as np 
 from time import time
 from pathlib import Path
-from multiprocessing import Array, Pool
+from multiprocessing import Manager, Pool
 from scipy.stats import truncnorm
 
 from .io_tools import FilterbankReader, FilterbankWriter, print_exe
@@ -12,9 +12,11 @@ from .pulsar_model import PulsarModel
 from .observation import Observation
 
 
+
 class InjectSignal:
     def __init__(self, setup_manager, n_cpus, gulp_size_GB=0.01):
-        self.bits_flipped =  Array('i', [0]*n_cpus)
+        manager = Manager()
+        self.bits_flipped = manager.list([0]*n_cpus)  
 
         self.n_cpus = n_cpus
         self.gulp_size_GB = gulp_size_GB
@@ -119,7 +121,7 @@ class InjectSignal:
         injected_block = np.round(analog_block + pulsar_signal)
         filterbank.write_block(injected_block)
 
-        self.bits_flipped[cpu] += np.sum(injected_block-block)
+        self.bits_flipped[cpu] += int(np.sum(injected_block-block))
 
 
     def progress(self, cpu, N_blocks, block_i, t_stamp):
@@ -175,6 +177,3 @@ class InjectSignal:
 
         n_bits_flipped = np.sum(list(self.bits_flipped))
         print(f'bits flipped: {n_bits_flipped}/{self.n_samples*self.nchans} ({n_bits_flipped/(self.n_samples*self.nchans)*100:.3f}%)')
-
-    
-
