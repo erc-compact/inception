@@ -14,6 +14,7 @@ from .observation import Observation
 
 class InjectSignal:
     def __init__(self, setup_manager, n_cpus, gulp_size_GB=0.01):
+        self.bits_flipped = np.zeros(n_cpus)
         self.n_cpus = n_cpus
         self.gulp_size_GB = gulp_size_GB
         self.load_fb_stats = [setup_manager.fb.fb_mean, setup_manager.fb.fb_std]
@@ -114,7 +115,11 @@ class InjectSignal:
         pulsar_signal.T[channel_sigma==0] = 0
 
         analog_block = self.de_digitize(reader, block)
-        filterbank.write_block(np.round(analog_block + pulsar_signal))
+        injected_block = np.round(analog_block + pulsar_signal)
+        filterbank.write_block(injected_block)
+
+        self.bits_flipped[cpu] += np.sum(injected_block-block)
+
 
     def progress(self, cpu, N_blocks, block_i, t_stamp):
         if (block_i%10 == 0) and (block_i!=0):
@@ -166,6 +171,8 @@ class InjectSignal:
 
         filterbank_main.fb_reader.read_file.close()
         filterbank_main.write_file.close()
+
+        print_exe(f'bits flipped: {np.sum(self.bits_flipped)}/{self.n_samples*self.nchans} ({np.sum(self.bits_flipped)/(self.n_samples*self.nchans)*100:.3f}%)')
 
     
 
