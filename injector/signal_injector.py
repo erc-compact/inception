@@ -3,7 +3,7 @@ import sys
 import numpy as np 
 from time import time
 from pathlib import Path
-from multiprocessing import Pool
+from multiprocessing import Array, Pool
 from scipy.stats import truncnorm
 
 from .io_tools import FilterbankReader, FilterbankWriter, print_exe
@@ -14,7 +14,8 @@ from .observation import Observation
 
 class InjectSignal:
     def __init__(self, setup_manager, n_cpus, gulp_size_GB=0.01):
-        self.bits_flipped = np.zeros(n_cpus)
+        self.bits_flipped =  Array('i', [0]*n_cpus)
+
         self.n_cpus = n_cpus
         self.gulp_size_GB = gulp_size_GB
         self.load_fb_stats = [setup_manager.fb.fb_mean, setup_manager.fb.fb_std]
@@ -172,7 +173,8 @@ class InjectSignal:
         filterbank_main.fb_reader.read_file.close()
         filterbank_main.write_file.close()
 
-        print(f'bits flipped: {np.sum(self.bits_flipped)}/{self.n_samples*self.nchans} ({np.sum(self.bits_flipped)/(self.n_samples*self.nchans)*100:.3f}%)')
+        n_bits_flipped = np.sum(list(self.bits_flipped))
+        print(f'bits flipped: {n_bits_flipped}/{self.n_samples*self.nchans} ({n_bits_flipped/(self.n_samples*self.nchans)*100:.3f}%)')
 
     
 
