@@ -85,7 +85,7 @@ class PulsarModel:
             doppler_conv = (1 - self.obs.earth_radial_velocity(self.obs.obs_start)/const.c.value)[0]
             self.PX_list[0] *= doppler_conv
             self.FX_list[0] /= doppler_conv
-            
+
     
     def get_spin_functions(self, pulsar_pars):
         t, c = symbols('t, c')
@@ -194,7 +194,7 @@ class PulsarModel:
                 def intrinsic_pulse(phase, chan_num=0): 
                     return self.interp_func(phase) * self.spectra(self.obs.freq_arr[chan_num]) 
                 
-            elif (profile_arr.dim == 2) and (len(profile_arr) == self.obs.n_chan):
+            elif (profile_arr.ndim == 2) and (len(profile_arr) == self.obs.n_chan):
                 phase_range = np.linspace(0, 1, len(profile_arr.T))
                 self.interp_funcs = [interp1d(phase_range, profile_arr[i]/np.max(profile_arr)) for i in range(self.obs.n_chan)]
                 self.profile_length = len(profile_arr.T)
