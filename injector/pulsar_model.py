@@ -26,8 +26,7 @@ class PulsarModel:
         
         
         self.get_epochs(pulsar_pars)
-        self.PX_list = pulsar_pars['PX']
-        self.FX_list = pulsar_pars['FX']
+        self.get_pulsar_spin(pulsar_pars)
         self.AX_list = pulsar_pars['AX']
         self.get_spin_functions(pulsar_pars)
 
@@ -77,6 +76,16 @@ class PulsarModel:
         # self.pos_ref = pos_ref
         self.orbit_ref = orbit_ref
         self.accepoch = pulsar_pars['ACCEPOCH'] * self.obs.obs_len
+
+    def get_pulsar_spin(self, pulsar_pars):
+        self.PX_list = pulsar_pars['PX']
+        self.FX_list = pulsar_pars['FX']
+
+        if pulsar_pars['frame'] == 'topo':
+            doppler_conv = (1 - self.obs.earth_radial_velocity(self.obs.obs_start)/const.c.value)[0]
+            self.PX_list[0] *= doppler_conv
+            self.FX_list[0] /= doppler_conv
+            
     
     def get_spin_functions(self, pulsar_pars):
         t, c = symbols('t, c')

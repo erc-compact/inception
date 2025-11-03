@@ -8,6 +8,8 @@
 
 /dev_signal
 
+/dev_nulsar
+
 /injector/__pycache__
 
 /search_pipeline_validator/__pycache__
