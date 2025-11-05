@@ -81,7 +81,7 @@ class PulsarModel:
         self.PX_list = pulsar_pars['PX']
         self.FX_list = pulsar_pars['FX']
 
-        if pulsar_pars['frame'] == 'topo':
+        if pulsar_pars.get('frame', 'bary') == 'topo':
             doppler_conv = (1 - self.obs.earth_radial_velocity(self.obs.obs_start)/const.c.value)[0]
             self.PX_list[0] *= doppler_conv
             self.FX_list[0] /= doppler_conv

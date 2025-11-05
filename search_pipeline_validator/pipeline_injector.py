@@ -1,4 +1,5 @@
 import json
+import glob
 import argparse
 import subprocess
 import numpy as np
@@ -92,6 +93,8 @@ class InjectorProcess:
 
         inj_ID = self.injection_plan['psr_global']['injection_id']
         injected_fb = f'{self.work_dir}/{Path(self.new_fb_path).stem}_{inj_ID}.fil'
+        if not glob.glob(injected_fb):
+            sys.exit(1)
         injection_report = f'{self.work_dir}/report_{inj_ID}_{self.seed}.json'
         
         os.makedirs(results_dir, exist_ok=True)
