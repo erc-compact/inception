@@ -95,7 +95,7 @@
             "nbinplan": "0.1 128",
             "tsubint": 10.0,
             "nsubband": 64,
-            "clfd": 8,
+            "clfd": 2,
             "fillPatch": "rand",
             "rfi": "zdot"
         },
@@ -128,7 +128,7 @@
             "nbinplan": "0.1 128",
             "tsubint": 10.0,
             "nsubband": 64,
-            "clfd": 8,
+            "clfd": 2,
             "fillPatch": "rand",
             "rfi": "zdot"
         },

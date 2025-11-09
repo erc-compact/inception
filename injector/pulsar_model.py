@@ -111,10 +111,6 @@ class PulsarModel:
 
         else:
             phase_symbolic = sum([FX[n]*t**(n+1)/factorial(n+1) for n in range(n_freq)])
-
-            if self.mode == 'pint':
-                freq_derivs['F0'] = 0
-
             phase_func_abs = lambdify(t, phase_symbolic.subs(freq_derivs))
             self.phase_func = lambda t: phase_func_abs(t) + phase_offset
 
@@ -211,7 +207,7 @@ class PulsarModel:
         beam_scale = self.obs.get_beam_snr() 
 
         n_chan = self.obs.n_chan
-        p0 = self.PX_list[0]
+        p0 = self.pulsar_pars.get('P0_SNR', self.period)
         n_pulse = self.obs.obs_len/p0
 
         # nbins = int(np.round(p0/self.obs.dt))

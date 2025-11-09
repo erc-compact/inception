@@ -33,6 +33,8 @@ class PulsarParParser:
         parser.add_argument('--PEPOCH', metavar='(MJD)', required=False, type=float, help='Reference epoch for pulsar spin values (default: obseravtion start, barycentre)')
         parser.add_argument('--FX', metavar='(Hz)', required=False, type=list, help='Xth frequency derivative of pulsar spin')
         parser.add_argument('--PX', metavar='(sec)', required=False, type=list, help='Xth period derivative of pulsar spin')
+        parser.add_argument('--P0_SNR', metavar='(sec)', required=False, type=float, help='Spin period for calculating pulsar SNR (only used in Nullsar)')
+
         parser.add_argument('--AX', metavar='(m/s^(2+X))', required=False, type=list, help='Xth acceleration derivative')
         parser.add_argument('--ACCEPOCH', metavar='(obs phase)', required=False,  default=0.5, type=float, help='Reference epoch for AX, (0 - 1) T_obs')
         parser.add_argument('--presto_z', metavar='(z)', required=False, type=float, help='presto acceleration')

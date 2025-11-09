@@ -1,0 +1,54 @@
+{
+    "filtool_args":  {
+
+        "cmd": {
+            "td": 4
+        },
+
+        "cmd_flags": [
+            "-v"
+        ]
+    },
+
+    "nullsar":{
+
+        "filtool": true,
+        
+
+        "par_files": [
+            "/path/PulsarA.par",
+            "/path/PulsarB.par"
+        ],
+
+        "injection": {
+            "ephem": "builtin",
+            "python": "python3",
+            "gulp_size_GB": 0.01,
+            "stats_samples": 1e6
+        },
+
+        "fold_pars": {
+            "mode": "psrfold_fil",
+
+            "channel_mask": "",
+            "template": "/path/meerkat_fold.template",
+            "blocksize_plan": [2, 10, 0.1],
+
+            "cmd": {
+                "nbin": 64,
+                "nbinplan": "0.1 128",
+                "tsubint": 10.0,
+                "nsubband": 64,
+                "clfd": 2,
+                "fillPatch": "rand",
+                "rfi": "zdot"
+            },
+
+            "cmd_flags": [
+                "-v",
+                "--render",
+                "--plotx"
+            ]
+        }
+    }
+}
