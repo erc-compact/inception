@@ -140,8 +140,9 @@ class PulsarxParFolder:
             if png:
                 rsync(png[0], f"{nullsar_dir}/{pID}_mode_{self.mode}.png")
 
-            fits_path = self.archive[pID]
-            rsync(fits_path, f"{nullsar_dir}/{pID}_mode_{self.mode}.fits")
+            if self.mode != 'CONFIRM':
+                fits_path = self.archive[pID]
+                rsync(fits_path, f"{nullsar_dir}/{pID}_mode_{self.mode}.fits")
 
 
 

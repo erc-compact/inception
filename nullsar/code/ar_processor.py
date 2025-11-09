@@ -37,7 +37,7 @@ class ARProcessor:
         y = np.array(time_phase[1])
         z = np.array(time_phase[2])
         TP = z.reshape((y.shape[0],x.shape[0]))
-        return TP[:, :self.TP.shape[1]//2] 
+        return TP[:, :TP.shape[1]//2] 
 
     def get_freq_phase(self):
         freq_phase = self.hdul[8].data[0]
@@ -45,14 +45,14 @@ class ARProcessor:
         y = np.array(freq_phase[1])
         z = np.array(freq_phase[2])
         FP = z.reshape((y.shape[0],x.shape[0])) 
-        return FP[:, :self.FP.shape[1]//2] 
+        return FP[:, :FP.shape[1]//2] 
 
     def get_dm_curve(self):
         self.dm_curve = self.hdul[21].data[0][1] 
     
     def get_intensity_prof(self):
         intensity_prof = self.hdul[7].data[0][1] 
-        return intensity_prof[:len(self.intensity_prof)//2]
+        return intensity_prof[:len(intensity_prof)//2]
 
     def get_ffdot(self):
         ffdot = self.hdul[16].data[0]
