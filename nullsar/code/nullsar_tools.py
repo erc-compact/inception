@@ -77,7 +77,11 @@ def fit_time_phase(time_phase, freq_phase, obs_len):
 
     phase, err = [], []
     for i in np.arange(len(freq_phase)):
-        out = curve_fit(func, phase, time_phase[i], p0=[0, np.max(time_phase[i]), np.min(time_phase[i])])
+        time_phase_arr = time_phase[i]
+        time_phase_arr -= np.min(time_phase_arr)
+        time_phase_arr /= np.max(time_phase_arr)
+
+        out = curve_fit(func, phase, time_phase_arr, p0=[0, np.max(time_phase_arr), np.min(time_phase_arr)])
         phase.append(out[0][0])
         err.append(np.sqrt(np.diag(out[1]))[0])
 
