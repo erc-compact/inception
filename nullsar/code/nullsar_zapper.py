@@ -122,12 +122,13 @@ class InjectorProcess:
                 "polycos": par_file
             }
 
-            for key, value in self.ar_data[psr_ID]['FX']:
+            for key, value in self.ar_data[psr_ID]['FX'].items():
                 psr_dict[key] = value
 
             injection_plan['pulsars'].append(psr_dict)
 
-        self.inject_file = f"{self.work_dir}/NULLSAR_inject_file.json"
+        files_dir = f"{self.processing_dir}/01_FILES/NULLSAR"
+        self.inject_file = f"{files_dir}/NULLSAR_inject_file_mode_{self.mode}.json"
         with open(self.inject_file, 'w') as file:
             json.dump(injection_plan, file, indent=4)
 
