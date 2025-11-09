@@ -69,7 +69,7 @@ def fit_time_phase(time_phase, freq_phase, obs_len):
     import numpy as np
     from scipy.optimize import curve_fit
 
-    phase, profile = get_IP_interp(freq_phase)
+    phase_arr, profile = get_IP_interp(freq_phase)
 
     def func(t, phase_off, Amp, base):
         g = profile((t-phase_off)%1)
@@ -81,7 +81,7 @@ def fit_time_phase(time_phase, freq_phase, obs_len):
         time_phase_arr -= np.min(time_phase_arr)
         time_phase_arr /= np.max(time_phase_arr)
 
-        out = curve_fit(func, phase, time_phase_arr, p0=[0, np.max(time_phase_arr), np.min(time_phase_arr)])
+        out = curve_fit(func, phase_arr, time_phase_arr, p0=[0, np.max(time_phase_arr), np.min(time_phase_arr)])
         phase.append(out[0][0])
         err.append(np.sqrt(np.diag(out[1]))[0])
 

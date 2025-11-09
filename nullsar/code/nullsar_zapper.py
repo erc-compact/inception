@@ -58,7 +58,7 @@ class InjectorProcess:
         par_files = self.processing_args['par_files']
         self.ar_data = {}
 
-        fb = FilterbankReader(self.new_fb_path)
+        fb = FilterbankReader(self.new_fb_path, load_fb_stats=(128, 6))
         obs_len = fb.dt * fb.n_samples
 
         for par_file in par_files:
