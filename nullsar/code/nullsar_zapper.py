@@ -167,7 +167,7 @@ class InjectorProcess:
         n_samples = self.processing_args['injection']['stats_samples']
 
         inputs = f"--signal={self.inject_file} --fb={self.new_fb_path} --ephem={self.ephem} --output={self.work_dir} --ncpu={ncpus} --gulp_size_GB={gulp_size} --stats_samples={n_samples}"
-        cmd = f"{self.processing_args['injection_args']['python']} {SCRIPT_inject_pulsars.__file__} {inputs}"
+        cmd = f"{self.processing_args['injection']['python']} {SCRIPT_inject_pulsars.__file__} {inputs}"
 
         print_exe('starting injection...')
         subprocess.run(cmd, shell=True)
