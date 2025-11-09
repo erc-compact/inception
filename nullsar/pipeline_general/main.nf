@@ -10,11 +10,11 @@ include { nullsar_zap } from './processes'
 
 workflow nullsar {
     take:
-        tag_file
+        beam_channel
 
     main:
 
-    fold_out_0 = nullsar_fold(tag_file, "INIT")
+    fold_out_0 = nullsar_fold(beam_channel, "INIT")
     zap_out_0 = nullsar_zap(fold_out_0, "INIT")
 
     fold_out_1 = nullsar_fold(zap_out_0, "OPTIMISE")
