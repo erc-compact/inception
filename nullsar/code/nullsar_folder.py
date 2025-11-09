@@ -6,11 +6,6 @@ import subprocess
 from pathlib import Path
 from multiprocessing import Manager, Pool
 
-
-
-# Empty shared dictionary
-
-
 from ar_processor import ARProcessor
 from nullsar_tools import parse_cand_file, parse_par_file, parse_JSON, rsync
 

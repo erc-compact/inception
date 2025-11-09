@@ -39,7 +39,7 @@ class InjectorProcess:
                 self.data = [line.strip() for line in f if line.strip()]
 
     def extract_archive(self):
-        par_files = self.processing_args['fold_pars']['par_files']
+        par_files = self.processing_args['par_files']
         files_dir = f'{self.processing_dir}/01_FILES/NULLSAR'
         self.ar_data = {}
 
@@ -55,7 +55,7 @@ class InjectorProcess:
 
     def parse_archive(self, archive):
         files_dir = f"{self.processing_dir}/01_FILES/NULLSAR"
-        par_files = self.processing_args['fold_pars']['par_files']
+        par_files = self.processing_args['par_files']
         self.ar_data = {}
 
         fb = FilterbankReader(self.new_fb_path)
@@ -109,7 +109,7 @@ class InjectorProcess:
             "pulsars": []
         }
 
-        par_files = self.processing_args['fold_pars']['par_files']
+        par_files = self.processing_args['par_files']
         for par_file in par_files:
             psr_ID = Path(par_file).stem
             params = parse_par_file(par_file)
