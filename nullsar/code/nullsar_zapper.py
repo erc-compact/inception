@@ -41,6 +41,7 @@ class InjectorProcess:
     def extract_archive(self):
         par_files = self.processing_args['par_files']
         files_dir = f'{self.processing_dir}/01_FILES/NULLSAR'
+        ar_path = f"{files_dir}/INIT_fold_params.json"
         self.ar_data = {}
 
         for par_file in par_files:
@@ -51,52 +52,45 @@ class InjectorProcess:
                 fits_path = f'{files_dir}/{psr_ID}_mode_OPTIMISE.fits'
 
             archive = ARProcessor(fits_path, mode='load')
-            self.ar_data[psr_ID] = self.parse_archive(archive)
+            self.parse_archive(psr_ID, archive, ar_path)
 
-    def parse_archive(self, archive):
+        if self.mode == "INIT":
+            with open(ar_path, 'w') as file:
+                json.dump(self.ar_data, file, indent=4)
+
+    def parse_archive(self, psr_ID, archive, ar_path):
         files_dir = f"{self.processing_dir}/01_FILES/NULLSAR"
-        par_files = self.processing_args['par_files']
-        self.ar_data = {}
 
         fb = FilterbankReader(self.new_fb_path, load_fb_stats=(128, 6))
         obs_len = fb.dt * fb.n_samples
 
-        for par_file in par_files:
-            psr_ID = Path(par_file).stem
-            profile_path = f"{files_dir}/profile_{psr_ID}.npy"
-            ar_path = f"{files_dir}/INIT_fold_params.json"
-            
-            if self.mode == 'INIT':
-                SNR = archive.get_SNR()
-                freq_phase = archive.get_freq_phase()
-                freq_phase_scaled = scale_freq_phase(freq_phase)
+        profile_path = f"{files_dir}/profile_{psr_ID}.npy"        
+        if self.mode == 'INIT':
+            SNR = archive.get_SNR()
+            freq_phase = archive.get_freq_phase()
+            freq_phase_scaled = scale_freq_phase(freq_phase)
 
-                time_phase = archive.get_time_phase()
-                freq_deriv, phase_offset = fit_time_phase(time_phase, freq_phase, obs_len)
+            time_phase = archive.get_time_phase()
+            freq_deriv, phase_offset = fit_time_phase(time_phase, freq_phase, obs_len)
 
-                np.save(profile_path, freq_phase_scaled)
+            np.save(profile_path, freq_phase_scaled)
 
-            elif self.mode == "NULL":
-                init_ar_data =  parse_JSON(ar_path)
-                SNR = init_ar_data[psr_ID]['SNR']
-                freq_deriv = init_ar_data[psr_ID]['FX']
+        elif self.mode == "NULL":
+            init_ar_data =  parse_JSON(ar_path)
+            SNR = init_ar_data[psr_ID]['SNR']
+            freq_deriv = init_ar_data[psr_ID]['FX']
 
-                intensity_profile = archive.get_intensity_prof()
-                freq_phase = np.load(profile_path)
+            intensity_profile = archive.get_intensity_prof()
+            freq_phase = np.load(profile_path)
 
-                phase_offset, SNR_scale = fit_phase_offset(intensity_profile, freq_phase)
-                SNR *= SNR_scale
-                phase_offset += init_ar_data[psr_ID]['phase_offset']
+            phase_offset, SNR_scale = fit_phase_offset(intensity_profile, freq_phase)
+            SNR *= SNR_scale
+            phase_offset += init_ar_data[psr_ID]['phase_offset']
 
-            self.ar_data[psr_ID] = {"SNR": SNR,  
-                                    "phase_offset": phase_offset, 
-                                    "profile": profile_path,
-                                    "FX": freq_deriv}
-            
-            if self.mode == "INIT":
-                with open(ar_path, 'w') as file:
-                    json.dump(self.ar_data, file, indent=4)
-
+        self.ar_data[psr_ID] = {"SNR": SNR,  
+                                "phase_offset": phase_offset, 
+                                "profile": profile_path,
+                                "FX": freq_deriv}
             
     def create_injection_plan(self):
         injection_plan = {
