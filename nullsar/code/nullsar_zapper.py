@@ -32,11 +32,6 @@ class InjectorProcess:
     def get_data(self):
         files_dir = f'{self.processing_dir}/01_FILES'
 
-        if self.mode == 'INIT':
-            self.ar_path = glob.glob(f'{files_dir}/NULLSAR/*INIT.ar')
-        elif self.mode == 'NULL':
-            self.ar_path = glob.glob(f'{files_dir}/NULLSAR/*OPTIMISE.ar')
-
         if self.processing_args.get('filtool', False):
             self.data = glob.glob(f'{files_dir}/*FILTOOL*.fil')[0]
         else:
@@ -51,11 +46,11 @@ class InjectorProcess:
         for par_file in par_files:
             psr_ID = Path(par_file).stem
             if self.mode == 'INIT':
-                ar_path = f'{files_dir}/{psr_ID}_mode_INIT.ar'
+                fits_path = f'{files_dir}/{psr_ID}_mode_INIT.fits'
             if self.mode == 'NULL':
-                ar_path = f'{files_dir}/{psr_ID}_mode_OPTIMISE.ar'
+                fits_path = f'{files_dir}/{psr_ID}_mode_OPTIMISE.fits'
 
-            archive = ARProcessor(ar_path, work_dir=self.work_dir)
+            archive = ARProcessor(fits_path, mode='load')
             self.ar_data[psr_ID] = self.parse_archive(archive)
 
     def parse_archive(self, archive):

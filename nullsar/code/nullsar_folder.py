@@ -6,6 +6,7 @@ import subprocess
 from pathlib import Path
 from multiprocessing import Pool
 
+from ar_processor import ARProcessor
 from nullsar_tools import parse_cand_file, parse_par_file, parse_JSON, rsync
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
@@ -22,7 +23,12 @@ class PulsarxParFolder:
         
         self.tag = tag
         self.mode = mode
+        
+        self.archive = {}
+
+    def setup(self):
         self.create_zap_sting()
+        self.transfer_data()
 
     def create_zap_sting(self):
         cmask = self.processing_args['fold_pars'].get('channel_mask', '')
@@ -62,8 +68,8 @@ class PulsarxParFolder:
     def get_psr_params(self, par_file):
         if self.get_folding_alg(par_file) == '--parfile':
             psr = parse_par_file(par_file)
-            p0 = psr.get('P0', 0)
-            f0 = psr.get('F0', 0)
+            p0 = float(psr.get('P0', 0))
+            f0 = float(psr.get('F0', 0))
             if not p0 and f0:
                 p0 = 1/f0
         else:
@@ -100,7 +106,7 @@ class PulsarxParFolder:
 
         tmp_cwd = f'{self.work_dir}/process_{psr_id}'
         os.makedirs(tmp_cwd, exist_ok=True)
-        cmd = f"{fold_args['mode']} {search} -o {tmp_cwd}/{psr_id}  -f {self.data} --template {fold_args['template']} {alg_cmd} {par_file} --blocksize {block_size} {self.zap_string}"
+        cmd = f"{fold_args['mode']} {search} -o {tmp_cwd}/  -f {self.data} --template {fold_args['template']} {alg_cmd} {par_file} --blocksize {block_size} {self.zap_string}"
     
         for flag in fold_args['cmd_flags']:
             cmd += f" {flag}"
@@ -110,11 +116,15 @@ class PulsarxParFolder:
         
         subprocess.run(cmd, shell=True, cwd=tmp_cwd)
 
-        rsync(f'{tmp_cwd}/{psr_id}*.png', self.work_dir)
-        rsync(f'{tmp_cwd}/{psr_id}*.ar', self.work_dir)
+        self.extract_archive(psr_id)
+
+    def extract_archive(self, psr_id):
+        tmp_cwd = f'{self.work_dir}/process_{psr_id}'
+        ar_path = glob.glob(f'{tmp_cwd}/*.ar')[0]
+        self.archive[psr_id] = ARProcessor(ar_path, work_dir=self.work_dir).fits_file
 
     def run_fold(self, ncpus):
-        args = self.processing_args['fold_pars']['par_files']
+        args = self.processing_args['par_files']
 
         with Pool(ncpus) as p:
             p.map(self.run_parfold, args)
@@ -123,14 +133,14 @@ class PulsarxParFolder:
         nullsar_dir = f'{self.out_dir}/PROCESSING/{self.tag}/01_FILES/NULLSAR'
         os.makedirs(nullsar_dir, exist_ok=True)
 
-        for par_file in self.processing_args['fold_pars']['par_files']:
+        for par_file in self.processing_args['par_files']:
             pID = Path(par_file).stem
-            png = glob.glob(f'{self.work_dir}/{pID}*.png')
+            png = glob.glob(f'{self.work_dir}/process_{pID}/*.png')
             if png:
-                os.rename(png[0], f"{Path(png[0]).parent}/{pID}_mode_{self.mode}.png")
-            arc = glob.glob(f'{self.work_dir}/{pID}*.ar')
-            if arc:
-                os.rename(arc[0], f"{Path(arc[0]).parent}/{pID}_mode_{self.mode}.ar")
+                rsync(png[0], f"{nullsar_dir}/{pID}_mode_{self.mode}.png")
+
+            fits_path = self.archive[pID]
+            rsync(fits_path, f"{nullsar_dir}/{pID}_mode_{self.mode}.fits")
 
 
 
@@ -149,5 +159,6 @@ if __name__=='__main__':
     args = parser.parse_args()
     fold_exec = PulsarxParFolder(args.tag, args.processing_args, args.out_dir, args.work_dir, args.mode)
 
+    fold_exec.setup()
     fold_exec.run_fold(args.ncpus)
     fold_exec.transfer_products()
