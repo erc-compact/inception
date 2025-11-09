@@ -89,12 +89,12 @@ def fit_time_phase(time_phase, freq_phase, obs_len):
         return theta0 + f0*t + (1/2)*f1*t**2 + (1/6)*f2*t**3 + (1/24)*f3*t**4
 
     time = np.linspace(-obs_len/2, obs_len/2, len(freq_phase.T))
-    out = -curve_fit(fit_f, time, phase, sigma=np.array(err), p0=[1e-3,1e-6,1e-8,1e-10,1e-12])
-    phase_offset = out[0][0]
+    out = curve_fit(fit_f, time, phase, sigma=np.array(err), p0=[1e-3,1e-6,1e-8,1e-10,1e-12])
+    phase_offset = -out[0][0]
 
     freq_deriv = {}
     for i, fx in enumerate(out[0][1:]):
-        freq_deriv[f'F{i}'] = fx
+        freq_deriv[f'F{i}'] = -fx
 
     return freq_deriv, phase_offset
 
