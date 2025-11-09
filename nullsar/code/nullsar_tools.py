@@ -49,9 +49,9 @@ def scale_freq_phase(freq_phase):
     freq_phase -= np.min(freq_phase)
     freq_phase /= np.max(freq_phase)
 
-    spec[spec<0.1] = 0
-    spec = spec[::-1]
-    return spec
+    freq_phase[freq_phase<0.1] = 0
+    freq_phase = freq_phase[::-1]
+    return freq_phase
 
 def get_IP_interp(freq_phase):
     import numpy as np
