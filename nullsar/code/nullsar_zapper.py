@@ -9,7 +9,7 @@ from ar_processor import ARProcessor
 from nullsar_tools import parse_cand_file, parse_par_file, parse_JSON, rsync, fit_time_phase, fit_phase_offset, scale_freq_phase
 
 import os, sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '...')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 from injector import SCRIPT_inject_pulsars 
 from injector.io_tools import merge_filterbanks, print_exe, FilterbankReader
