@@ -8,7 +8,7 @@ from multiprocessing import Pool
 
 from nullsar_tools import parse_cand_file, parse_par_file, parse_JSON, rsync
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '...')))
 from injector.io_tools import merge_filterbanks, print_exe
 
 
