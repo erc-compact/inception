@@ -52,7 +52,7 @@ process nullsar_zap {
     script:
     """
 
-    python3 ${params.pipeline_code}/nullsar_zapper.py  --tag=${tag} --mode=${mode} --processing_args=${params.pipeline_config} --out_dir=${params.output_dir} --n_cpus=${task.cpus} 
+    python3 ${params.pipeline_code}/nullsar_zapper.py  --tag=${tag} --mode=${mode} --processing_args=${params.pipeline_config} --out_dir=${params.output_dir} --ncpus=${task.cpus} 
 
     """
 }
@@ -73,7 +73,7 @@ process nullsar_fold {
     script:
     """
 
-    python3 ${params.pipeline_code}/nullsar_folder.py --tag=${tag} --mode=${mode} --processing_args=${params.pipeline_config} --out_dir=${params.output_dir} --n_cpus=${task.cpus} 
+    python3 ${params.pipeline_code}/nullsar_folder.py --tag=${tag} --mode=${mode} --processing_args=${params.pipeline_config} --out_dir=${params.output_dir} --ncpus=${task.cpus} 
 
     """
 }
