@@ -130,8 +130,7 @@ class PulsarModel:
             freq_max = np.max(self.obs.freq_arr) + abs(self.obs.df)/2
             freq_range = np.linspace(freq_min, freq_max, len(spectra_arr))
             spectra_interp = interp1d(freq_range, spectra_arr)
-            spectra_norm = spectra_interp(self.obs.f0)
-            return lambda freq: spectra_interp(freq)/spectra_norm
+            return lambda freq: spectra_interp(freq)/np.max(spectra_arr)
         else:
             spectral_index = pulsar_pars['spectral_index']
             return lambda freq: (freq/self.obs.f0)**float(spectral_index)
