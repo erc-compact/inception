@@ -88,7 +88,7 @@ def fit_time_phase(time_phase, freq_phase, obs_len):
     def fit_f(t, theta0, f0, f1, f2, f3):
         return theta0 + f0*t + (1/2)*f1*t**2 + (1/6)*f2*t**3 + (1/24)*f3*t**4
 
-    time = np.linspace(-obs_len/2, obs_len/2, len(freq_phase.T))
+    time = np.linspace(-obs_len/2, obs_len/2, len(time_phase))
     out = curve_fit(fit_f, time, phase, sigma=np.array(err), p0=[1e-3,1e-6,1e-8,1e-10,1e-12])
     phase_offset = -out[0][0]
 
