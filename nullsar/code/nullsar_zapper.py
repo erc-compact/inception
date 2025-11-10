@@ -68,8 +68,9 @@ class InjectorProcess:
         if self.mode == 'INIT':
             SNR = archive.get_SNR()
             freq_phase = archive.get_freq_phase()
-            freq_phase_scaled = scale_freq_phase(freq_phase)
-
+            intensity_profile = archive.get_intensity_prof()
+            freq_phase_scaled = scale_freq_phase(freq_phase, intensity_profile)
+            
             time_phase = archive.get_time_phase()
             freq_deriv, phase_offset = fit_time_phase(time_phase, freq_phase, obs_len)
 

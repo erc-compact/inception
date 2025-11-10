@@ -6,7 +6,6 @@ import subprocess
 from pathlib import Path
 from multiprocessing import Manager, Pool
 
-from ar_processor import ARProcessor
 from nullsar_tools import parse_cand_file, parse_par_file, parse_JSON, rsync
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
@@ -124,8 +123,8 @@ class PulsarxParFolder:
         png_path = glob.glob(f'{tmp_cwd}/*.png')[0]
         rsync(png_path, f'{self.work_dir}/{psr_id}_mode_{self.mode}.png')
 
-        ar_path = glob.glob(f'{tmp_cwd}/*.ar')[0]
-        self.archive[psr_id] = ARProcessor(ar_path, work_dir=tmp_cwd).fits_file
+        ar_path = glob.glob(f'{tmp_cwd}/*.px')[0]
+        self.archive[psr_id] = ar_path
 
     def run_fold(self, ncpus):
         args = self.processing_args['par_files']

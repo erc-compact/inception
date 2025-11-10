@@ -43,14 +43,15 @@ def parse_cand_file(candifle):
     return dict(zip(data[0], data[1]))
 
 
-def scale_freq_phase(freq_phase):
+def scale_freq_phase(freq_phase, intensity_profile):
     import numpy as np
 
-    freq_phase -= np.min(freq_phase)
-    freq_phase /= np.max(freq_phase)
+    mask = (intensity_profile < np.max(intensity_profile)*0.05)
 
-    freq_phase[freq_phase<0.1] = 0
-    freq_phase = freq_phase[::-1]
+    freq_phase.T[mask] = 0
+    freq_phase /= np.max(freq_phase)
+    freq_phase[freq_phase < 0] = 0
+
     return freq_phase
 
 def get_IP_interp(freq_phase):
