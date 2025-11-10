@@ -139,9 +139,8 @@ class PulsarxParFolder:
 
         for par_file in self.processing_args['par_files']:
             pID = Path(par_file).stem
-            png = glob.glob(f'{self.work_dir}/*.png')
-            if png:
-                rsync(png[0], nullsar_dir)
+            png = f'{self.work_dir}/{pID}_mode_{self.mode}.png'
+            rsync(png, nullsar_dir)
 
             if self.mode != 'CONFIRM':
                 fits_path = self.archive[pID]
