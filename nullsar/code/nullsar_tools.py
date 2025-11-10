@@ -76,7 +76,7 @@ def fit_time_phase(time_phase, freq_phase, obs_len):
         return Amp * g/g.max() + base
 
     phase, err = [], []
-    for i in np.arange(len(freq_phase)):
+    for i in np.arange(len(time_phase)):
         time_phase_arr = time_phase[i]
         time_phase_arr -= np.min(time_phase_arr)
         time_phase_arr /= np.max(time_phase_arr)
