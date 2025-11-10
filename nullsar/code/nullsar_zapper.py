@@ -201,7 +201,7 @@ if __name__=='__main__':
     parser.add_argument('--ncpus', metavar='int', required=False, default=1, type=int, help='number of cpus for injection')
 
     args = parser.parse_args()
-    inj_exec = InjectorProcess(args.tag, args.processing_args, args.out_dir, args.work_dir)
+    inj_exec = InjectorProcess(args.tag, args.processing_args, args.out_dir, args.work_dir, args.mode)
     inj_exec.injector_setup()
     inj_exec.run_injector(args.ncpus)
     inj_exec.transfer_products()

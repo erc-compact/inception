@@ -54,7 +54,7 @@ class PulsarxParFolder:
             self.data = glob.glob(f'{files_dir}/NULLSAR/*INIT.fil')[0]
 
         elif self.mode == 'CONFIRM':
-            self.data = glob.glob(f'{files_dir}/NULLSAR/*NULLED.fil')[0]
+            self.data = glob.glob(f'{files_dir}/NULLSAR/*NULL.fil')[0]
 
         if type(self.data) == list:
             fb_names = [Path(fb).stem for fb in self.data]
