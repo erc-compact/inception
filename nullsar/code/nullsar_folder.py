@@ -121,8 +121,11 @@ class PulsarxParFolder:
 
     def extract_archive(self, psr_id):
         tmp_cwd = f'{self.work_dir}/process_{psr_id}'
+        png_path = glob.glob(f'{tmp_cwd}/*.png')[0]
+        rsync(png_path, f'{self.work_dir}/{psr_id}_mode_{self.mode}.png')
+
         ar_path = glob.glob(f'{tmp_cwd}/*.ar')[0]
-        self.archive[psr_id] = ARProcessor(ar_path, work_dir=self.work_dir).fits_file
+        self.archive[psr_id] = ARProcessor(ar_path, work_dir=tmp_cwd).fits_file
 
     def run_fold(self, ncpus):
         args = self.processing_args['par_files']
@@ -136,9 +139,9 @@ class PulsarxParFolder:
 
         for par_file in self.processing_args['par_files']:
             pID = Path(par_file).stem
-            png = glob.glob(f'{self.work_dir}/process_{pID}/*.png')
+            png = glob.glob(f'{self.work_dir}/*.png')
             if png:
-                rsync(png[0], f"{nullsar_dir}/{pID}_mode_{self.mode}.png")
+                rsync(png[0], nullsar_dir)
 
             if self.mode != 'CONFIRM':
                 fits_path = self.archive[pID]
