@@ -124,7 +124,7 @@ class PulsarxParFolder:
         if self.mode == 'INIT':
             search = '--nof0search --nof1search' 
         elif self.mode == 'OPTIMISE':
-            search == '--nosearch'
+            search = '--nosearch'
         else:
             search = ''
 
