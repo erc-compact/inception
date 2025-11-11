@@ -128,14 +128,14 @@ class PulsarxParFolder:
 
         tmp_cwd = f'{self.work_dir}/process_{psr_id}'
         os.makedirs(tmp_cwd, exist_ok=True)
-        cmd = f"{fold_args['mode']} {search} -o {tmp_cwd}/ --t_subint {t_subint} --nsubband {fb.nchans} -f {self.data} --template {fold_args['template']} {alg_cmd} {par_file} --blocksize {block_size} {self.zap_string} --saveimage"
+        cmd = f"{fold_args['mode']} {search} -o {tmp_cwd}/ --tsubint {t_subint} --nsubband {fb.nchans} -f {self.data} --template {fold_args['template']} {alg_cmd} {par_file} --blocksize {block_size} {self.zap_string} --saveimage"
     
         for flag in fold_args['cmd_flags']:
             if flag != '--saveimage':
                 cmd += f" {flag}"
 
         for key, value in fold_args['cmd'].items():
-            if key in ['t_subint', 'nsubband']:
+            if key in ['tsubint', 'nsubband']:
                 print(f'{key} parameter not available in Nullsar')
             else:
                 cmd += f" --{key} {value}"
