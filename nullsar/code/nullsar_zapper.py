@@ -40,13 +40,24 @@ class NullerProcess:
     def check_SNR(self):
         files_dir = f'{self.processing_dir}/01_FILES/NULLSAR'
         SNR_limit = self.processing_args.get('SNR_limit', 15)
-        
-        for par_file  in list(self.processing_args['par_files']):
-            psr_ID = Path(par_file).stem
-            fits_path = f'{files_dir}/FOLDS/{psr_ID}_mode_INIT.fits'
-            archive = ARProcessor(fits_path, mode='load')
-            SNR = archive.get_SNR()
+        snr_path = f"{files_dir}/INIT_SNR_record.json"
 
+        if self.mode == "INIT":
+            SNR_record = {}
+            for par_file  in list(self.processing_args['par_files']):
+                psr_ID = Path(par_file).stem
+                fits_path = f'{files_dir}/FOLDS/{psr_ID}_mode_INIT.fits'
+                archive = ARProcessor(fits_path, mode='load')
+                SNR = archive.get_SNR()
+                SNR_record[psr_ID] = {"SNR": SNR}
+
+            with open(snr_path, 'w') as file:
+                json.dump(SNR_record, file, indent=4)
+
+        SNR_record = parse_JSON(snr_path)
+        for par_file in list(self.processing_args['par_files']):
+            psr_ID = Path(par_file).stem
+            SNR = SNR_record[psr_ID]['SNR']
             if SNR < SNR_limit:
                 self.processing_args['par_files'].remove(par_file)
                 

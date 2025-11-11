@@ -6,7 +6,6 @@ import subprocess
 from pathlib import Path
 from multiprocessing import Manager, Pool
 
-from ar_processor import ARProcessor
 from nullsar_tools import parse_cand_file, parse_par_file, parse_JSON, rsync
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
@@ -14,7 +13,7 @@ from injector.io_tools import merge_filterbanks, FilterbankReader, print_exe
 
 
 class PulsarxParFolder:
-    def __init__(self, tag, processing_args, out_dir, work_dir, mode='INIT'):
+    def __init__(self, tag, processing_args, out_dir, work_dir, mode='init'):
         self.processing_args_path = processing_args
         self.processing_args = parse_JSON(processing_args)['nullsar']
 
@@ -37,14 +36,12 @@ class PulsarxParFolder:
     def check_SNR(self):
         if self.mode != 'INIT':
             files_dir = f'{self.processing_dir}/01_FILES/NULLSAR'
+            init_ar_data =  parse_JSON(f"{files_dir}/INIT_SNR_record.json")
             SNR_limit = self.processing_args.get('SNR_limit', 15)
             
             for par_file  in list(self.processing_args['par_files']):
                 psr_ID = Path(par_file).stem
-                fits_path = f'{files_dir}/FOLDS/{psr_ID}_mode_INIT.fits'
-                archive = ARProcessor(fits_path, mode='load')
-                SNR = archive.get_SNR()
-
+                SNR = init_ar_data[psr_ID]['SNR']
                 if SNR < SNR_limit:
                     self.processing_args['par_files'].remove(par_file)
                     
@@ -126,19 +123,19 @@ class PulsarxParFolder:
 
         search = '--nosearch' if (self.mode != 'CONFIRM') else ''
 
-        fb = FilterbankReader(self.data, load_fb_stats=(128, 6))
+        fb = FilterbankReader(self.data)
         t_subint = fb.obs_len / fold_args['n_subint']
 
         tmp_cwd = f'{self.work_dir}/process_{psr_id}'
         os.makedirs(tmp_cwd, exist_ok=True)
-        cmd = f"{fold_args['mode']} {search} -o {tmp_cwd}/ --tsubint {t_subint} --nsubband {fb.nchans} -f {self.data} --template {fold_args['template']} {alg_cmd} {par_file} --blocksize {block_size} {self.zap_string} --saveimage"
+        cmd = f"{fold_args['mode']} {search} -o {tmp_cwd}/ --t_subint {t_subint} --nsubband {fb.nchans} -f {self.data} --template {fold_args['template']} {alg_cmd} {par_file} --blocksize {block_size} {self.zap_string} --saveimage"
     
         for flag in fold_args['cmd_flags']:
             if flag != '--saveimage':
                 cmd += f" {flag}"
 
         for key, value in fold_args['cmd'].items():
-            if key in ['tsubint', 'nsubband']:
+            if key in ['t_subint', 'nsubband']:
                 print(f'{key} parameter not available in Nullsar')
             else:
                 cmd += f" --{key} {value}"
@@ -161,7 +158,7 @@ class PulsarxParFolder:
             tmp_cwd = f'{self.work_dir}/process_{psr_id}'
             png_path = glob.glob(f'{tmp_cwd}/*.png')
             if png_path:
-                rsync(png_path[0], f"{folds_dir}/{psr_id}_mode_{self.mode}.png")
+                rsync(png_path[0], f"{folds_dir}/{psr_id}_mode_{self.mode}.fits")
 
             if self.mode != 'CONFIRM':
                 fits_path = glob.glob(f'{tmp_cwd}/*.px')
@@ -181,7 +178,7 @@ class PulsarxParFolder:
                 fits_files = glob.glob(f'{folds_dir}/*.fits')
                 for file in fits_files:
                     os.remove(file)
-            
+                
 
 
 if __name__=='__main__':
