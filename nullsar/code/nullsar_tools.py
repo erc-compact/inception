@@ -109,12 +109,12 @@ def fit_phase_offset(intensity_profile, freq_phase):
     intensity_profile -= np.min(intensity_profile)
     intensity_profile /= np.max(intensity_profile)
 
-    def func_r(x, A1, A2, x1, x2, d):
-        g1 = profile((x-x1)%1)
-        g2 = profile((x-x2)%1)
+    def func_r(x, A1, A2, x2, d):
+        g1 = profile(x % 1)
+        g2 = profile((x-x2) % 1)
         return A1* g1/g1.max() +A2* g2/g2.max()+ d
     
-    p0 = [0.5, -0.5, 0, phase[np.argmin(intensity_profile)]-phase[np.argmax(intensity_profile)], 0.5]
+    p0 = [0.5, -0.5, phase[np.argmin(intensity_profile)]-phase[np.argmax(intensity_profile)], 0.5]
     out = curve_fit(func_r, phase, intensity_profile, p0=p0)
 
     phase_offset = out[0][3]-out[0][2]
