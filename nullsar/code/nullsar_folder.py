@@ -6,6 +6,7 @@ import subprocess
 from pathlib import Path
 from multiprocessing import Manager, Pool
 
+from ar_processor import ARProcessor
 from nullsar_tools import parse_cand_file, parse_par_file, parse_JSON, rsync
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
@@ -36,12 +37,14 @@ class PulsarxParFolder:
     def check_SNR(self):
         if self.mode != 'INIT':
             files_dir = f'{self.processing_dir}/01_FILES/NULLSAR'
-            init_ar_data =  parse_JSON(f"{files_dir}/INIT_fold_params.json")
             SNR_limit = self.processing_args.get('SNR_limit', 15)
             
             for par_file  in list(self.processing_args['par_files']):
                 psr_ID = Path(par_file).stem
-                SNR = init_ar_data[psr_ID]['SNR']
+                fits_path = f'{files_dir}/FOLDS/{psr_ID}_mode_INIT.fits'
+                archive = ARProcessor(fits_path, mode='load')
+                SNR = archive.get_SNR()
+
                 if SNR < SNR_limit:
                     self.processing_args['par_files'].remove(par_file)
                     
@@ -123,7 +126,7 @@ class PulsarxParFolder:
 
         search = '--nosearch' if (self.mode != 'CONFIRM') else ''
 
-        fb = FilterbankReader(self.data)
+        fb = FilterbankReader(self.data, load_fb_stats=(128, 6))
         t_subint = fb.obs_len / fold_args['n_subint']
 
         tmp_cwd = f'{self.work_dir}/process_{psr_id}'
