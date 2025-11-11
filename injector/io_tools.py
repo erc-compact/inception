@@ -30,6 +30,7 @@ class FilterbankReader:
         self.center = self.ftop + 0.5 * self.header['foff'] * self.header['nchans']
 
         self.n_samples = self.get_n_samples() 
+        self.obs_len = self.n_samples * self.dt
         if load_fb_stats:
             self.fb_mean, self.fb_std = load_fb_stats
         else:

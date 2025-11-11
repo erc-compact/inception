@@ -15,7 +15,7 @@ from injector import SCRIPT_inject_pulsars
 from injector.io_tools import merge_filterbanks, print_exe, FilterbankReader
 
 
-class InjectorProcess:
+class NullerProcess:
     def __init__(self, tag, processing_args, out_dir, work_dir, mode='INIT'):
 
         self.out_dir = os.getcwd() if out_dir == 'cwd' else out_dir
@@ -28,6 +28,30 @@ class InjectorProcess:
         self.mode = mode
         self.processing_dir = f'{self.out_dir}/PROCESSING/{self.tag}'
 
+        self.ar_data = {}
+
+    def injector_setup(self):
+        self.check_SNR()
+
+        self.get_data()
+        self.transfer_merge()
+        self.extract_archive()
+        self.create_injection_plan()
+
+    def check_SNR(self):
+        files_dir = f'{self.processing_dir}/01_FILES/NULLSAR'
+        init_ar_data =  parse_JSON(f"{files_dir}/INIT_fold_params.json")
+        SNR_limit = self.processing_args.get('SNR_limit', 15)
+        
+        for par_file  in list(self.processing_args['par_files']):
+            psr_ID = Path(par_file).stem
+            SNR = init_ar_data[psr_ID]['SNR']
+            if SNR < SNR_limit:
+                self.processing_args['par_files'].remove(par_file)
+                
+        if len(self.processing_args['par_files']) == 0:
+            print_exe('No pulsars to null.')
+            sys.exit(0)
 
     def get_data(self):
         files_dir = f'{self.processing_dir}/01_FILES'
@@ -42,14 +66,14 @@ class InjectorProcess:
         par_files = self.processing_args['par_files']
         files_dir = f'{self.processing_dir}/01_FILES/NULLSAR'
         ar_path = f"{files_dir}/INIT_fold_params.json"
-        self.ar_data = {}
+        
 
         for par_file in par_files:
             psr_ID = Path(par_file).stem
             if self.mode == 'INIT':
-                fits_path = f'{files_dir}/{psr_ID}_mode_INIT.fits'
+                fits_path = f'{files_dir}/FOLDS/{psr_ID}_mode_INIT.fits'
             if self.mode == 'NULL':
-                fits_path = f'{files_dir}/{psr_ID}_mode_OPTIMISE.fits'
+                fits_path = f'{files_dir}/FOLDS/{psr_ID}_mode_OPTIMISE.fits'
 
             archive = ARProcessor(fits_path, mode='load')
             self.parse_archive(psr_ID, archive, ar_path)
@@ -128,16 +152,10 @@ class InjectorProcess:
 
             injection_plan['pulsars'].append(psr_dict)
 
-        files_dir = f"{self.processing_dir}/01_FILES/NULLSAR"
-        self.inject_file = f"{files_dir}/NULLSAR_inject_file_mode_{self.mode}.json"
+        # files_dir = f"{self.processing_dir}/01_FILES/NULLSAR"
+        self.inject_file = f"{self.work_dir}/NULLSAR_inject_file_mode_{self.mode}.json"
         with open(self.inject_file, 'w') as file:
             json.dump(injection_plan, file, indent=4)
-
-    def injector_setup(self):
-        self.get_data()
-        self.transfer_merge()
-        self.extract_archive()
-        self.create_injection_plan()
 
     def transfer_merge(self):
         if type(self.data) == list:
@@ -185,12 +203,12 @@ class InjectorProcess:
         os.makedirs(results_dir, exist_ok=True)
 
         rsync(injected_fb, results_dir)
-        rsync(f'{self.work_dir}/*.polycos', results_dir)
+        # rsync(f'{self.work_dir}/*.polycos', results_dir)
 
         
 
 if __name__=='__main__':
-    parser = argparse.ArgumentParser(prog='COMPASS - preprocessing channel splitter',
+    parser = argparse.ArgumentParser(prog='Nullsar zapper',
                                      epilog='Feel free to contact me if you have questions - rsenzel@mpifr-bonn.mpg.de')
     parser.add_argument('--tag', metavar='str', required=True, type=str, help='file tag')
     parser.add_argument('--processing_args', metavar='file', required=True, help='JSON file with search parameters')
@@ -202,7 +220,7 @@ if __name__=='__main__':
     parser.add_argument('--ncpus', metavar='int', required=False, default=1, type=int, help='number of cpus for injection')
 
     args = parser.parse_args()
-    inj_exec = InjectorProcess(args.tag, args.processing_args, args.out_dir, args.work_dir, args.mode)
+    inj_exec = NullerProcess(args.tag, args.processing_args, args.out_dir, args.work_dir, args.mode)
     inj_exec.injector_setup()
     inj_exec.run_injector(args.ncpus)
     inj_exec.transfer_products()

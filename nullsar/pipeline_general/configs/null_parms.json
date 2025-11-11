@@ -13,8 +13,11 @@
     "nullsar":{
 
         "filtool": true,
-        
+        "SNR_limit": 15,
 
+        "delete_filtool": false,
+        "delete_processing": false,
+        
         "par_files": [
             "/path/PulsarA.par",
             "/path/PulsarB.par"
@@ -33,12 +36,11 @@
             "channel_mask": "",
             "template": "/path/meerkat_fold.template",
             "blocksize_plan": [2, 10, 0.1],
+            "n_subint": 64,
 
             "cmd": {
                 "nbin": 64,
                 "nbinplan": "0.1 128",
-                "tsubint": 10.0,
-                "nsubband": 64,
                 "clfd": 2,
                 "fillPatch": "rand",
                 "rfi": "zdot"
@@ -50,5 +52,6 @@
                 "--plotx"
             ]
         }
+
     }
 }
