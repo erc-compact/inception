@@ -129,6 +129,7 @@ class NullerProcess:
         profile_path = f"{files_dir}/profile_{psr_ID}.npy"        
         if self.mode == 'INIT':
             SNR = archive.get_SNR()
+            DM = archive.get_DM()
             freq_phase = archive.get_freq_phase()
             intensity_profile = archive.get_intensity_prof()
             freq_phase_scaled = scale_freq_phase(freq_phase, intensity_profile)
@@ -141,6 +142,7 @@ class NullerProcess:
         elif self.mode == "NULL":
             init_ar_data =  parse_JSON(ar_path)
             SNR = init_ar_data[psr_ID]['SNR']
+            DM = init_ar_data[psr_ID]['DM']
             freq_deriv = init_ar_data[psr_ID]['FX']
 
             intensity_profile = archive.get_intensity_prof()
@@ -151,6 +153,7 @@ class NullerProcess:
             phase_offset += init_ar_data[psr_ID]['phase_offset']
 
         self.ar_data[psr_ID] = {"SNR": SNR,  
+                                "DM": DM,
                                 "phase_offset": phase_offset, 
                                 "profile": profile_path,
                                 "FX": freq_deriv}
@@ -178,7 +181,7 @@ class NullerProcess:
                 "phase_offset": self.ar_data[psr_ID]['phase_offset'],
                 
                 "P0_SNR": 1/float(params['F0']),
-                "DM": float(params['DM']),
+                "DM": self.ar_data[psr_ID]['DM'],
                 "SNR": -self.ar_data[psr_ID]['SNR'],
 
                 "profile": self.ar_data[psr_ID]['profile'],
