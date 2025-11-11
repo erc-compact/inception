@@ -48,9 +48,9 @@ class PulsarxParFolder:
                 if SNR < SNR_limit:
                     self.processing_args['par_files'].remove(par_file)
                     
-            if len(self.processing_args['par_files']) == 0:
-                print_exe('No pulsars to null.')
-                sys.exit(0)
+        if len(self.processing_args['par_files']) == 0:
+            print_exe('No pulsars to null.')
+            sys.exit(0)
 
     def create_zap_sting(self):
         cmask = self.processing_args['fold_pars'].get('channel_mask', '')
