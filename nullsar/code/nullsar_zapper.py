@@ -31,21 +31,22 @@ class NullerProcess:
         self.ar_data = {}
 
     def injector_setup(self):
-        self.extract_archive()
         self.check_SNR()
-        self.create_injection_plan()
 
         self.get_data()
-        self.transfer_merge()
+        self.extract_archive()
+        self.create_injection_plan()
 
     def check_SNR(self):
         files_dir = f'{self.processing_dir}/01_FILES/NULLSAR'
-        init_ar_data =  parse_JSON(f"{files_dir}/INIT_fold_params.json")
         SNR_limit = self.processing_args.get('SNR_limit', 15)
         
         for par_file  in list(self.processing_args['par_files']):
             psr_ID = Path(par_file).stem
-            SNR = init_ar_data[psr_ID]['SNR']
+            fits_path = f'{files_dir}/FOLDS/{psr_ID}_mode_INIT.fits'
+            archive = ARProcessor(fits_path, mode='load')
+            SNR = archive.get_SNR()
+
             if SNR < SNR_limit:
                 self.processing_args['par_files'].remove(par_file)
                 
@@ -57,10 +58,34 @@ class NullerProcess:
         files_dir = f'{self.processing_dir}/01_FILES'
 
         if self.processing_args.get('filtool', False):
-            self.data = glob.glob(f'{files_dir}/*FILTOOL*.fil')[0]
+            data = glob.glob(f'{files_dir}/*FILTOOL*.fil')[0]
         else:
             with open(f'{files_dir}/files.txt') as f:
-                self.data = [line.strip() for line in f if line.strip()]
+                data = [line.strip() for line in f if line.strip()]
+
+        if type(data) == list:
+            fb_names = [Path(fb).stem for fb in data]
+
+            prefix = os.path.commonprefix(fb_names)
+            self.new_fb_path = f"{self.work_dir}/{prefix}_MERGED.fil"
+
+            for data_product in data:
+                rsync(data_product, self.work_dir)
+            
+            new_data_paths = [f'{self.work_dir}/{Path(fb).name}' for fb in data]
+            new_data_paths.sort()
+            merge_filterbanks(new_data_paths, self.new_fb_path)
+
+        else:
+            prefix = Path(data).stem 
+            self.new_fb_path = f"{self.work_dir}/{prefix}.fil"
+
+            rsync(data, self.new_fb_path)
+
+        ephem = self.processing_args['injection']['ephem']
+        if ephem != 'builtin':
+            rsync(ephem, self.work_dir)
+            self.ephem = f'./{Path(ephem).name}'
 
     def extract_archive(self):
         par_files = self.processing_args['par_files']
@@ -151,35 +176,9 @@ class NullerProcess:
 
             injection_plan['pulsars'].append(psr_dict)
 
-        # files_dir = f"{self.processing_dir}/01_FILES/NULLSAR"
         self.inject_file = f"{self.work_dir}/NULLSAR_inject_file_mode_{self.mode}.json"
         with open(self.inject_file, 'w') as file:
             json.dump(injection_plan, file, indent=4)
-
-    def transfer_merge(self):
-        if type(self.data) == list:
-            fb_names = [Path(fb).stem for fb in self.data]
-
-            prefix = os.path.commonprefix(fb_names)
-            self.new_fb_path = f"{self.work_dir}/{prefix}_MERGED.fil"
-
-            for data_product in self.data:
-                rsync(data_product, self.work_dir)
-            
-            new_data_paths = [f'{self.work_dir}/{Path(fb).name}' for fb in self.data]
-            new_data_paths.sort()
-            merge_filterbanks(new_data_paths, self.new_fb_path)
-
-        else:
-            prefix = Path(self.data).stem 
-            self.new_fb_path = f"{self.work_dir}/{prefix}.fil"
-
-            rsync(self.data, self.new_fb_path)
-
-        ephem = self.processing_args['injection']['ephem']
-        if ephem != 'builtin':
-            rsync(ephem, self.work_dir)
-            self.ephem = f'./{Path(ephem).name}'
 
     def run_injector(self, ncpus):
         gulp_size = self.processing_args['injection']['gulp_size_GB']
@@ -202,7 +201,6 @@ class NullerProcess:
         os.makedirs(results_dir, exist_ok=True)
 
         rsync(injected_fb, results_dir)
-        # rsync(f'{self.work_dir}/*.polycos', results_dir)
 
         
 
