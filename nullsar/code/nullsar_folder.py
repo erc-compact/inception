@@ -121,7 +121,12 @@ class PulsarxParFolder:
         psr_id, block_size = self.get_psr_params(par_file)
         alg_cmd = self.get_folding_alg(par_file)
 
-        search = '--nof0search --nof1search' if (self.mode != 'CONFIRM') else ''
+        if self.mode == 'INIT':
+            search = '--nof0search --nof1search' 
+        elif self.mode == 'OPTIMISE':
+            search == '--nosearch'
+        else:
+            search = ''
 
         fb = FilterbankReader(self.data)
         t_subint = fb.obs_len / fold_args['n_subint']
