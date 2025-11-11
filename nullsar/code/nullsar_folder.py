@@ -114,6 +114,19 @@ class PulsarxParFolder:
             return '--candfile'
         else:
             return '--parfile'
+
+    def adjust_par_file(self, par_file, psr_id):
+        params = parse_par_file(par_file)
+        files_dir = f'{self.processing_dir}/01_FILES/NULLSAR'
+        init_ar_data = parse_JSON(f"{files_dir}/INIT_fold_params.json")
+        
+        params['DM'] = init_ar_data[psr_id]['DM']
+        new_par_file = f'{self.work_dir}/{psr_id}_new_parfile.par'
+        with open(new_par_file, "w") as f:
+            for key, value in params.items():
+                f.write(f"{key} {value}\n")
+
+        return new_par_file
     
     def run_parfold(self, par_file):
         fold_args = self.processing_args['fold_pars']
@@ -121,10 +134,12 @@ class PulsarxParFolder:
         psr_id, block_size = self.get_psr_params(par_file)
         alg_cmd = self.get_folding_alg(par_file)
 
+
         if self.mode == 'INIT':
             search = '--nof0search --nof1search' 
         elif self.mode == 'OPTIMISE':
             search = '--nosearch'
+            par_file = self.adjust_par_file(par_file, psr_id)
         else:
             search = ''
 

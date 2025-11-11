@@ -117,7 +117,7 @@ def fit_phase_offset(intensity_profile, freq_phase):
     p0 = [0.5, -0.5, phase[np.argmin(intensity_profile)]-phase[np.argmax(intensity_profile)], 0.5]
     out = curve_fit(func_r, phase, intensity_profile, p0=p0)
 
-    phase_offset = out[0][3]-out[0][2]
+    phase_offset = out[0][2]
     SNR_scale = np.abs(out[0][0]/out[0][1])
     
     return phase_offset, SNR_scale
