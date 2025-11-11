@@ -158,7 +158,7 @@ class PulsarxParFolder:
             tmp_cwd = f'{self.work_dir}/process_{psr_id}'
             png_path = glob.glob(f'{tmp_cwd}/*.png')
             if png_path:
-                rsync(png_path[0], f"{folds_dir}/{psr_id}_mode_{self.mode}.fits")
+                rsync(png_path[0], f"{folds_dir}/{psr_id}_mode_{self.mode}.png")
 
             if self.mode != 'CONFIRM':
                 fits_path = glob.glob(f'{tmp_cwd}/*.px')

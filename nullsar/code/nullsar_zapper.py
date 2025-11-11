@@ -31,12 +31,12 @@ class NullerProcess:
         self.ar_data = {}
 
     def injector_setup(self):
+        self.extract_archive()
         self.check_SNR()
+        self.create_injection_plan()
 
         self.get_data()
         self.transfer_merge()
-        self.extract_archive()
-        self.create_injection_plan()
 
     def check_SNR(self):
         files_dir = f'{self.processing_dir}/01_FILES/NULLSAR'
@@ -67,7 +67,6 @@ class NullerProcess:
         files_dir = f'{self.processing_dir}/01_FILES/NULLSAR'
         ar_path = f"{files_dir}/INIT_fold_params.json"
         
-
         for par_file in par_files:
             psr_ID = Path(par_file).stem
             if self.mode == 'INIT':
