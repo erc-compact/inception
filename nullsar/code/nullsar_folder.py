@@ -13,7 +13,7 @@ from injector.io_tools import merge_filterbanks, FilterbankReader, print_exe
 
 
 class PulsarxParFolder:
-    def __init__(self, tag, processing_args, out_dir, work_dir, mode='init'):
+    def __init__(self, tag, processing_args, out_dir, work_dir, mode='INIT'):
         self.processing_args_path = processing_args
         self.processing_args = parse_JSON(processing_args)['nullsar']
 
@@ -36,7 +36,7 @@ class PulsarxParFolder:
     def check_SNR(self):
         if self.mode != 'INIT':
             files_dir = f'{self.processing_dir}/01_FILES/NULLSAR'
-            init_ar_data =  parse_JSON(f"{files_dir}/INIT_SNR_record.json")
+            init_ar_data =  parse_JSON(f"{files_dir}/INIT_fold_params.json")
             SNR_limit = self.processing_args.get('SNR_limit', 15)
             
             for par_file  in list(self.processing_args['par_files']):

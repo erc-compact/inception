@@ -40,19 +40,19 @@ class NullerProcess:
     def check_SNR(self):
         files_dir = f'{self.processing_dir}/01_FILES/NULLSAR'
         SNR_limit = self.processing_args.get('SNR_limit', 15)
-        snr_path = f"{files_dir}/INIT_SNR_record.json"
+        snr_path = f"{files_dir}/INIT_fold_params.json"
 
         if self.mode == "INIT":
-            SNR_record = {}
+            self.SNR_record = {}
             for par_file  in list(self.processing_args['par_files']):
                 psr_ID = Path(par_file).stem
                 fits_path = f'{files_dir}/FOLDS/{psr_ID}_mode_INIT.fits'
                 archive = ARProcessor(fits_path, mode='load')
                 SNR = archive.get_SNR()
-                SNR_record[psr_ID] = {"SNR": SNR}
+                self.SNR_record[psr_ID] = {"SNR": SNR}
 
             with open(snr_path, 'w') as file:
-                json.dump(SNR_record, file, indent=4)
+                json.dump(self.SNR_record, file, indent=4)
 
         SNR_record = parse_JSON(snr_path)
         for par_file in list(self.processing_args['par_files']):
@@ -115,6 +115,9 @@ class NullerProcess:
 
         if self.mode == "INIT":
             with open(ar_path, 'w') as file:
+                for key, value in self.SNR_record.items():
+                    if not self.ar_data.get(key, None):
+                        self.ar_data[key] = value
                 json.dump(self.ar_data, file, indent=4)
 
     def parse_archive(self, psr_ID, archive, ar_path):
