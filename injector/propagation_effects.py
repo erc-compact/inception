@@ -24,25 +24,28 @@ class PropagationEffects:
         self.DM_const = (const.e.si**2/(8*np.pi**2*const.m_e*const.c) /(const.eps0) * u.pc.to(u.m)*u.m).value*1e-6   # Mhz^2 pc^-1 cm^3 s
         self.DM_delays = -self.DM * self.DM_const / self.obs.freq_arr**2  
 
-    def scattering_relation_1(self, freq):
-        DM_term = 0.154*np.log10(self.DM) + 1.07*np.log10(self.DM)**2
-        f_term = -3.86*np.log10(freq * (u.MHz.to(u.GHz)))
-        return 10**(-6.46 + DM_term + f_term) * u.ms.to(u.s) / self.period
+    def scattering_relation_TPA(self, freq):
+        DM_term = 3.6e-6 * self.DM**2.2 * (1 + 0.00194*self.DM**2)
+        f_term = (freq/327)**-self.pulsar_pars.get('scattering_index', 4)
+        Tau_s = DM_term * f_term
+
+        return Tau_s/self.period
 
     def ISM_scattering(self, intrinsic_pulse):
         ref_scattering_time = self.pulsar_pars['scattering_time']
 
-        if (ref_scattering_time == 0):
+        if (ref_scattering_time == '') or (ref_scattering_time == 0):
             return intrinsic_pulse
         else:
-            if ref_scattering_time == 12321:
-                scattering_relation = self.scattering_relation_1
+            if ref_scattering_time == 'TPA':
+                scattering_relation = self.scattering_relation_TPA
             else:
                 scattering_index = self.pulsar_pars['scattering_index']
+                ref_scattering_time = float(ref_scattering_time)
             
                 def scattering_relation(freq):
                     scattering_phase = ref_scattering_time * u.ms.to(u.s) / self.period
-                    return scattering_phase * (freq/self.obs.f0) ** scattering_index 
+                    return scattering_phase * (freq/self.obs.f0) ** -scattering_index 
                         
             def scattering_kernal(nchan):
                 scattering_time = scattering_relation(self.obs.freq_arr[nchan])
@@ -82,8 +85,10 @@ class PropagationEffects:
                 self.smeared_values = []
                 for chan in range(self.obs.n_chan):
                     channel_freq = self.obs.freq_arr[chan]
+                    chan_top = channel_freq + self.obs.df/2
+                    chan_bottom = channel_freq - self.obs.df/2
                     
-                    W_eff = np.sqrt(W_int**2 + (2*self.DM_const * self.DM * (self.obs.df/channel_freq**3))**2)
+                    W_eff = np.sqrt(W_int**2 + (self.DM_const * self.DM * (chan_top**-2 - chan_bottom**-2 ))**2)
                     snr_scale = np.sqrt((self.period-W_eff) / W_eff) / snr_int
 
                     self.smeared_values.append([W_eff, snr_scale])

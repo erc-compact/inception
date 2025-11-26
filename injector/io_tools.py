@@ -29,6 +29,10 @@ class FilterbankReader:
         self.fbottom = self.ftop + self.header['foff'] * self.header['nchans']
         self.center = self.ftop + 0.5 * self.header['foff'] * self.header['nchans']
 
+        self.freq_arr = np.linspace(self.header['fch1'], 
+                                    self.header['fch1'] + self.header['nchans']*self.header['foff'], 
+                                    self.header['nchans'], endpoint=False)
+
         self.n_samples = self.get_n_samples() 
         self.obs_len = self.n_samples * self.dt
         if load_fb_stats:

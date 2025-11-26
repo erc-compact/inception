@@ -58,7 +58,7 @@ class Setup:
 
 
 if __name__=='__main__':
-    parser = argparse.ArgumentParser(prog='COMPASS - preprocessing setup',
+    parser = argparse.ArgumentParser(prog='NULLSAR - preprocessing setup',
                                      epilog='Feel free to contact me if you have questions - rsenzel@mpifr-bonn.mpg.de')
     parser.add_argument('--processing_args', metavar='file', required=True, help='JSON file with preprocessing parameters')
     parser.add_argument('--filterbanks', metavar='file', required=True,  help='.txt file containg filterbanks and processing tags')

@@ -53,9 +53,10 @@ class PulsarModel:
             self.generate_signal = self.generate_signal_polcos
 
     def get_observed_profile(self):
-        scatterd_profile = self.prop_effect.ISM_scattering(self.intrinsic_profile_chan)
-        smeared_profile = self.prop_effect.intra_channel_DM_smearing(scatterd_profile)
-        return smeared_profile
+        smeared_profile = self.prop_effect.intra_channel_DM_smearing(self.intrinsic_profile_chan)
+        scatterd_profile = self.prop_effect.ISM_scattering(smeared_profile)
+        
+        return scatterd_profile
 
     def get_epochs(self, pulsar_pars):
         pepoch = pulsar_pars['PEPOCH'] if pulsar_pars['PEPOCH'] else self.obs.obs_start_bary
@@ -110,6 +111,9 @@ class PulsarModel:
             self.phase_func = lambda t: phase_func_abs(t - self.accepoch, const.c.value) + phase_offset
 
         else:
+            if self.mode == 'pint':
+                freq_derivs['F0'] = 0
+                
             phase_symbolic = sum([FX[n]*t**(n+1)/factorial(n+1) for n in range(n_freq)])
             phase_func_abs = lambdify(t, phase_symbolic.subs(freq_derivs))
             self.phase_func = lambda t: phase_func_abs(t) + phase_offset
@@ -153,8 +157,19 @@ class PulsarModel:
             duty_cycle = pulsar_pars['duty_cycle']
             pulse_sigma = (duty_cycle)/(2*np.sqrt(2*np.log(2)))
             self.profile_length = 1000
+
+            phase_range = np.linspace(-1, 2, len(self.profile_length)*3)
+
+            def single_pulse(phase): 
+                return np.exp(-(phase-0.5)**2/(2*(pulse_sigma)**2))
+            
+            profile_arr = single_pulse(phase_range)
+            profile_arr += single_pulse(phase_range-1)
+            profile_arr += single_pulse(phase_range+1)
+            interp_func = interp1d(phase_range, profile_arr/np.max(profile_arr))
+
             def intrinsic_pulse(phase, chan_num=0): 
-                return np.exp(-(phase-0.5)**2/(2*(pulse_sigma)**2)) * self.spectra(self.obs.freq_arr[chan_num])
+                return interp_func(phase) * self.spectra(self.obs.freq_arr[chan_num])
             
         else:
             if type(profile) == str:
@@ -184,17 +199,17 @@ class PulsarModel:
 
             if profile_arr.ndim == 1:
                 phase_range = np.linspace(0, 1, len(profile_arr))
-                self.interp_func = interp1d(phase_range, profile_arr/np.max(profile_arr))
+                interp_func = interp1d(phase_range, profile_arr/np.max(profile_arr))
                 self.profile_length = len(profile_arr)
                 def intrinsic_pulse(phase, chan_num=0): 
-                    return self.interp_func(phase) * self.spectra(self.obs.freq_arr[chan_num]) 
+                    return interp_func(phase) * self.spectra(self.obs.freq_arr[chan_num]) 
                 
             elif (profile_arr.ndim == 2) and (len(profile_arr) == self.obs.n_chan):
                 phase_range = np.linspace(0, 1, len(profile_arr.T))
-                self.interp_funcs = [interp1d(phase_range, profile_arr[i]/np.max(profile_arr)) for i in range(self.obs.n_chan)]
+                interp_funcs = [interp1d(phase_range, profile_arr[i]/np.max(profile_arr)) for i in range(self.obs.n_chan)]
                 self.profile_length = len(profile_arr.T)
                 def intrinsic_pulse(phase, chan_num): 
-                    return self.interp_funcs[chan_num](phase) * self.spectra(self.obs.freq_arr[chan_num])
+                    return interp_funcs[chan_num](phase) * self.spectra(self.obs.freq_arr[chan_num])
                 
             else:
                 sys.exit(f'Unable to interpret {profile} numpy pulse profile for pulsar {self.ID}.')
