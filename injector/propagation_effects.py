@@ -27,14 +27,14 @@ class PropagationEffects:
     def scattering_relation_TPA(self, freq):
         DM_term = 3.6e-6 * self.DM**2.2 * (1 + 0.00194*self.DM**2)
         f_term = (freq/327)**-self.pulsar_pars.get('scattering_index', 4)
-        Tau_s = DM_term * f_term
+        Tau_s = DM_term * f_term / 1000
 
         return Tau_s/self.period
 
     def ISM_scattering(self, intrinsic_pulse):
         ref_scattering_time = self.pulsar_pars['scattering_time']
 
-        if (ref_scattering_time == '') or (ref_scattering_time == 0):
+        if (ref_scattering_time == '') or (ref_scattering_time == '0'):
             return intrinsic_pulse
         else:
             if ref_scattering_time == 'TPA':
@@ -54,7 +54,8 @@ class PropagationEffects:
             
             conv_profiles = [convolve1d(intrinsic_pulse(self.phase, nchan), scattering_kernal(nchan), mode='wrap') for nchan in range(self.obs.n_chan)]
             phase_shift = [np.roll(profile, int(round(len(self.phase)/2))) for profile in conv_profiles]
-            self.scattered_profiles = [interp1d(self.phase, profile) for profile in phase_shift]
+            profile_shift = [profile-np.min(profile) for profile in phase_shift]
+            self.scattered_profiles = [interp1d(self.phase, profile) for profile in profile_shift]
 
             def scattered_pulse(phase, chan_num):
                 return self.scattered_profiles[chan_num](phase)
@@ -78,9 +79,27 @@ class PropagationEffects:
                 W_int = self.period * duty_cycle
                 snr_int = np.sqrt((self.period-W_int) / W_int)
 
-                def intrinsic_pulse(phase, duty_cycle=duty_cycle, snr_scale=1, chan_num=0): 
+                def single_pulse(phase, duty_cycle): 
                     pulse_sigma = (duty_cycle)/(2*np.sqrt(2*np.log(2)))
-                    return np.exp(-(phase-0.5)**2/(2*(pulse_sigma)**2)) * self.spectra(self.obs.freq_arr[chan_num]) * snr_scale
+                    return np.exp(-(phase-0.5)**2/(2*(pulse_sigma)**2))
+
+                def pulse_profile(phase, duty_cycle=duty_cycle, snr_scale=1, chan_num=0): 
+                    phase_range = np.linspace(-1, 2, len(self.phase)*3)
+                    profile_arr = single_pulse(phase_range, duty_cycle)
+                    profile_arr += single_pulse(phase_range-1, duty_cycle)
+                    profile_arr += single_pulse(phase_range+1, duty_cycle)
+                    profile_arr /= np.max(profile_arr)
+
+                    cut = (phase_range > -0.5) & (phase_range < 1.5)
+                    phase_range = phase_range[cut]
+                    profile_arr = profile_arr[cut]
+                    profile_arr -= np.min(profile_arr)
+                    interp_func = interp1d(phase_range, profile_arr)
+                    return interp_func(phase) * self.spectra(self.obs.freq_arr[chan_num]) * snr_scale
+
+                # def intrinsic_pulse(phase, duty_cycle=duty_cycle, snr_scale=1, chan_num=0): 
+                #     pulse_sigma = (duty_cycle)/(2*np.sqrt(2*np.log(2)))
+                #     return np.exp(-(phase-0.5)**2/(2*(pulse_sigma)**2)) * self.spectra(self.obs.freq_arr[chan_num]) * snr_scale
                 
                 self.smeared_values = []
                 for chan in range(self.obs.n_chan):
@@ -89,13 +108,17 @@ class PropagationEffects:
                     chan_bottom = channel_freq - self.obs.df/2
                     
                     W_eff = np.sqrt(W_int**2 + (self.DM_const * self.DM * (chan_top**-2 - chan_bottom**-2 ))**2)
-                    snr_scale = np.sqrt((self.period-W_eff) / W_eff) / snr_int
+                    if W_eff >= self.period:
+                        snr_scale = 0.0
+                        W_eff = 0.99*self.period
+                    else:
+                        snr_scale = np.sqrt((self.period-W_eff) / W_eff) / snr_int
 
                     self.smeared_values.append([W_eff, snr_scale])
 
                 def smeared_pulse(phase, chan_num):
                     W_eff, snr_scale = self.smeared_values[chan_num]
-                    return intrinsic_pulse(phase, W_eff/self.period, snr_scale, chan_num)
+                    return pulse_profile(phase, W_eff/self.period, snr_scale, chan_num)
 
             else:
                 self.smeared_profiles = []

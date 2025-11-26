@@ -113,7 +113,7 @@ class PulsarModel:
         else:
             if self.mode == 'pint':
                 freq_derivs['F0'] = 0
-                
+
             phase_symbolic = sum([FX[n]*t**(n+1)/factorial(n+1) for n in range(n_freq)])
             phase_func_abs = lambdify(t, phase_symbolic.subs(freq_derivs))
             self.phase_func = lambda t: phase_func_abs(t) + phase_offset
@@ -158,7 +158,7 @@ class PulsarModel:
             pulse_sigma = (duty_cycle)/(2*np.sqrt(2*np.log(2)))
             self.profile_length = 1000
 
-            phase_range = np.linspace(-1, 2, len(self.profile_length)*3)
+            phase_range = np.linspace(-1, 2, self.profile_length*3)
 
             def single_pulse(phase): 
                 return np.exp(-(phase-0.5)**2/(2*(pulse_sigma)**2))
@@ -166,7 +166,13 @@ class PulsarModel:
             profile_arr = single_pulse(phase_range)
             profile_arr += single_pulse(phase_range-1)
             profile_arr += single_pulse(phase_range+1)
-            interp_func = interp1d(phase_range, profile_arr/np.max(profile_arr))
+            profile_arr /= np.max(profile_arr)
+            
+            cut = (phase_range > -0.5) & (phase_range < 1.5)
+            phase_range = phase_range[cut]
+            profile_arr = profile_arr[cut]
+            profile_arr -= np.min(profile_arr)
+            interp_func = interp1d(phase_range, profile_arr)
 
             def intrinsic_pulse(phase, chan_num=0): 
                 return interp_func(phase) * self.spectra(self.obs.freq_arr[chan_num])
