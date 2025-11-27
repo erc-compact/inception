@@ -108,7 +108,9 @@ class PulsarxFoldCandProcess:
                 fold_cand2csv(cand_file[0], output)
 
         if self.processing_args['pulsarx_candfold_args']['delete_inj_fb']:
-            os.remove(f'{self.out_dir}/inj_{self.injection_number:06}/{Path(self.data).name}')
+            check_par = glob.glob(f'{self.out_dir}/inj_{self.injection_number:06}/inj_pulsars/*.png')
+            if check_par:
+                os.remove(f'{self.out_dir}/inj_{self.injection_number:06}/{Path(self.data).name}')
 
 
 if __name__=='__main__':

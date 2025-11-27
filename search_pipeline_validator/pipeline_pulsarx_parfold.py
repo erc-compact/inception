@@ -162,6 +162,11 @@ class PulsarxFoldParProcess:
         if self.processing_args['pulsarx_parfold_args']['delete_inj_fb']:
             os.remove(f'{self.out_dir}/inj_{self.injection_number:06}/{Path(self.data).name}')
 
+        if self.processing_args.get('pulsarx_candfold_args', {}).get('delete_inj_fb', False):
+            check_cands = glob.glob(f'{self.out_dir}/inj_{self.injection_number:06}/inj_cands/*.png')
+            if check_cands:
+                os.remove(f'{self.out_dir}/inj_{self.injection_number:06}/{Path(self.data).name}')
+
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(prog='Pulsarx par-folder for search pipeline validator',

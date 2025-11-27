@@ -97,7 +97,7 @@ class CandidateFilterProcess:
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}/processing'
         fold_candidates.to_csv(f'{results_dir}/good_cands_to_fold_with_beam.csv')
 
-
+        inj_tools.rsync(f'{self.work_dir}/*.csv', results_dir)
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(prog='MMGPS candidate filter for INCEPTION',
