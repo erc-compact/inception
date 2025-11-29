@@ -32,13 +32,12 @@ for i, inj_dir in enumerate(inj_directories):
     par_fold_path = glob.glob(f'{inj_dir}/inj_pulsars/*_parfold.csv')[0]
     par_fold = pd.read_csv(par_fold_path, index_col=0)
 
-    peasoup_paths = glob.glob(f'{inj_dir}/processing/*_{tag}_*.csv')
+    merged_cand_path = glob.glob(f'{inj_dir}/processing/*_SIFTED_candidates.csv')
+    merged_cands = pd.read_csv(merged_cand_path[0])
 
     cand_paths = glob.glob(f'{inj_dir}/inj_cands/*_candfold.csv')
     if cand_paths:
         cand_fold = pd.read_csv(cand_paths[0], index_col=0)
-        merged_cand_path = glob.glob(f'{inj_dir}/processing/*_MERGED.candfile')
-        merged_cands = pd.read_csv(merged_cand_path[0], delimiter=' ')
     else:
         cand_fold = []
 
@@ -56,12 +55,11 @@ for i, inj_dir in enumerate(inj_directories):
         inj_res.append(psr_par['acc'])
         inj_res.append(psr_par['SNR'])
 
+
+        pea_pars = merged_cands[merged_cands['inj_id'] == psr['ID']]
         pea_results = []
-        for pea_path in peasoup_paths:
-            pea_i =  pd.read_csv(pea_path, index_col=0)
-            pea_pars = pea_i[pea_i['inj_id'] == psr['ID']]
-            if len(pea_pars.values):
-                pea_results.append(pea_pars)
+        if np.any(pea_pars):
+            pea_results.append(pea_pars)
 
         if pea_results:
             detections = pd.concat(pea_results)
@@ -73,9 +71,7 @@ for i, inj_dir in enumerate(inj_directories):
             inj_res.extend(pea_results)
 
             if len(cand_fold):
-                index_col = np.round(merged_cands['F0'], 6) == np.round(1/d_pea['period'], 6)
-
-                psr_par = cand_fold[index_col].iloc[0]
+                psr_par.iloc[d_pea['index_number']]
                 inj_res.append(1/psr_par['f0'])
                 inj_res.append(psr_par['dm'])
                 inj_res.append(psr_par['acc'])

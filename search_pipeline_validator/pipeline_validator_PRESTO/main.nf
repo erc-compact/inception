@@ -14,23 +14,6 @@ include { peasoup2 } from './peasoup_processes'
 include { peasoup3 } from './peasoup_processes'
 
 
-process barrier {
-    executor 'local'
-    input:
-        val p0
-        val p1
-        val p2
-        val p3
-
-    output:
-        val p3
-
-    script:
-    """
-    """
-}
-
-
 workflow peasoup_spawner {
     take:
         injection_number
@@ -42,10 +25,8 @@ workflow peasoup_spawner {
     p2 = peasoup2(injection_number)
     p3 = peasoup3(injection_number)
 
-    finished = barrier(p0, p1, p2, p3)
-
     emit:
-       finished
+       p0
 
 }
 

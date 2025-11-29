@@ -13,106 +13,42 @@
         "save_pars": true
     },
 
-    "filtool_args":  {
-        "filplan": {
-            "frequency_downsample": 1,
-            "nbits": 8,
-            "outmean": 128.0,
-            "outstd": 6.0,
-            "baseline_width": 0
+    "presto_rfi_args":  {
+        "rfifind": {
+            "time": 2
         },
 
-        "cmd": {
-            "rfi": "kadaneF 8 4 zdot",
-            "zapthre": 4,
-            "seglen": 2,
-            "baseline": "0 0",
-            "fillPatch": "rand"
+        "birdies": {
+            "numharm": 4
         },
 
-        "cmd_flags": [
-            "-v"
-        ],
-
-        "tscrunch": [1, 2, 4, 8],
-
-        "save_filtool_fb": true,
-        "save_filplan": false,
-
-        "delete_inj_fb": false
+        "save_dat": false,
+        "save_fft": false
     },
 
-
-    "peasoup_args": {
-        "filtool": true,
-        "inj_DM": false,
-        "candidate_matcher": {
-            "match_inj": true,
-            "create_candfile": true,
-            "tag" : "PEASOUP",
-            "n_cands_per_inj": -1,
-            "DM_snr_limit": 3,
-            "max_harmonic": 4
-        },
-        
+    "presto_search_args": {
         "ddplan": " 0.000 103.800 0.03 1 3460 0.7544\r\n 103.800 167.300 0.05 2 1270 0.1384\r\n 167.300 318.500 0.10 4 1512 0.08242\r\n 318.500 500.100 0.20 8 908 0.02475",
-        "birdie_list": "1000.00:0.05,1500.00:0.05,1300.00:0.05",
-        "channel_mask": "932.00:961.00",
 
-        "cmd": {
-            "min_snr": 8.0,
-            "nharmonics": "4",
-            "acc_start": -105.0,
-            "acc_end": 105.0,
-            "acc_tol": 1.11,
-            "limit": 1000,
-            
-            "fft_size": 4194304,
-            "ram_limit_gb": 24.0,
-            "dedisp_gulp": 1000000
-        },
+        "bary": false,
+        "zmax": 200,
+        "wmax": 0,
+        "numharm": 8,
 
-        "save_xml": true,
-        "save_csv": true,
-        "save_peasoup": false,
-        "save_birdie": false,
-        "save_cmask": false,
-        "save_dm_list": false,
-
-        "delete_filtool_fb": false,
-        "delete_inj_fb": false
+        "mask": "rfifind",
+        "birdies": "rfifind"
     },
 
-    "pulsarx_parfold_args": {
-        "mode": "psrfold_fil",
-
-        "channel_mask": "856.0:863.94140625",
-        "template": "/hercules/u/rsenzel/pulsar_inject/fold_code/meerkat_fold.template",
-        "blocksize_plan": [2, 10, 0.1],
-
-        "cmd": {
-            "nbin": 64,
-            "nbinplan": "0.1 128",
-            "tsubint": 10.0,
-            "nsubband": 64,
-            "clfd": 2,
-            "fillPatch": "rand",
-            "rfi": "zdot"
-        },
-
-        "cmd_flags": [
-            "-v",
-            "--render",
-            "--plotx", 
-            "--nosearch"
-        ],
+    "presto_sifter": {
         
-        "save_png": true,
-        "save_ar": true,
-        "save_cand": true,
-        "save_csv": true,
+    },
 
-        "delete_inj_fb": false
+    "presto_fold_args": {
+
+        "bary": false,
+        "mask": "rfifind",
+
+        "save_png": true,
+        "save_pfd": true
 
     },
 
@@ -147,21 +83,7 @@
         "delete_inj_fb": false
     },
 
-    "MMGPS_candidate_filter": {
-        "n_cbeams": 479,
-        "n_ibeams": 1,
 
-        "p_tol": 0.0005,
-        "dm_tol": 0.01,
-        "snr_cutoff": 8.5,
-
-        "save_sift_outputs": false
-    },
-
-    "PICS_scorer": {
-        "code_path": "./pipeline_validator_MMGPS/PICS_python2.py",
-        "models_dir": "./pipeline_validator_MMGPS/configs/pics_models"
-    },
 
 
     "data": [

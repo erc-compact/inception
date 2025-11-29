@@ -2,6 +2,7 @@ import os
 import glob
 import argparse
 import subprocess
+import numpy as np
 import pandas as pd
 from pathlib import Path
 
@@ -76,7 +77,7 @@ class CandidateFilterProcess:
 
     def run_cmd(self):
         params = self.processing_args['MMGPS_candidate_filter']
-        cmd = f"candidate_filter.py -i {self.xml_file} -o {self.work_dir}/ --threshold {params['snr_cutoff']} " \
+        cmd = f"candidate_filter.py -i {self.xml_file} -o {self.work_dir}/{self.inj_id} --threshold {params['snr_cutoff']} " \
               f"--p_tol {params['p_tol']} --dm_tol {params['dm_tol']} " \
               "-c /home/psr/software/candidate_filter/candidate_filter/default_config.json " \
               "--rfi /home/psr/software/candidate_filter/candidate_filter/known_rfi.txt"
@@ -84,20 +85,38 @@ class CandidateFilterProcess:
         subprocess.run(cmd, shell=True)
 
     def transfer_products(self):
-        def get_beam_name(file_path):
-            path_obj = Path(file_path)
-            if path_obj.stem.split('_')[0] != 'overview':
-                return self.beam
-            else:
-                return path_obj.parent.stem 
-
-        fold_candidates = pd.read_csv(f'{self.work_dir}/_good_cands_to_fold.csv')
-        fold_candidates['beam_id'] = [get_beam_name(file_path) for file_path in fold_candidates['file']]
-        
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}/processing'
-        fold_candidates.to_csv(f'{results_dir}/good_cands_to_fold_with_beam.csv')
 
-        inj_tools.rsync(f'{self.work_dir}/*.csv', results_dir)
+        fold_candidates = pd.read_csv(f'{self.work_dir}/{self.inj_id}_good_cands_to_fold.csv')
+        rfi_candidates = pd.read_csv(f'{self.work_dir}/known_rfi_cands.csv')
+
+        found_cand_files = glob.glob(f'{results_dir}/*PEASOUP*.csv')
+        sifted_candidates = [] 
+        for file in found_cand_files:
+            cands = pd.read_csv(file)
+            for _, row in cands.iterrows():
+                row = row.copy() 
+                cand_p0 = row['period_input']
+                cand_dm = row['dm']
+                match_fold = fold_candidates[(fold_candidates['period'] == cand_p0) & (fold_candidates['dm'] == cand_dm)]
+                match_rfi = rfi_candidates[(rfi_candidates['period'] == cand_p0) & (rfi_candidates['dm'] == cand_dm)]
+
+                if np.any(match_fold):
+                    row['sifted'] = 'fold'
+                elif np.any(match_rfi):
+                    row['sifted'] = 'rfi'
+                else:
+                    row['sifted'] = 'err'
+    
+                sifted_candidates.append(row)
+
+        results = pd.DataFrame(sifted_candidates)
+        results["index_number"] = np.arange(len(results))
+
+        results.to_csv(f'{results_dir}/{self.inj_id}_SIFTED_candidates.csv')
+
+        if self.processing_args['MMGPS_candidate_filter'].get('save_sift_outputs', False):
+            inj_tools.rsync(f'{self.work_dir}/*.csv', results_dir)
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(prog='MMGPS candidate filter for INCEPTION',

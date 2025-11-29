@@ -34,3 +34,5 @@ def create_DDplan(ddplan):
     return list(sorted(segments, key=lambda x: x.tscrunch))
 
 
+def presto_CAND_parser(cand_path):
+    pass
