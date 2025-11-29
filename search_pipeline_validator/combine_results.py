@@ -18,7 +18,7 @@ keys = ['inj_dir', 'fb', 'psr_ID',
         'pea_p0', 'pea_dm', 'pea_acc', 'pea_SNR', 'pea_cand_ID', 'pea_nbins', 'pea_drift', 'pea_harmonic','sift',
         'fold_p0', 'fold_dm', 'fold_acc', 'fold_SNR', 'PICS_fscore', 'PICS_recall']
 
-for i, inj_dir in enumerate(inj_directories[:10]):
+for i, inj_dir in enumerate(inj_directories):
 
     inj_number = Path(inj_dir).stem
     print(inj_number)
