@@ -5,7 +5,7 @@ import glob
 import json
 import os
 
-output_dir = '/hercules/scratch/rsenzel/PIPELINE_VALIDATOR/outputs'
+output_dir = 'path/outputs'
 inj_directories = glob.glob(f'{output_dir}/inj_*')
 inj_directories.sort()
 tag = 'PEASOUP'
@@ -15,10 +15,10 @@ fault = 0
 keys = ['inj_dir', 'fb', 'psr_ID', 
         'inj_p0', 'inj_DM', 'inj_SNR', 'inj_DC', 'inj_s_index', 'inj_phase', 'inj_bin_p0', 'inj_M2', 'inj_inc', 'inj_ecc', 'inj_AoP', 'inj_T0',
         'par_p0', 'par_dm', 'par_acc', 'par_SNR',
-        'pea_p0', 'pea_dm', 'pea_acc', 'pea_SNR', 'pea_cand_ID', 'pea_nbins', 'pea_drift', 'pea_harmonic',
+        'pea_p0', 'pea_dm', 'pea_acc', 'pea_SNR', 'pea_cand_ID', 'pea_nbins', 'pea_drift', 'pea_harmonic','sift',
         'fold_p0', 'fold_dm', 'fold_acc', 'fold_SNR', 'PICS_fscore', 'PICS_recall']
 
-for i, inj_dir in enumerate(inj_directories):
+for i, inj_dir in enumerate(inj_directories[:10]):
 
     inj_number = Path(inj_dir).stem
     print(inj_number)
@@ -74,15 +74,15 @@ for i, inj_dir in enumerate(inj_directories):
 
             pea_harmonic =  int(np.round(psr['PX'][0]/d_pea['period']))
             pea_results = [d_pea['period'], d_pea['dm'], d_pea['acc'], d_pea['snr'],  
-                           d_pea['cand_id'],  d_pea['nbins_offset'],  d_pea['accel_bin_drift'], pea_harmonic]
+                           d_pea['cand_id'],  d_pea['nbins_offset'],  d_pea['accel_bin_drift'], pea_harmonic, d_pea['sifted']]
             inj_res.extend(pea_results)
 
             if len(cand_fold):
-                psr_par.iloc[d_pea['index_number']]
-                inj_res.append(1/psr_par['f0'])
-                inj_res.append(psr_par['dm'])
-                inj_res.append(psr_par['acc'])
-                inj_res.append(psr_par['SNR'])
+                cand_psr = cand_fold.iloc[d_pea['index_number']]
+                inj_res.append(1/cand_psr['f0'])
+                inj_res.append(cand_psr['dm'])
+                inj_res.append(cand_psr['acc'])
+                inj_res.append(cand_psr['SNR'])
 
                 if len(pics_vals):
                     psr_pics = pics_vals.iloc[d_pea['index_number']]
@@ -98,7 +98,7 @@ for i, inj_dir in enumerate(inj_directories):
                 inj_res.extend(np.zeros(6).tolist())
 
         else:
-            inj_res.extend(np.zeros(14).tolist())
+            inj_res.extend(np.zeros(15).tolist())
 
         results.append(inj_res)
 
