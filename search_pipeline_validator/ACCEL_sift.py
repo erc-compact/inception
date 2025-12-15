@@ -11,8 +11,8 @@ from operator import itemgetter, attrgetter
 #        the following variables for your particular search
 
 # glob for ACCEL files
-# globaccel = "*ACCEL_*0"
-globaccel = "*ACCEL*"
+globaccel = "*ACCEL_*0"
+# globaccel = "*ACCEL*"
 # glob for .inf files
 globinf = "*DM*.inf"
 # In how many DMs must a candidate be detected to be considered "good"
@@ -129,27 +129,12 @@ if __name__=='__main__':
             ])
 
             for goodcand in self.cands:
-                numhits = len(goodcand.hits)
-
-                if numhits > 1:
-                    goodcand.hits.sort(key=lambda cand: float(cand[0]))
-
-                    for hit in goodcand.hits:
-                        file, candnum = str(goodcand).split(':')
-                        writer.writerow([
-                            file,  # file:candnum
-                            candnum,
-                            hit[0],         # DM
-                            hit[1],         # SNR
-                            hit[2],         # sigma
-                            hit[3],         # numharm
-                            hit[4],         # ipow
-                            hit[5],         # cpow
-                            hit[6],         # P(ms)
-                            hit[7],         # r
-                            hit[8],         # z
-                            numhits
-                        ])
+                fields = str(goodcand).split()
+                file, candnum = fields[0].split(':')
+                fields[0] = file
+                fields.insert(1, candnum)
+                fields.append(len(goodcand.hits))
+                writer.writerow(fields)
 
 
     cands.sort(key=attrgetter('sigma'), reverse=True)

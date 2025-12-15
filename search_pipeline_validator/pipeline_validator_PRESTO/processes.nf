@@ -96,6 +96,23 @@ process presto_sift {
     """
 }
 
+process presto_fold {
+    label "presto_fold"
+    container params.presto_image
+
+    input:
+        val injection_number
+
+    output:
+        val injection_number
+
+    script:
+    """
+    python3 ${params.pipeline_code}/pipeline_presto_candfold.py --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --threads=${task.cpus}
+
+    """
+}
+
 
 process pics_scorer {
     label "pics_scorer"

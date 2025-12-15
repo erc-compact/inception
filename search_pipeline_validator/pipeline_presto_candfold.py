@@ -4,6 +4,7 @@ import argparse
 import subprocess
 from pathlib import Path
 from multiprocessing import Pool
+import pandas as pd
 
 import pipeline_tools as inj_tools
 
@@ -50,12 +51,15 @@ class PrestoFoldProcess:
         else:
             self.mask = ''
 
-        self.candfile = f"{presto_out_dir}/"
+        candfile = f"{presto_out_dir}/PRESTO_CANDS/PRESTO_candidates.txt"
+        df = pd.readcsv(candfile)
         self.cands = []
+        for row in df.iterrows():
+            self.cands.append((row['DM'], row['candnum'], f"{presto_out_dir}/PRESTO_CANDS/{row['file']}.cand"))
 
 
     def fold_candidate(self, candidates):
-        for (DM, cand_i) in candidates:
+        for (DM, cand_i, candfile) in candidates:
             results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
             presto_out_dir = f'{results_dir}/processing'
             os.makedirs(presto_out_dir, exist_ok=True)
@@ -68,7 +72,7 @@ class PrestoFoldProcess:
                 bary = "-topo"
 
             out_file=f"{self.work_dir}/{self.inj_id}_topo_DM{DM:.2f}"
-            cmd = f"prepfold {bary} -noxwin -dm {DM} -o {out_file} -accelcand {cand_i} -accelfile {self.candfile} {self.mask} {self.data}"
+            cmd = f"prepfold {bary} -noxwin -dm {DM} -o {out_file} -accelcand {cand_i} -accelfile {candfile} {self.mask} {self.data}"
 
             subprocess.run(cmd, shell=True)
 
