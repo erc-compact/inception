@@ -79,6 +79,24 @@ process presto_search {
 }
 
 
+process presto_sift {
+    label "presto_sift"
+    container params.presto_image
+
+    input:
+        val injection_number
+
+    output:
+        val injection_number
+
+    script:
+    """
+    python3 ${params.pipeline_code}/ACCEL_sift.py --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}
+
+    """
+}
+
+
 process pics_scorer {
     label "pics_scorer"
     container params.pics_scorer_image
