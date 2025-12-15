@@ -111,7 +111,8 @@ class CandidateFilterProcess:
                 sifted_candidates.append(row)
 
         results = pd.DataFrame(sifted_candidates)
-        results["index_number"] = np.arange(len(results))
+        if np.any(results):
+            results["index_number"] = np.arange(len(results))
 
         results.to_csv(f'{results_dir}/{self.inj_id}_SIFTED_candidates.csv')
 

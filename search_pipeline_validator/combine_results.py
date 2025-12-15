@@ -63,10 +63,12 @@ for i, inj_dir in enumerate(inj_directories):
         inj_res.append(psr_par['SNR'])
 
 
-        pea_pars = merged_cands[merged_cands['inj_id'] == psr['ID']]
         pea_results = []
-        if np.any(pea_pars):
-            pea_results.append(pea_pars)
+        if np.any(merged_cands):
+            pea_pars = merged_cands[merged_cands.get('inj_id', '') == psr['ID']]
+       
+            if np.any(pea_pars):
+                pea_results.append(pea_pars)
 
         if pea_results:
             detections = pd.concat(pea_results)

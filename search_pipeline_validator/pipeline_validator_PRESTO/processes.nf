@@ -21,30 +21,9 @@ process injection {
     """
 }
 
-process filtool {
-    label "filtool"
-    container params.filtool_image
-
-    input:
-        val injection_number
-
-    output:
-        val injection_number
-
-    scratch params.tmp_dir
-
-    script:
-    """
-    source ${params.singularity_config}
-
-    python3.6 ${params.pipeline_code}/pipeline_filtool.py  --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --threads=${task.cpus}
-
-    """
-}
-
 process pulsarx_parfold {
     label "pulsarx_parfold"
-    container params.fold_par_image
+    container params.pulsarx_image
 
     input:
         val injection_number
@@ -61,10 +40,9 @@ process pulsarx_parfold {
     """
 }
 
-
-process pulsarx_candfold {
-    label "pulsarx_candfold"
-    container params.fold_cand_image
+process rfifind {
+    label "rfifind"
+    container params.presto_image
 
     input:
         val injection_number
@@ -76,32 +54,27 @@ process pulsarx_candfold {
 
     script:
     """
-    source ${params.singularity_config}
-    source ${params.dependencies_config} ${params.tmp_dir} python3.6
-
-    python3.6 ${params.pipeline_code}/pipeline_pulsarx_candfold.py --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
+    python3 ${params.pipeline_code}/pipeline_presto_rfifind.py  --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --threads=${task.cpus}
 
     """
 }
 
-process candidate_filter {
-    label "candidate_filter"
-    container params.candidate_filter_image
+process presto_search {
+    label "presto_search"
+    container params.presto_image
 
     input:
         val injection_number
 
     output:
         val injection_number
-    
+
     scratch params.tmp_dir
 
     script:
     """
-    source ${params.singularity_config}
-    
-    python3.6 ${params.pipeline_code}/MMGPS_candidate_filter.py --processing_args=${params.config_params} --out_dir=${params.output_dir} --injection_number=${injection_number}
-    
+    python3 ${params.pipeline_code}/pipeline_presto_search.py --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
+
     """
 }
 
