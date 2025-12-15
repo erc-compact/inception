@@ -98,15 +98,18 @@ class PrestoSearchProcess:
         else:
             bary = "-nobary"
 
-        out_file=f"{self.work_dir}/{self.inj_id}_topo_DM{DM:.2f}"
-        cmd=f"prepdata {bary} -o {out_file} -dm {DM} -downsamp {int(down_sample)} {self.mask} {self.data}"
-        subprocess.run(cmd, shell=True)
+        cwd = f'{self.work_dir}/{DM:.2f}'
+        os.makedirs(cwd, exist_ok=True)
+
+        out_file=f"{cwd}/{self.inj_id}_topo_DM{DM:.2f}"
+        cmd=f"prepdata {bary} -o {out_file} -dm {DM:.2f} -downsamp {int(down_sample)} {self.mask} {self.data}"
+        subprocess.run(cmd, shell=True, cwd=cwd)
 
         cmd=f"realfft {out_file}.dat"
-        subprocess.run(cmd, shell=True)
+        subprocess.run(cmd, shell=True, cwd=cwd)
 
         cmd=f"zapbirds -zap {self.birdies} {out_file}.fft"
-        subprocess.run(cmd, shell=True)
+        subprocess.run(cmd, shell=True, cwd=cwd)
         
         if s_args.get('wmax', 0):
             wmax = f"-wmax {s_args['wmax']}" 
@@ -114,12 +117,11 @@ class PrestoSearchProcess:
             wmax = ""
 
         cmd=f"accelsearch -numharm {s_args['numharm']} -zmax {s_args['zmax']} {wmax} {out_file}.fft"
-        subprocess.run(cmd, shell=True)
+        subprocess.run(cmd, shell=True, cwd=cwd)
 
-        subprocess.run(f"rm -rf {out_file}.dat")
-        subprocess.run(f"rm -rf {out_file}.fft")
+        subprocess.run(f"rm -rf {out_file}.dat", shell=True, cwd=cwd)
+        subprocess.run(f"rm -rf {out_file}.fft", shell=True, cwd=cwd)
 
-        subprocess.run("ls", shell=True)
 
     def run_search(self, ncpus):
 
@@ -132,10 +134,8 @@ class PrestoSearchProcess:
         presto_out_dir = f'{results_dir}/processing/PRESTO_CANDS'
         os.makedirs(presto_out_dir, exist_ok=True)
 
-        inj_tools.rsync(f'{self.work_dir}/*.txt', presto_out_dir)
-        inj_tools.rsync(f'{self.work_dir}/*.inf', presto_out_dir)
-        inj_tools.rsync(f'{self.work_dir}/*.cand', presto_out_dir)
-        inj_tools.rsync(f'{self.work_dir}/*ACCEL*', presto_out_dir)
+        inj_tools.rsync(f'{self.work_dir}/*/*.inf', presto_out_dir)
+        inj_tools.rsync(f'{self.work_dir}/*/*ACCEL*', presto_out_dir)
             
 
 if __name__=='__main__':
