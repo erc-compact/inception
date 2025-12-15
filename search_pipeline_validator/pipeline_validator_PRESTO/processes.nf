@@ -73,7 +73,7 @@ process presto_search {
 
     script:
     """
-    python3 ${params.pipeline_code}/pipeline_presto_search.py --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
+    python3 ${params.pipeline_code}/pipeline_presto_search.py --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --threads=${task.cpus}
 
     """
 }

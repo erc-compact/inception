@@ -61,8 +61,20 @@ class PrestoSearchProcess:
 
             DM_values = np.linspace(d.low_dm, d.high_dm, n_trials, endpoint=include_endpoint)
             DD_plan.extend((dm, d.tscrunch) for dm in DM_values)
+        
+        inj_DM = [psr['DM'] for psr in self.injection_report['pulsars']] 
+        dm_trails = np.array(DD_plan).T[0]
 
-        self.DD_plan = DD_plan
+        if s_args.get('inj_DM', True):
+            search_DM = []
+            for DM in inj_DM:
+                closest_dm_index = np.argmin(np.abs(dm_trails - DM))
+                search_DM.append(DD_plan[closest_dm_index]) 
+
+            print(search_DM)
+            self.DD_plan = search_DM
+        else:
+            self.DD_plan = DD_plan
 
 
     def transfer_data(self):
@@ -74,38 +86,38 @@ class PrestoSearchProcess:
         self.data = f'{self.work_dir}/{Path(data).name}'
 
     def run_DM_trial(self, DM_trial):
-        for (DM, down_sample) in DM_trial:
-            results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
-            presto_out_dir = f'{results_dir}/processing'
-            os.makedirs(presto_out_dir, exist_ok=True)
+        DM, down_sample = DM_trial
+        results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
+        presto_out_dir = f'{results_dir}/processing'
+        os.makedirs(presto_out_dir, exist_ok=True)
 
-            s_args = self.processing_args['presto_search_args']
+        s_args = self.processing_args['presto_search_args']
 
-            if s_args.get('bary', False):
-                bary = ""
-            else:
-                bary = "-nobary"
+        if s_args.get('bary', False):
+            bary = ""
+        else:
+            bary = "-nobary"
 
-            out_file=f"{self.work_dir}/{self.inj_id}_topo_DM{DM:.2f}"
-            cmd=f"prepdata {bary} -o {out_file} -dm {DM} -downsamp {down_sample} {self.mask} {self.data}"
-            subprocess.run(cmd, shell=True)
+        out_file=f"{self.work_dir}/{self.inj_id}_topo_DM{DM:.2f}"
+        cmd=f"prepdata {bary} -o {out_file} -dm {DM} -downsamp {int(down_sample)} {self.mask} {self.data}"
+        subprocess.run(cmd, shell=True)
 
-            cmd=f"realfft {out_file}.dat"
-            subprocess.run(cmd, shell=True)
+        cmd=f"realfft {out_file}.dat"
+        subprocess.run(cmd, shell=True)
 
-            cmd=f"zapbirds -zap {self.birdies} {out_file}.fft"
-            subprocess.run(cmd, shell=True)
-            
-            if s_args.get('wmax', 0):
-                wmax = f"-wmax {s_args['wmax']}" 
-            else:
-                wmax = ""
+        cmd=f"zapbirds -zap {self.birdies} {out_file}.fft"
+        subprocess.run(cmd, shell=True)
+        
+        if s_args.get('wmax', 0):
+            wmax = f"-wmax {s_args['wmax']}" 
+        else:
+            wmax = ""
 
-            cmd=f"accelsearch -numharm {s_args['numharm']} -zmax {s_args['zmax']} {wmax} {out_file}.fft"
-            subprocess.run(cmd, shell=True)
+        cmd=f"accelsearch -numharm {s_args['numharm']} -zmax {s_args['zmax']} {wmax} {out_file}.fft"
+        subprocess.run(cmd, shell=True)
 
-            subprocess.run(f"rm -rf {out_file}.dat")
-            subprocess.run(f"rm -rf {out_file}.fft")
+        subprocess.run(f"rm -rf {out_file}.dat")
+        subprocess.run(f"rm -rf {out_file}.fft")
 
         subprocess.run("ls", shell=True)
 

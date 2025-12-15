@@ -35,7 +35,9 @@
         "numharm": 8,
 
         "mask": "rfifind",
-        "birdies": "rfifind"
+        "birdies": "rfifind",
+
+        "inj_DM": true
     },
 
     "presto_sifter": {
