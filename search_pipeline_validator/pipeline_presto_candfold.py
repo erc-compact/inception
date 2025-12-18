@@ -102,7 +102,7 @@ class PrestoFoldProcess:
         out_file=f"{cwd}/{self.inj_id}_topo_DM{DM:.2f}"
 
         os.makedirs(cwd, exist_ok=True)
-        cmd = f"prepfold {bary} -noxwin -dm {DM:.2f} -o {out_file} -accelcand {cand_i} -accelfile {candfile} {self.mask} {self.data}"
+        cmd = f"prepfold {bary} -noxwin -n 64 -dm {DM:.2f} -o {out_file} -accelcand {cand_i} -accelfile {candfile} {self.mask} {self.data}"
 
         subprocess.run(cmd, shell=True, cwd=cwd)
 
@@ -129,8 +129,6 @@ class PrestoFoldProcess:
             check_par = glob.glob(f'{self.out_dir}/inj_{self.injection_number:06}/inj_pulsars/*.png')
             if check_par:
                 os.remove(f'{self.out_dir}/inj_{self.injection_number:06}/{Path(self.data).name}')
-
-
             
 
 if __name__=='__main__':
