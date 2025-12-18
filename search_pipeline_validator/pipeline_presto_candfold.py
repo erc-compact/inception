@@ -1,4 +1,5 @@
 import os
+import csv
 import glob
 import argparse
 import subprocess
@@ -52,31 +53,60 @@ class PrestoFoldProcess:
             self.mask = ''
 
         candfile = f"{presto_out_dir}/PRESTO_CANDS/PRESTO_candidates.txt"
-        df = pd.readcsv(candfile)
-        self.cands = []
-        for row in df.iterrows():
-            self.cands.append((row['DM'], row['candnum'], f"{presto_out_dir}/PRESTO_CANDS/{row['file']}.cand"))
+        df = pd.read_csv(candfile)
+        all_cands = []
+        for i, row in df.iterrows():
+            all_cands.append([row['DM'], row['P(ms)'], row['candnum'], f"{presto_out_dir}/PRESTO_CANDS/{row['file']}.cand"])
 
+        self.cands = []
+        for psr in self.injection_report['pulsars']:
+            psr_DM = psr['DM']
+            psr_p0 = psr['PX'][0]*1000
+            for row in all_cands:
+                if self.match(psr_DM, psr_p0, row):
+                    self.cands.append((psr['ID'], *row))
+                    break
+                
+        results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
+        presto_out_dir = f'{results_dir}/inj_cands_PRESTO'
+        os.makedirs(presto_out_dir, exist_ok=True)
+
+        with open(f"{presto_out_dir}/candidates.csv", "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(["ID", "DM", "P(ms)", "candnum", "file"])
+            writer.writerows(self.cands)
+        
+    def match(self, psr_DM, psr_p0, row):
+        DM, P0, candnm, file = row
+        DM_tol = 0.5
+        P0_ms_tol = 0.05
+        if (abs(DM - psr_DM) <= DM_tol) and (abs(P0 - psr_p0) <= P0_ms_tol):
+            return True
+        else:
+            return False
 
     def fold_candidate(self, candidates):
-        for (DM, cand_i, candfile) in candidates:
-            results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
-            presto_out_dir = f'{results_dir}/processing'
-            os.makedirs(presto_out_dir, exist_ok=True)
+        ID, DM, P0, cand_i, candfile = candidates
+        results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
+        presto_out_dir = f'{results_dir}/processing'
+        os.makedirs(presto_out_dir, exist_ok=True)
 
-            f_args = self.processing_args['presto_search_args']
+        f_args = self.processing_args['presto_search_args']
 
-            if f_args.get('bary', False):
-                bary = ""
-            else:
-                bary = "-topo"
+        if f_args.get('bary', False):
+            bary = ""
+        else:
+            bary = "-topo"
 
-            out_file=f"{self.work_dir}/{self.inj_id}_topo_DM{DM:.2f}"
-            cmd = f"prepfold {bary} -noxwin -dm {DM} -o {out_file} -accelcand {cand_i} -accelfile {candfile} {self.mask} {self.data}"
+        cwd = f"{self.work_dir}/{DM:.2f}_{cand_i}"
+        out_file=f"{cwd}/{self.inj_id}_topo_DM{DM:.2f}"
 
-            subprocess.run(cmd, shell=True)
+        os.makedirs(cwd, exist_ok=True)
+        cmd = f"prepfold {bary} -noxwin -dm {DM:.2f} -o {out_file} -accelcand {cand_i} -accelfile {candfile} {self.mask} {self.data}"
 
-        subprocess.run("ls", shell=True)
+        subprocess.run(cmd, shell=True, cwd=cwd)
+
+        subprocess.run('ls', shell=True, cwd=cwd)
 
     def run_folds(self, ncpus):
 
@@ -86,14 +116,21 @@ class PrestoFoldProcess:
 
     def transfer_products(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
-        presto_out_dir = f'{results_dir}/processing'
-        out_file=f"{self.work_dir}/{self.inj_id}"
+        presto_out_dir = f'{results_dir}/inj_cands_PRESTO'
+        os.makedirs(presto_out_dir, exist_ok=True)
 
-        if self.processing_args['presto_search_args']['save_png']:
-            inj_tools.rsync(f'{out_file}*.png', presto_out_dir)
+        if self.processing_args['presto_fold_args']['save_png']:
+            inj_tools.rsync(f'{self.work_dir}/*/*.png', presto_out_dir)
 
-        if self.processing_args['presto_search_args']['save_pfd']:
-            inj_tools.rsync(f'{out_file}*.pfd', presto_out_dir)
+        if self.processing_args['presto_fold_args']['save_pfd']:
+            inj_tools.rsync(f'{self.work_dir}/*/*.pfd', presto_out_dir)
+
+        if self.processing_args['presto_fold_args']['delete_inj_fb']:
+            check_par = glob.glob(f'{self.out_dir}/inj_{self.injection_number:06}/inj_pulsars/*.png')
+            if check_par:
+                os.remove(f'{self.out_dir}/inj_{self.injection_number:06}/{Path(self.data).name}')
+
+
             
 
 if __name__=='__main__':

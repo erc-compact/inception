@@ -89,6 +89,8 @@ process presto_sift {
     output:
         val injection_number
 
+    scratch params.tmp_dir
+
     script:
     """
     python3 ${params.pipeline_code}/ACCEL_sift.py --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}
@@ -106,6 +108,8 @@ process presto_fold {
     output:
         val injection_number
 
+    scratch params.tmp_dir
+    
     script:
     """
     python3 ${params.pipeline_code}/pipeline_presto_candfold.py --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --threads=${task.cpus}

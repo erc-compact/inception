@@ -50,42 +50,10 @@
         "mask": "rfifind",
 
         "save_png": true,
-        "save_pfd": true
-
-    },
-
-    "pulsarx_candfold_args": {
-        "mode": "psrfold_fil",
-        "candidate_tag": "PEASOUP",
-
-        "channel_mask": "856.0:863.94140625",
-        "template": "/hercules/u/rsenzel/pulsar_inject/fold_code/meerkat_fold.template",
-
-        "cmd": {
-            "nbin": 64,
-            "nbinplan": "0.1 128",
-            "tsubint": 10.0,
-            "nsubband": 64,
-            "clfd": 2,
-            "fillPatch": "rand",
-            "rfi": "zdot"
-        },
-
-        "cmd_flags": [
-            "-v",
-            "--plotx",
-            "--render"
-        ],
+        "save_pfd": true,
         
-        "save_png": true,
-        "save_ar": true,
-        "save_cand": true,
-        "save_csv": true,
-
-        "delete_inj_fb": false
+        "delete_inj_fb": true
     },
-
-
 
 
     "data": [

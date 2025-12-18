@@ -73,6 +73,15 @@ if __name__=='__main__':
     dms.sort()
     dmstrs = ["%.2f"%x for x in dms]
 
+    for dm in dmstrs:
+        source_file = glob.glob(f"{path}/*DM{dm}.inf")
+        destination_file = glob.glob(f"{path}/*DM{dm}_ACCEL_*0")
+        if source_file and destination_file:
+
+            with open(source_file[0], "r") as src, open(destination_file[0], "a") as dest:
+                for line in src:
+                    dest.write(line)
+
     # Read in all the candidates
     candfiles_new = [path+"/"+candf for candf in candfiles] # edit RS
     cands = sifting.read_candidates(candfiles_new) # edit RS
