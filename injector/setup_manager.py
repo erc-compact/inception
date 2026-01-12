@@ -315,6 +315,7 @@ class SetupManager:
             F2 = F0 * (accel/const.c.value)**2 - (jerk*F0/const.c.value)
         else:
             accel = 0
+            F2 = 0
 
         cand_file_path = self.output_path+f'/{pm.ID}.candfile'
         with open(cand_file_path, 'w') as file:

@@ -78,8 +78,8 @@ class PrestoFoldProcess:
         
     def match(self, psr_DM, psr_p0, row):
         DM, P0, candnm, file = row
-        DM_tol = 0.5
-        P0_ms_tol = 0.05
+        DM_tol = 0.2
+        P0_ms_tol = 0.001
         if (abs(DM - psr_DM) <= DM_tol) and (abs(P0 - psr_p0) <= P0_ms_tol):
             return True
         else:

@@ -47,7 +47,7 @@ for i, inj_dir in enumerate(inj_directories):
 
 
         df_f = presto_df[presto_df['ID'] == psr['ID']]
-        if df_f:
+        if np.any(df_f):
             inj_res.extend(['found'])
         else:
             inj_res.extend(['not found'])
