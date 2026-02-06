@@ -56,7 +56,8 @@ class PrestoFoldProcess:
         df = pd.read_csv(candfile)
         all_cands = []
         for i, row in df.iterrows():
-            all_cands.append([row['DM'], row['P(ms)'], row['candnum'], f"{presto_out_dir}/PRESTO_CANDS/{row['file']}.cand"])
+            all_cands.append([row['DM'], row['P(ms)'], row['candnum'], f"{presto_out_dir}/PRESTO_CANDS/{row['file']}.cand", 
+                              row['SNR'], row['sigma'], row['numharm'], row['ipow'], row['cpow'], row['r'], row['z'], row['numhits']])
 
         self.cands = []
         for psr in self.injection_report['pulsars']:
@@ -73,11 +74,11 @@ class PrestoFoldProcess:
 
         with open(f"{presto_out_dir}/candidates.csv", "w", newline="") as f:
             writer = csv.writer(f)
-            writer.writerow(["ID", "DM", "P(ms)", "candnum", "file"])
+            writer.writerow(["ID", "DM", "P(ms)", "candnum", "file", 'SNR', 'sigma', 'numharm', 'ipow', 'cpow', 'r', 'z', 'numhits'])
             writer.writerows(self.cands)
         
     def match(self, psr_DM, psr_p0, row):
-        DM, P0, candnm, file = row
+        DM, P0, *rest = row
         DM_tol = 0.2
         P0_ms_tol = 0.001
         if (abs(DM - psr_DM) <= DM_tol) and (abs(P0 - psr_p0) <= P0_ms_tol):
@@ -86,7 +87,7 @@ class PrestoFoldProcess:
             return False
 
     def fold_candidate(self, candidates):
-        ID, DM, P0, cand_i, candfile = candidates
+        ID, DM, P0, cand_i, candfile, *rest = candidates
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
         presto_out_dir = f'{results_dir}/processing'
         os.makedirs(presto_out_dir, exist_ok=True)

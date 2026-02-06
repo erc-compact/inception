@@ -74,7 +74,7 @@ class PropagationEffects:
         if not self.pulsar_pars['DM_smear']:
             return intrinsic_pulse
         else:
-            if self.pulsar_pars['profile'] == 'default': # untested
+            if self.pulsar_pars['profile'] == 'default':
                 duty_cycle = self.pulsar_pars['duty_cycle']
                 W_int = self.period * duty_cycle
                 snr_int = np.sqrt((self.period-W_int) / W_int)

@@ -5,15 +5,16 @@ import glob
 import json
 import os
 
-output_dir = 'path/outputs'
+output_dir = '/hercules/results/rsenzel/PIPELINE_VALIDATOR/outputs_presto'
 inj_directories = glob.glob(f'{output_dir}/inj_*')
 inj_directories.sort()
 
 results = []
 fault = 0
 keys = ['inj_dir', 'fb', 'psr_ID', 
-        'inj_p0', 'inj_DM', 'inj_SNR', 'inj_DC', 'inj_s_index', 'inj_phase', 'inj_bin_p0', 'inj_M2', 'inj_inc', 'inj_ecc', 'inj_AoP', 'inj_T0',
-        'par_p0', 'par_dm', 'par_acc', 'par_SNR', 'found']
+        'inj_p0', 'inj_DM', 'inj_SNR', 'inj_DC', 'inj_s_index', 'inj_phase', 'inj_bin_p0', 'inj_M2', 'inj_inc', 'inj_ecc', 'inj_A0', 'inj_T0',
+        'par_p0', 'par_dm', 'par_acc', 'par_SNR', 'found', 'PRESTO_DM', 'PRESTO_P(ms)', 'PRESTO_candnum', 'PRESTO_file', 
+        'PRESTO_SNR', 'PRESTO_sigma', 'PRESTO_numharm', 'PRESTO_ipow', 'PRESTO_cpow', 'PRESTO_r', 'PRESTO_z', 'PRESTO_numhits']
 
 for i, inj_dir in enumerate(inj_directories):
 
@@ -31,13 +32,12 @@ for i, inj_dir in enumerate(inj_directories):
 
     presto_df = pd.read_csv(f'{inj_dir}/inj_cands_PRESTO/candidates.csv')
 
+    presto_search = pd.read_csv(f'{inj_dir}/processing/PRESTO_CANDS/PRESTO_candidates.txt')
+
     for psr in report:
         inj_res = [inj_number, fb_name, psr['ID'], psr['PX'][0], psr['DM'], psr['SNR'], psr['duty_cycle'], psr['spectral_index'], psr['phase_offset']]
 
-        if psr['binary_period']:
-            inj_res.extend([psr['binary_period'], psr['M2'], psr['inc'], psr['ecc'], psr['AoP'], psr['T0']])
-        else:
-            inj_res.extend(np.zeros(6).tolist())
+        inj_res.extend([psr['binary_period'], psr['M2'], psr['inc'], psr['ecc'], psr['AX'][0], psr['T0']])
                    
         psr_par = par_fold[par_fold['ID'] == psr['ID']].iloc[0]
         inj_res.append(1/psr_par['f0'])
@@ -48,9 +48,11 @@ for i, inj_dir in enumerate(inj_directories):
 
         df_f = presto_df[presto_df['ID'] == psr['ID']]
         if np.any(df_f):
-            inj_res.extend(['found'])
+            di = df_f.iloc[0]
+            inj_res.extend(['found', di['DM'],  di['P(ms)'],  di['candnum'],  di['file'],  
+                            di['SNR'],  di['sigma'],  di['numharm'],  di['ipow'],  di['cpow'],  di['r'],  di['z'],  di['numhits']])
         else:
-            inj_res.extend(['not found'])
+            inj_res.extend(['not found', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
         results.append(inj_res)
 

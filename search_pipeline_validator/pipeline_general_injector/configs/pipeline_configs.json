@@ -1,7 +1,7 @@
 {
     "injection_args": {
         "id": "test_1",
-        "ephem": "/hercules/u/rsenzel/pulsar_inject/ephem/de440.bsp",
+        "ephem": "./ephem/de440.bsp",
         "python": "python3",
         "filterbank" : "random",
         "gulp_size_GB": 0.01,
@@ -24,7 +24,7 @@
         },
 
         "channel_mask": "856.0:863.94140625",
-        "template": "/hercules/u/rsenzel/pulsar_inject/fold_code/meerkat_fold.template",
+        "template": "./meerkat_fold.template",
         "blocksize_plan": [2, 10, 0.1],
         "harmonic_fold": {
             "max_duty_cycle": 0.08,
@@ -59,14 +59,14 @@
     },
 
     "data": [
-        ["/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00011/2024-09-15-14:13:59_cfbf00011_0000000000000000.fil",
-         "/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00011/2024-09-15-14:13:59_cfbf00011_0000005099999232.fil"],
+        ["./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00011/2024-09-15-14:13:59_cfbf00011_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00011/2024-09-15-14:13:59_cfbf00011_0000005099999232.fil"],
 
-        ["/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00322/2024-09-15-14:14:00_cfbf00322_0000000000000000.fil",
-         "/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00322/2024-09-15-14:14:00_cfbf00322_0000005099999232.fil"],
+        ["./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00322/2024-09-15-14:14:00_cfbf00322_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00322/2024-09-15-14:14:00_cfbf00322_0000005099999232.fil"],
 
-        ["/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00375/2024-09-15-14:13:59_cfbf00375_0000000000000000.fil",
-         "/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00375/2024-09-15-14:13:59_cfbf00375_0000005099999232.fil"]
+        ["./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00375/2024-09-15-14:13:59_cfbf00375_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00375/2024-09-15-14:13:59_cfbf00375_0000005099999232.fil"]
     ]
     
 }

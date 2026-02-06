@@ -233,14 +233,19 @@ class PulsarModel:
         # nbins = int(np.round(p0/self.obs.dt))
         nbins = self.profile_length
         phase = np.linspace(0, 1, nbins)
-        intrinsic_profile_sum = np.sum([self.intrinsic_profile_chan(phase, chan) for chan in range(n_chan)], axis=0) 
-        profile_energy_scale = np.sum((intrinsic_profile_sum*n_pulse)**2)
 
-        samples_per_bin =  nbins / (p0 / self.obs.dt)
-        noise_energy = self.obs.fb_std ** 2 * (n_pulse * n_chan) * samples_per_bin
-        snr = profile_energy_scale/noise_energy
+        profile = self.pulsar_pars['profile']
+        if profile == 'default_test': # in progress
+            pass
+        else:
+            intrinsic_profile_sum = np.sum([self.intrinsic_profile_chan(phase, chan) for chan in range(n_chan)], axis=0) 
+            profile_energy_scale = np.sum((intrinsic_profile_sum*n_pulse)**2)
 
-        self.SNR_scale = self.SNR / np.sqrt(snr) * beam_scale
+            samples_per_bin =  nbins / (p0 / self.obs.dt)
+            noise_energy = self.obs.fb_std ** 2 * (n_pulse * n_chan) * samples_per_bin
+            snr = profile_energy_scale/noise_energy
+
+            self.SNR_scale = self.SNR / np.sqrt(snr) * beam_scale
      
     def vectorise_observed_profile(self):
         phases = self.prop_effect.phase

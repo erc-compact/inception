@@ -132,7 +132,7 @@ process pics_scorer {
 
     script:
     """
-    python3.6 ${params.pipeline_code}/MMGPS_PICS_scorer.py --processing_args=${params.config_params} --injection_number=${injection_number}  --out_dir=${params.output_dir}
+    python3.6 ${params.pipeline_code}/MMGPS_PICS_scorer.py  --file_type=pfd --processing_args=${params.config_params} --injection_number=${injection_number}  --out_dir=${params.output_dir}
 
     """
 }

@@ -87,7 +87,7 @@
         "mode": "psrfold_fil",
 
         "channel_mask": "856.0:863.94140625",
-        "template": "/hercules/u/rsenzel/pulsar_inject/fold_code/meerkat_fold.template",
+        "template": "./meerkat_fold.template",
         "blocksize_plan": [2, 10, 0.1],
 
         "cmd": {
@@ -104,7 +104,7 @@
             "-v",
             "--render",
             "--plotx", 
-            "--nosearch"
+            "--output_width"
         ],
         
         "save_png": true,
@@ -121,7 +121,7 @@
         "candidate_tag": "PEASOUP",
 
         "channel_mask": "856.0:863.94140625",
-        "template": "/hercules/u/rsenzel/pulsar_inject/fold_code/meerkat_fold.template",
+        "template": "./meerkat_fold.template",
 
         "cmd": {
             "nbin": 64,
@@ -136,7 +136,8 @@
         "cmd_flags": [
             "-v",
             "--plotx",
-            "--render"
+            "--render",
+            "--output_width"
         ],
         
         "save_png": true,
@@ -155,7 +156,9 @@
         "dm_tol": 0.01,
         "snr_cutoff": 8.5,
 
-        "save_sift_outputs": false
+        "code_path": "./pipeline_validator_MMGPS/candidate_filter.py",
+        "rfi_list": "./pipeline_validator_MMGPS/known_rfi.txt",
+        "default_configs": "./pipeline_validator_MMGPS/default_config.json"
     },
 
     "PICS_scorer": {
@@ -165,38 +168,38 @@
 
 
     "data": [
-        ["/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00011/2024-09-15-14:13:59_cfbf00011_0000000000000000.fil",
-         "/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00011/2024-09-15-14:13:59_cfbf00011_0000005099999232.fil"],
+        ["./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00011/2024-09-15-14:13:59_cfbf00011_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00011/2024-09-15-14:13:59_cfbf00011_0000005099999232.fil"],
 
-        ["/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00322/2024-09-15-14:14:00_cfbf00322_0000000000000000.fil",
-         "/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00322/2024-09-15-14:14:00_cfbf00322_0000005099999232.fil"],
+        ["./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00322/2024-09-15-14:14:00_cfbf00322_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00322/2024-09-15-14:14:00_cfbf00322_0000005099999232.fil"],
 
-        ["/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00375/2024-09-15-14:13:59_cfbf00375_0000000000000000.fil",
-         "/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00375/2024-09-15-14:13:59_cfbf00375_0000005099999232.fil"],
+        ["./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00375/2024-09-15-14:13:59_cfbf00375_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00375/2024-09-15-14:13:59_cfbf00375_0000005099999232.fil"],
 
-        ["/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00050/2024-09-15-14:13:59_cfbf00050_0000000000000000.fil",
-        "/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00050/2024-09-15-14:13:59_cfbf00050_0000005099999232.fil"],
+        ["./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00050/2024-09-15-14:13:59_cfbf00050_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00050/2024-09-15-14:13:59_cfbf00050_0000005099999232.fil"],
 
-        ["/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00088/2024-09-15-14:13:59_cfbf00088_0000000000000000.fil",
-        "/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00088/2024-09-15-14:13:59_cfbf00088_0000005099999232.fil"],
+        ["./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00088/2024-09-15-14:13:59_cfbf00088_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00088/2024-09-15-14:13:59_cfbf00088_0000005099999232.fil"],
 
-        ["/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00349/2024-09-15-14:14:00_cfbf00349_0000000000000000.fil",
-        "/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00349/2024-09-15-14:14:00_cfbf00349_0000005099999232.fil"],
+        ["./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00349/2024-09-15-14:14:00_cfbf00349_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00349/2024-09-15-14:14:00_cfbf00349_0000005099999232.fil"],
 
-        ["/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0025/cfbf00164/2024-09-15-16:59:41_cfbf00164_0000000000000000.fil",
-        "/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0025/cfbf00164/2024-09-15-16:59:41_cfbf00164_0000005099999232.fil"],
+        ["./MMGPS_UHF_DATA/MMGPS_U_0025/cfbf00164/2024-09-15-16:59:41_cfbf00164_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0025/cfbf00164/2024-09-15-16:59:41_cfbf00164_0000005099999232.fil"],
 
-        ["/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0018/cfbf00125/2024-09-15-15:42:10_cfbf00125_0000000000000000.fil",
-        "/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0018/cfbf00125/2024-09-15-15:42:10_cfbf00125_0000005099999232.fil"],
+        ["./MMGPS_UHF_DATA/MMGPS_U_0018/cfbf00125/2024-09-15-15:42:10_cfbf00125_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0018/cfbf00125/2024-09-15-15:42:10_cfbf00125_0000005099999232.fil"],
 
-        ["/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0012/cfbf00000/2024-09-15-14:46:16_cfbf00000_0000000000000000.fil",
-        "/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0012/cfbf00000/2024-09-15-14:46:16_cfbf00000_0000005099999232.fil"],
+        ["./MMGPS_UHF_DATA/MMGPS_U_0012/cfbf00000/2024-09-15-14:46:16_cfbf00000_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0012/cfbf00000/2024-09-15-14:46:16_cfbf00000_0000005099999232.fil"],
 
-        ["/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0009/cfbf00258/2024-09-15-14:05:22_cfbf00258_0000000000000000.fil",
-        "/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0009/cfbf00258/2024-09-15-14:05:22_cfbf00258_0000005099999232.fil"],
+        ["./MMGPS_UHF_DATA/MMGPS_U_0009/cfbf00258/2024-09-15-14:05:22_cfbf00258_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0009/cfbf00258/2024-09-15-14:05:22_cfbf00258_0000005099999232.fil"],
 
-        ["/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0004/cfbf00001/2024-09-15-13:18:40_cfbf00001_0000000000000000.fil",
-        "/hercules/scratch/vishnu/MMGPS_UHF_DATA/MMGPS_U_0004/cfbf00001/2024-09-15-13:18:40_cfbf00001_0000005099999232.fil"]
+        ["./MMGPS_UHF_DATA/MMGPS_U_0004/cfbf00001/2024-09-15-13:18:40_cfbf00001_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0004/cfbf00001/2024-09-15-13:18:40_cfbf00001_0000005099999232.fil"]
     ]
     
     

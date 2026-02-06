@@ -8,13 +8,14 @@ import pipeline_tools as inj_tools
 
 
 class PICSScorer:
-    def __init__(self, processing_args, injection_number, out_dir, work_dir):
+    def __init__(self, processing_args, injection_number, out_dir, work_dir, file_type):
         self.processing_args_path = processing_args
         self.processing_args = inj_tools.parse_JSON(processing_args)
 
         self.pics_models = self.processing_args['PICS_scorer']['models_dir']
         self.pics_code = self.processing_args['PICS_scorer']['code_path']
         self.injection_number = injection_number
+        self.file_type = file_type
 
         self.out_dir = os.getcwd() if out_dir == 'cwd' else out_dir
         self.work_dir = os.getcwd() if work_dir == 'cwd' else work_dir
@@ -30,12 +31,15 @@ class PICSScorer:
 
     def run_cmd(self):
         attempts = 0
-        in_path = f'{self.out_dir}/inj_{self.injection_number:06}/inj_cands'
-        ar_files = glob.glob(f'{in_path}/*.ar')
+        if self.file_type == '.ar':
+            in_path = f'{self.out_dir}/inj_{self.injection_number:06}/inj_cands' 
+        elif self.file_type == '.pfd':
+            in_path = f'{self.out_dir}/inj_{self.injection_number:06}/inj_cands_PRESTO' 
+        ar_files = glob.glob(f'{in_path}/*.{self.file_type}')
         if len(ar_files) != 0:
             while (not os.path.exists(f'{in_path}/pics_scores.txt')) and (attempts != 3):
                 attempts += 1
-                cmd = f"python2 {self.pics_code} --in_path={in_path} --model_dir={self.pics_models} --work_dir={os.getcwd()}"
+                cmd = f"python2 {self.pics_code} --in_path={in_path} --model_dir={self.pics_models} --work_dir={os.getcwd()} --file_type={self.file_type}"
                 subprocess.run(cmd, shell=True)
 
 
@@ -46,8 +50,10 @@ if __name__=='__main__':
     parser.add_argument('--injection_number', metavar='int', required=True, type=int, help='injection process number')
     parser.add_argument('--out_dir', metavar='dir', required=False, default='cwd', help='output directory')
     parser.add_argument('--work_dir', metavar='dir', required=False, default='cwd', help='work directory')
+    parser.add_argument('--file_type',type=str, default="ar", help='Type of file (ar/pfd/ar2/clfd)')
+
     args = parser.parse_args()
 
-    ps = PICSScorer(args.processing_args, args.injection_number, args.out_dir,  args.work_dir)
+    ps = PICSScorer(args.processing_args, args.injection_number, args.out_dir,  args.work_dir, args.file_type)
     ps.scorer_setup()
     ps.run_cmd()

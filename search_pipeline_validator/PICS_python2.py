@@ -9,15 +9,15 @@ import optparse
 from ubc_AI.data import pfdreader
 
 
-def get_id_from_cand_file(filename):
-    return(filename.split('_')[-1].strip(".ar"))
-
-
 def extract_and_score(opts):
+
     path = opts.in_path
     file_type = opts.file_type
     AI_PATH = opts.model_dir
     models = os.listdir(AI_PATH)
+
+    def get_id_from_cand_file(filename):
+        return(filename.split('_')[-1].strip(".{}".format(file_type)))
 
     classifiers = []
     for model in models:

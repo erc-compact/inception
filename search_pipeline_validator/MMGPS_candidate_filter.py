@@ -77,10 +77,13 @@ class CandidateFilterProcess:
 
     def run_cmd(self):
         params = self.processing_args['MMGPS_candidate_filter']
-        cmd = f"candidate_filter.py -i {self.xml_file} -o {self.work_dir}/{self.inj_id} --threshold {params['snr_cutoff']} " \
+        sifter_code = params['code_path']
+        known_rfi = params['rfi_list']
+        default_config = params['default_configs']
+        cmd = f"python3.6 {sifter_code} -i {self.xml_file} -o {self.work_dir}/{self.inj_id} --threshold {params['snr_cutoff']} " \
               f"--p_tol {params['p_tol']} --dm_tol {params['dm_tol']} " \
-              "-c /home/psr/software/candidate_filter/candidate_filter/default_config.json " \
-              "--rfi /home/psr/software/candidate_filter/candidate_filter/known_rfi.txt"
+              f"-c {default_config} " \
+              f"--rfi {known_rfi}"
 
         subprocess.run(cmd, shell=True)
 
