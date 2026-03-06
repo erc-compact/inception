@@ -23,7 +23,7 @@ class BinaryModel:
             self.a1_sini_c = pulsar_pars['x'] 
             self.a = self.get_semi_major(self.period, self.mass_p+self.mass_c) # m
             self.a1 = self.mass_c/(self.mass_p+self.mass_c) * self.a
-            self.gamma = self.mass_c**2 * (self.mass_p + 2*self.mass_c) * self.P2pi * self.e / (self.a1 * (self.mass_p + self.mass_c)**2)
+            self.gamma = 0 #self.mass_c**2 * (self.mass_p + 2*self.mass_c) * self.P2pi * self.e / (self.a1 * (self.mass_p + self.mass_c)**2)
 
         self.T0 = None
         if generate:

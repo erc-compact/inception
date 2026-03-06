@@ -223,21 +223,26 @@ class PulsarModel:
         return intrinsic_pulse
 
     def calculate_SNR(self):
-
         beam_scale = self.obs.get_beam_snr() 
 
         n_chan = self.obs.n_chan
         p0 = self.pulsar_pars.get('P0_SNR', self.period)
         n_pulse = self.obs.obs_len/p0
 
-        # nbins = int(np.round(p0/self.obs.dt))
-        nbins = self.profile_length
-        phase = np.linspace(0, 1, nbins)
-
         profile = self.pulsar_pars['profile']
-        if profile == 'default_test': # in progress
-            pass
+        if profile == 'test': 
+            spectra_sum = np.sum([self.intrinsic_profile_chan(0.5, chan) for chan in range(n_chan)], axis=0)  
+            Weq = 0.5 * np.sqrt(np.pi/np.log(2)) * self.pulsar_pars['duty_cycle']
+
+            numerator = self.obs.fb_std * np.sqrt(n_chan)
+            denominator = np.sqrt(Weq) * np.sqrt(n_pulse) * spectra_sum
+
+            self.SNR_scale =  self.SNR * numerator / denominator * beam_scale
+
         else:
+            nbins = self.profile_length
+            phase = np.linspace(0, 1, nbins)
+
             intrinsic_profile_sum = np.sum([self.intrinsic_profile_chan(phase, chan) for chan in range(n_chan)], axis=0) 
             profile_energy_scale = np.sum((intrinsic_profile_sum*n_pulse)**2)
 

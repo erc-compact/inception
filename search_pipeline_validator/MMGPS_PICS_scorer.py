@@ -31,9 +31,9 @@ class PICSScorer:
 
     def run_cmd(self):
         attempts = 0
-        if self.file_type == '.ar':
+        if self.file_type == 'ar':
             in_path = f'{self.out_dir}/inj_{self.injection_number:06}/inj_cands' 
-        elif self.file_type == '.pfd':
+        elif self.file_type == 'pfd':
             in_path = f'{self.out_dir}/inj_{self.injection_number:06}/inj_cands_PRESTO' 
         ar_files = glob.glob(f'{in_path}/*.{self.file_type}')
         if len(ar_files) != 0:
