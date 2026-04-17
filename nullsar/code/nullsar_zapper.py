@@ -107,11 +107,17 @@ class NullerProcess:
             psr_ID = Path(par_file).stem
             if self.mode == 'INIT':
                 fits_path = f'{files_dir}/FOLDS/{psr_ID}_mode_INIT.fits'
-            if self.mode == 'NULL':
-                fits_path = f'{files_dir}/FOLDS/{psr_ID}_mode_OPTIMISE.fits'
+                archive_INIT = ARProcessor(fits_path, mode='load')
+                self.parse_archive(psr_ID, archive_INIT, archive_INIT, ar_path)
 
-            archive = ARProcessor(fits_path, mode='load')
-            self.parse_archive(psr_ID, archive, ar_path)
+            if self.mode == 'NULL':
+                fits_path_INIT = f'{files_dir}/FOLDS/{psr_ID}_mode_INIT.fits'
+                fits_path_OPT = f'{files_dir}/FOLDS/{psr_ID}_mode_OPTIMISE.fits'
+
+                archive_INIT = ARProcessor(fits_path_INIT, mode='load')
+                archive_OPT = ARProcessor(fits_path_OPT, mode='load')
+
+                self.parse_archive(psr_ID, archive_INIT, archive_OPT, ar_path)
 
         if self.mode == "INIT":
             with open(ar_path, 'w') as file:
@@ -120,7 +126,7 @@ class NullerProcess:
                         self.ar_data[key] = value
                 json.dump(self.ar_data, file, indent=4)
 
-    def parse_archive(self, psr_ID, archive, ar_path):
+    def parse_archive(self, psr_ID, archive_INIT, archive_OPT, ar_path):
         files_dir = f"{self.processing_dir}/01_FILES/NULLSAR"
 
         fb = FilterbankReader(self.new_fb_path, load_fb_stats=(128, 6))
@@ -128,15 +134,16 @@ class NullerProcess:
 
         profile_path = f"{files_dir}/profile_{psr_ID}.npy"        
         if self.mode == 'INIT':
-            SNR = archive.get_SNR()
-            DM = archive.get_DM()
-            freq_phase = archive.get_freq_phase()
-            intensity_profile = archive.get_intensity_prof()
-            freq_phase_scaled = scale_freq_phase(freq_phase, intensity_profile)
+            SNR = archive_INIT.get_SNR()
+            DM = archive_INIT.get_DM()
+            freq_phase = archive_INIT.get_freq_phase()
+            intensity_profile = archive_INIT.get_intensity_prof()
             
-            time_phase = archive.get_time_phase()
-            freq_deriv, phase_offset = fit_time_phase(time_phase, freq_phase, obs_len)
+            time_phase = archive_INIT.get_time_phase()
+            freq_deriv, phase_offset, SNR_fit = fit_time_phase(time_phase, intensity_profile, obs_len)
 
+            freq_phase_scaled = scale_freq_phase(freq_phase, intensity_profile)
+            print(SNR, SNR_fit)
             np.save(profile_path, freq_phase_scaled)
 
         elif self.mode == "NULL":
@@ -145,10 +152,10 @@ class NullerProcess:
             DM = init_ar_data[psr_ID]['DM']
             freq_deriv = init_ar_data[psr_ID]['FX']
 
-            intensity_profile = archive.get_intensity_prof()
-            freq_phase = np.load(profile_path)
+            intensity_profile_INIT = archive_INIT.get_intensity_prof()
+            intensity_profile_OPT = archive_OPT.get_intensity_prof()
 
-            phase_offset, SNR_scale = fit_phase_offset(intensity_profile, freq_phase)
+            phase_offset, SNR_scale = fit_phase_offset(intensity_profile_OPT, intensity_profile_INIT)
             SNR *= SNR_scale
             phase_offset += init_ar_data[psr_ID]['phase_offset']
 
@@ -178,7 +185,7 @@ class NullerProcess:
                 "ID": psr_ID,
                 "mode": "pint",
                 "PEPOCH": 0.5,
-                "phase_offset": self.ar_data[psr_ID]['phase_offset'],
+                "phase_offset": float(self.ar_data[psr_ID]['phase_offset']),
                 
                 "P0_SNR": 1/float(params['F0']),
                 "DM": self.ar_data[psr_ID]['DM'],
