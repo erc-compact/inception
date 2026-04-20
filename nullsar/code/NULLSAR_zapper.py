@@ -5,8 +5,9 @@ import subprocess
 import numpy as np
 from pathlib import Path
 
-from ar_processor import ARProcessor
-from nullsar_tools import parse_cand_file, parse_par_file, parse_JSON, rsync, fit_time_phase, fit_phase_offset, scale_freq_phase
+from TOOLS_ar import ARProcessor
+from TOOLS_io import parse_par_file, parse_JSON, rsync, print_exe
+from TOOLS_nullsar import fit_time_phase, fit_phase_offset, scale_freq_phase
 
 import os, sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
@@ -26,7 +27,7 @@ class NullerProcess:
 
         self.tag = tag
         self.mode = mode
-        self.processing_dir = f'{self.out_dir}/PROCESSING/{self.tag}'
+        self.processing_dir = f'{self.out_dir}/{self.tag}'
 
         self.ar_data = {}
 
@@ -38,15 +39,14 @@ class NullerProcess:
         self.create_injection_plan()
 
     def check_SNR(self):
-        files_dir = f'{self.processing_dir}/01_FILES/NULLSAR'
         SNR_limit = self.processing_args.get('SNR_limit', 15)
-        snr_path = f"{files_dir}/INIT_fold_params.json"
+        snr_path = f'{self.processing_dir}/02_INIT/INIT_fold_params.json'
 
         if self.mode == "INIT":
             self.SNR_record = {}
             for par_file  in list(self.processing_args['par_files']):
                 psr_ID = Path(par_file).stem
-                fits_path = f'{files_dir}/FOLDS/{psr_ID}_mode_INIT.fits'
+                fits_path =  f'{self.processing_dir}/02_INIT/FOLDS/{psr_ID}_mode_INIT.fits'
                 archive = ARProcessor(fits_path, mode='load')
                 SNR = archive.get_SNR()
                 self.SNR_record[psr_ID] = {"SNR": SNR}
@@ -69,7 +69,7 @@ class NullerProcess:
         files_dir = f'{self.processing_dir}/01_FILES'
 
         if self.processing_args.get('filtool', False):
-            data = glob.glob(f'{files_dir}/*FILTOOL*.fil')[0]
+            data = glob.glob(f'{files_dir}/{self.tag}_FILTOOL*.fil')[0]
         else:
             with open(f'{files_dir}/files.txt') as f:
                 data = [line.strip() for line in f if line.strip()]
@@ -100,39 +100,37 @@ class NullerProcess:
 
     def extract_archive(self):
         par_files = self.processing_args['par_files']
-        files_dir = f'{self.processing_dir}/01_FILES/NULLSAR'
-        ar_path = f"{files_dir}/INIT_fold_params.json"
+        params_path = f'{self.processing_dir}/02_INIT/INIT_fold_params.json'
         
         for par_file in par_files:
             psr_ID = Path(par_file).stem
             if self.mode == 'INIT':
-                fits_path = f'{files_dir}/FOLDS/{psr_ID}_mode_INIT.fits'
+                fits_path = f'{self.processing_dir}/02_INIT/FOLDS/{psr_ID}_mode_INIT.fits'
                 archive_INIT = ARProcessor(fits_path, mode='load')
-                self.parse_archive(psr_ID, archive_INIT, archive_INIT, ar_path)
+                self.parse_archive(psr_ID, archive_INIT, archive_INIT, params_path)
 
             if self.mode == 'NULL':
-                fits_path_INIT = f'{files_dir}/FOLDS/{psr_ID}_mode_INIT.fits'
-                fits_path_OPT = f'{files_dir}/FOLDS/{psr_ID}_mode_OPTIMISE.fits'
+                fits_path_INIT = f'{self.processing_dir}/02_INIT/FOLDS/{psr_ID}_mode_INIT.fits'
+                fits_path_OPT = f'{self.processing_dir}/03_OPT/FOLDS/{psr_ID}_mode_OPTIMISE.fits'
 
                 archive_INIT = ARProcessor(fits_path_INIT, mode='load')
                 archive_OPT = ARProcessor(fits_path_OPT, mode='load')
 
-                self.parse_archive(psr_ID, archive_INIT, archive_OPT, ar_path)
+                self.parse_archive(psr_ID, archive_INIT, archive_OPT, params_path)
 
         if self.mode == "INIT":
-            with open(ar_path, 'w') as file:
+            with open(params_path, 'w') as file:
                 for key, value in self.SNR_record.items():
                     if not self.ar_data.get(key, None):
                         self.ar_data[key] = value
                 json.dump(self.ar_data, file, indent=4)
 
     def parse_archive(self, psr_ID, archive_INIT, archive_OPT, ar_path):
-        files_dir = f"{self.processing_dir}/01_FILES/NULLSAR"
 
         fb = FilterbankReader(self.new_fb_path, load_fb_stats=(128, 6))
         obs_len = fb.dt * fb.n_samples
 
-        profile_path = f"{files_dir}/profile_{psr_ID}.npy"        
+        profile_path = f'{self.processing_dir}/02_INIT/profile_{psr_ID}.npy'        
         if self.mode == 'INIT':
             SNR = archive_INIT.get_SNR()
             DM = archive_INIT.get_DM()
@@ -140,8 +138,8 @@ class NullerProcess:
             intensity_profile = archive_INIT.get_intensity_prof()
             
             time_phase = archive_INIT.get_time_phase()
-            freq_deriv, phase_offset, SNR_fit = fit_time_phase(time_phase, intensity_profile, obs_len)
-
+            freq_deriv, phase_offset, phase_shift, SNR_fit = fit_time_phase(time_phase, intensity_profile, obs_len)
+            
             freq_phase_scaled = scale_freq_phase(freq_phase, intensity_profile)
             print(SNR, SNR_fit)
             np.save(profile_path, freq_phase_scaled)
@@ -156,12 +154,13 @@ class NullerProcess:
             intensity_profile_OPT = archive_OPT.get_intensity_prof()
 
             phase_offset, SNR_scale = fit_phase_offset(intensity_profile_OPT, intensity_profile_INIT)
+            phase_shift = 0
             SNR *= SNR_scale
             phase_offset += init_ar_data[psr_ID]['phase_offset']
 
         self.ar_data[psr_ID] = {"SNR": SNR,  
                                 "DM": DM,
-                                "phase_offset": phase_offset, 
+                                "phase_offset": phase_offset-phase_shift, 
                                 "profile": profile_path,
                                 "FX": freq_deriv}
             
@@ -218,15 +217,21 @@ class NullerProcess:
 
     def transfer_products(self):
         injected_fb = f'{self.work_dir}/{Path(self.new_fb_path).stem}_{self.mode}.fil'
+        report = f'{self.work_dir}/report_*.json'
         if not glob.glob(injected_fb):
             sys.exit(1)
 
-        results_dir = f'{self.processing_dir}/01_FILES/NULLSAR'
-        os.makedirs(results_dir, exist_ok=True)
+        if self.mode == 'INIT':
+            results_dir = f'{self.processing_dir}/02_INIT'
+        elif self.mode == 'NULL':
+            results_dir = f'{self.processing_dir}/03_OPT'
+
 
         rsync(injected_fb, results_dir)
+        rsync(glob.glob(report)[0], results_dir)
 
-        
+        print_exe('Done.')
+
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(prog='Nullsar zapper',

@@ -6,7 +6,7 @@ import subprocess
 from pathlib import Path
 from multiprocessing import Manager, Pool
 
-from nullsar_tools import parse_cand_file, parse_par_file, parse_JSON, rsync
+from TOOLS_io import parse_cand_file, parse_par_file, parse_JSON, rsync
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 from injector.io_tools import merge_filterbanks, FilterbankReader, print_exe
@@ -22,7 +22,7 @@ class PulsarxParFolder:
         
         self.tag = tag
         self.mode = mode
-        self.processing_dir = f'{self.out_dir}/PROCESSING/{self.tag}'
+        self.processing_dir = f'{self.out_dir}/{self.tag}'
         
         manager = Manager()
         self.archive = manager.dict()
@@ -35,8 +35,7 @@ class PulsarxParFolder:
 
     def check_SNR(self):
         if self.mode != 'INIT':
-            files_dir = f'{self.processing_dir}/01_FILES/NULLSAR'
-            init_ar_data =  parse_JSON(f"{files_dir}/INIT_fold_params.json")
+            init_ar_data =  parse_JSON(f"{self.processing_dir}/02_INIT/INIT_fold_params.json")
             SNR_limit = self.processing_args.get('SNR_limit', 15)
             
             for par_file  in list(self.processing_args['par_files']):
@@ -62,17 +61,17 @@ class PulsarxParFolder:
 
         if self.mode == 'INIT':
             if self.processing_args.get('filtool', False):
-                self.data = glob.glob(f'{files_dir}/*FILTOOL*.fil')[0]
+                self.data = glob.glob(f'{files_dir}/{self.tag}_FILTOOL*.fil')[0]
 
             else:
                 with open(f'{files_dir}/files.txt') as f:
                     self.data = [line.strip() for line in f if line.strip()]
 
         elif self.mode == 'OPTIMISE':
-            self.data = glob.glob(f'{files_dir}/NULLSAR/*INIT.fil')[0]
+            self.data = glob.glob(f'{self.processing_dir}/02_INIT/*INIT.fil')[0]
 
         elif self.mode == 'CONFIRM':
-            self.data = glob.glob(f'{files_dir}/NULLSAR/*NULL.fil')[0]
+            self.data = glob.glob(f'{self.processing_dir}/03_OPT/*NULL.fil')[0]
 
         if type(self.data) == list:
             fb_names = [Path(fb).stem for fb in self.data]
@@ -117,8 +116,7 @@ class PulsarxParFolder:
 
     def adjust_par_file(self, par_file, psr_id):
         params = parse_par_file(par_file)
-        files_dir = f'{self.processing_dir}/01_FILES/NULLSAR'
-        init_ar_data = parse_JSON(f"{files_dir}/INIT_fold_params.json")
+        init_ar_data = parse_JSON(f"{self.processing_dir}/02_INIT/INIT_fold_params.json")
         
         params['DM'] = init_ar_data[psr_id]['DM']
         new_par_file = f'{self.work_dir}/{psr_id}_new_parfile.par'
@@ -169,36 +167,46 @@ class PulsarxParFolder:
             p.map(self.run_parfold, args)
 
     def transfer_products(self):
-        files_dir = f'{self.processing_dir}/01_FILES/NULLSAR/'
-        folds_dir = f'{files_dir}/FOLDS'
-        os.makedirs(folds_dir, exist_ok=True)
 
         for par_file in self.processing_args['par_files']:
             psr_id = Path(par_file).stem
             tmp_cwd = f'{self.work_dir}/process_{psr_id}'
             png_path = glob.glob(f'{tmp_cwd}/*.png')
             if png_path:
+                if self.mode == 'INIT':
+                    files_dir = f'{self.processing_dir}/02_INIT/'
+                    folds_dir = f'{files_dir}/FOLDS'
+                    os.makedirs(folds_dir, exist_ok=True)
+
+                    fits_path = glob.glob(f'{tmp_cwd}/*.px')
+                    rsync(fits_path[0], f"{folds_dir}/{psr_id}_mode_{self.mode}.fits")
+
+                elif self.mode == 'OPTIMISE':
+                    files_dir = f'{self.processing_dir}/03_OPT/'
+                    folds_dir = f'{files_dir}/FOLDS'
+                    os.makedirs(folds_dir, exist_ok=True)
+
+                    fits_path = glob.glob(f'{tmp_cwd}/*.px')
+                    rsync(fits_path[0], f"{folds_dir}/{psr_id}_mode_{self.mode}.fits")
+                else:
+                    files_dir = f'{self.processing_dir}/04_CONFIRM/'
+                    folds_dir = f'{files_dir}/FOLDS'
+                    os.makedirs(folds_dir, exist_ok=True)
+
                 rsync(png_path[0], f"{folds_dir}/{psr_id}_mode_{self.mode}.png")
 
-            if self.mode != 'CONFIRM':
-                fits_path = glob.glob(f'{tmp_cwd}/*.px')
-                rsync(fits_path[0], f"{folds_dir}/{psr_id}_mode_{self.mode}.fits")
-
         if self.mode == 'CONFIRM':
+            files_dir = f'{self.processing_dir}/01_FILES'
             if self.processing_args['delete_filtool']:
-                filtool_fb = glob.glob(f'{files_dir}/*FILTOOL*.fil')
+                filtool_fb = glob.glob(f'{files_dir}/{self.tag}_FILTOOL*.fil')
                 if filtool_fb:
                     os.remove(filtool_fb[0])
 
+            files_dir = f'{self.processing_dir}/02_INIT'
             if self.processing_args['delete_processing']:
                 init_fb = glob.glob(f'{files_dir}/*INIT.fil')
                 if init_fb:
                     os.remove(init_fb[0])
-
-                fits_files = glob.glob(f'{folds_dir}/*.fits')
-                for file in fits_files:
-                    os.remove(file)
-                
 
 
 if __name__=='__main__':

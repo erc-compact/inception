@@ -10,7 +10,7 @@ process setup {
     script:
     """
 
-    python3 ${params.pipeline_code}/preprocess_setup.py  --processing_args=${params.pipeline_config} --filterbanks=${params.filterbanks} --out_dir=${params.output_dir}
+    python3 ${params.pipeline_code}/PREPROCESS_setup.py  --processing_args=${params.pipeline_config} --filterbanks=${params.filterbanks} --out_dir=${params.output_dir}
 
     """
 }
@@ -31,7 +31,7 @@ process filtool {
     script:
     """
 
-    python3 ${params.pipeline_code}/preprocess_filtool.py  --tag=${tag} --processing_args=${params.pipeline_config} --out_dir=${params.output_dir} --threads=${task.cpus}
+    python3 ${params.pipeline_code}/PREPROCESS_filtool.py  --tag=${tag} --processing_args=${params.pipeline_config} --out_dir=${params.output_dir} --threads=${task.cpus}
 
     """
 }
@@ -52,7 +52,7 @@ process nullsar_zap {
     script:
     """
 
-    python3 ${params.pipeline_code}/nullsar_zapper.py  --tag=${tag} --mode=${mode} --processing_args=${params.pipeline_config} --out_dir=${params.output_dir} --ncpus=${task.cpus} 
+    python3 ${params.pipeline_code}/NULLSAR_zapper.py  --tag=${tag} --mode=${mode} --processing_args=${params.pipeline_config} --out_dir=${params.output_dir} --ncpus=${task.cpus} 
 
     """
 }
@@ -73,7 +73,7 @@ process nullsar_fold {
     script:
     """
 
-    python3 ${params.pipeline_code}/nullsar_folder.py --tag=${tag} --mode=${mode} --processing_args=${params.pipeline_config} --out_dir=${params.output_dir} --ncpus=${task.cpus} 
+    python3 ${params.pipeline_code}/NULLSAR_folder.py --tag=${tag} --mode=${mode} --processing_args=${params.pipeline_config} --out_dir=${params.output_dir} --ncpus=${task.cpus} 
 
     """
 }

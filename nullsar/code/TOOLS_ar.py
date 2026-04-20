@@ -8,27 +8,18 @@
 
 
 import re, os
-import subprocess
 import numpy as np
+from astropy.io import fits
 
 
 class ARProcessor:
-    def __init__(self, file, mode='extract', work_dir='cwd', search=False):
+    def __init__(self, file, work_dir='cwd'):
         self.ar_file = file
         self.work_dir = os.getcwd() if work_dir == 'cwd' else work_dir
 
-        if mode == 'extract':
-            self.extract(search)
-        else:
-            self.load(file)
-
-    def extract(self, search):
-        self.run_dmffdot(search)
-        self.fits_file = self.ar_file.replace('.ar', '.px')
+        self.load(file)
 
     def load(self, fits_path):
-        from astropy.io import fits
-
         self.hdul = fits.open(fits_path)
 
     def get_time_phase(self):
@@ -81,18 +72,6 @@ class ARProcessor:
 
     def get_SNR(self):
         return self.extract_and_convert("S/N")
-    
 
-    def run_dmffdot(self, search):
-        if search:
-            command = ["dmffdot", "-f", self.ar_file, "--saveimage"]
-        else:
-            command = ["dmffdot", "-f", self.ar_file, "--saveimage", "--nosearch"]
-
-        print("Running command:", " ".join(command))
-
-        subprocess.run(command, cwd=self.work_dir) 
-
-        print("Run complete")
         
 

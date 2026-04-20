@@ -4,7 +4,7 @@ import argparse
 import subprocess
 from pathlib import Path
 
-from nullsar_tools import parse_JSON, rsync, print_exe
+from TOOLS_io import parse_JSON, rsync, print_exe
 
 
 class FiltoolProcess:
@@ -19,7 +19,7 @@ class FiltoolProcess:
         self.tag = tag
 
     def transfer_data(self):
-        files_dir = f'{self.out_dir}/PROCESSING/{self.tag}/01_FILES'
+        files_dir = f'{self.out_dir}/{self.tag}/01_FILES'
 
         with open(f'{files_dir}/files.txt') as f:
             self.fb = [line.strip() for line in f if line.strip()]
@@ -43,14 +43,14 @@ class FiltoolProcess:
         subprocess.run(cmd, shell=True)
 
     def transfer_products(self):
-        results_dir = f'{self.out_dir}/PROCESSING/{self.tag}/01_FILES'
+        results_dir = f'{self.out_dir}/{self.tag}/01_FILES'
 
-        data_product = glob.glob(f'{self.work_dir}/*_FILTOOL*.fil')[0]
+        data_product = glob.glob(f'{self.work_dir}/{self.tag}_FILTOOL*.fil')[0]
         rsync(data_product, results_dir)
 
     def process(self, threads):
 
-        check_fb = glob.glob(f'{self.out_dir}/PROCESSING/{self.tag}/01_FILES/*_FILTOOL*.fil')
+        check_fb = glob.glob(f'{self.out_dir}/{self.tag}/01_FILES/{self.tag}_FILTOOL*.fil')
         if check_fb:
             print_exe('Filterbank already FILTOOLED.')
         else:

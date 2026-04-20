@@ -1,10 +1,10 @@
-import sys, os
+import os
 import argparse
 from collections import defaultdict
 
-from nullsar_tools import parse_JSON
+from TOOLS_io import parse_JSON
 
-
+    
 class Setup:
     def __init__(self, processing_args, filterbanks, out_dir, work_dir):
 
@@ -28,22 +28,24 @@ class Setup:
         return parsed
 
     def create_dir(self):
-        os.makedirs(f'{self.out_dir}/PROCESSING', exist_ok=True)
-        os.makedirs(f'{self.out_dir}/SETUP', exist_ok=True)
 
         for tag in self.fb.keys():
-            os.makedirs(f'{self.out_dir}/PROCESSING/{tag}', exist_ok=True)
-            os.makedirs(f'{self.out_dir}/PROCESSING/{tag}/01_FILES', exist_ok=True)
+            os.makedirs(f'{self.out_dir}/{tag}', exist_ok=True)
+            os.makedirs(f'{self.out_dir}/{tag}/01_FILES', exist_ok=True)
+            os.makedirs(f'{self.out_dir}/{tag}/02_INIT', exist_ok=True)
+            os.makedirs(f'{self.out_dir}/{tag}/03_OPT', exist_ok=True)
+            os.makedirs(f'{self.out_dir}/{tag}/04_CONFIRM', exist_ok=True)
+
 
     def create_tag_file(self):
-        for loc in [self.work_dir, f'{self.out_dir}/SETUP']:
+        for loc in [self.work_dir]:
             with open(f'{loc}/tags.txt', 'w') as f:
                 for tag in sorted(self.fb.keys()):
                     f.write(tag + "\n")
 
     def create_fb_list(self):
         for tag in self.fb.keys():
-            with open(f'{self.out_dir}/PROCESSING/{tag}/01_FILES/files.txt', 'w') as f:
+            with open(f'{self.out_dir}/{tag}/01_FILES/files.txt', 'w') as f:
                 for fb in self.fb[tag]:
                     f.write(fb + "\n")
 
