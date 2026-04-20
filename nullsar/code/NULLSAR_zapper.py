@@ -47,7 +47,7 @@ class NullerProcess:
             for par_file  in list(self.processing_args['par_files']):
                 psr_ID = Path(par_file).stem
                 fits_path =  f'{self.processing_dir}/02_INIT/FOLDS/{psr_ID}_mode_INIT.fits'
-                archive = ARProcessor(fits_path, mode='load')
+                archive = ARProcessor(fits_path)
                 SNR = archive.get_SNR()
                 self.SNR_record[psr_ID] = {"SNR": SNR}
 
@@ -106,15 +106,15 @@ class NullerProcess:
             psr_ID = Path(par_file).stem
             if self.mode == 'INIT':
                 fits_path = f'{self.processing_dir}/02_INIT/FOLDS/{psr_ID}_mode_INIT.fits'
-                archive_INIT = ARProcessor(fits_path, mode='load')
+                archive_INIT = ARProcessor(fits_path)
                 self.parse_archive(psr_ID, archive_INIT, archive_INIT, params_path)
 
             if self.mode == 'NULL':
                 fits_path_INIT = f'{self.processing_dir}/02_INIT/FOLDS/{psr_ID}_mode_INIT.fits'
                 fits_path_OPT = f'{self.processing_dir}/03_OPT/FOLDS/{psr_ID}_mode_OPTIMISE.fits'
 
-                archive_INIT = ARProcessor(fits_path_INIT, mode='load')
-                archive_OPT = ARProcessor(fits_path_OPT, mode='load')
+                archive_INIT = ARProcessor(fits_path_INIT)
+                archive_OPT = ARProcessor(fits_path_OPT)
 
                 self.parse_archive(psr_ID, archive_INIT, archive_OPT, params_path)
 
