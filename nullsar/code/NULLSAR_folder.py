@@ -172,29 +172,23 @@ class PulsarxParFolder:
         for par_file in self.processing_args['par_files']:
             psr_id = Path(par_file).stem
             tmp_cwd = f'{self.work_dir}/process_{psr_id}'
+
+            if self.mode == 'INIT':
+                files_dir = f'{self.processing_dir}/02_INIT/'
+            elif self.mode == 'OPTIMISE':
+                files_dir = f'{self.processing_dir}/03_OPT/'
+            else:
+                files_dir = f'{self.processing_dir}/04_CONFIRM/'
+
+            folds_dir = f'{files_dir}/FOLDS'
             png_path = glob.glob(f'{tmp_cwd}/*.png')
             if png_path:
-                if self.mode == 'INIT':
-                    files_dir = f'{self.processing_dir}/02_INIT/'
-                    folds_dir = f'{files_dir}/FOLDS'
-                    os.makedirs(folds_dir, exist_ok=True)
-
-                    fits_path = glob.glob(f'{tmp_cwd}/*.px')
-                    rsync(fits_path[0], f"{folds_dir}/{psr_id}_mode_{self.mode}.fits")
-
-                elif self.mode == 'OPTIMISE':
-                    files_dir = f'{self.processing_dir}/03_OPT/'
-                    folds_dir = f'{files_dir}/FOLDS'
-                    os.makedirs(folds_dir, exist_ok=True)
-
-                    fits_path = glob.glob(f'{tmp_cwd}/*.px')
-                    rsync(fits_path[0], f"{folds_dir}/{psr_id}_mode_{self.mode}.fits")
-                else:
-                    files_dir = f'{self.processing_dir}/04_CONFIRM/'
-                    folds_dir = f'{files_dir}/FOLDS'
-                    os.makedirs(folds_dir, exist_ok=True)
-
                 rsync(png_path[0], f"{folds_dir}/{psr_id}_mode_{self.mode}.png")
+
+            fits_path = glob.glob(f'{tmp_cwd}/*.px')
+            if fits_path:
+                rsync(fits_path[0], f"{folds_dir}/{psr_id}_mode_{self.mode}.fits")
+
 
         if self.mode == 'CONFIRM':
             files_dir = f'{self.processing_dir}/01_FILES'

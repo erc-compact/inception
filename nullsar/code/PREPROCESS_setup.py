@@ -32,9 +32,17 @@ class Setup:
         for tag in self.fb.keys():
             os.makedirs(f'{self.out_dir}/{tag}', exist_ok=True)
             os.makedirs(f'{self.out_dir}/{tag}/01_FILES', exist_ok=True)
+
             os.makedirs(f'{self.out_dir}/{tag}/02_INIT', exist_ok=True)
+            os.makedirs(f'{self.out_dir}/{tag}/02_INIT/FOLDS', exist_ok=True)
+            os.makedirs(f'{self.out_dir}/{tag}/02_INIT/MODELS', exist_ok=True)
+
             os.makedirs(f'{self.out_dir}/{tag}/03_OPT', exist_ok=True)
+            os.makedirs(f'{self.out_dir}/{tag}/03_OPT/FOLDS', exist_ok=True)
+            os.makedirs(f'{self.out_dir}/{tag}/03_OPT/MODELS', exist_ok=True)
+
             os.makedirs(f'{self.out_dir}/{tag}/04_CONFIRM', exist_ok=True)
+            os.makedirs(f'{self.out_dir}/{tag}/04_CONFIRM/FOLDS', exist_ok=True)
 
 
     def create_tag_file(self):

@@ -1,7 +1,10 @@
 import numpy as np
 from scipy.stats import norm
+import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 from scipy.signal import savgol_filter
+from scipy.interpolate import PchipInterpolator
+
 
 
 def profile(t, phase, sigma, Amp):
@@ -61,6 +64,10 @@ def get_IP_interp(intensity_profile):
     return out[0], max_ind, SNR
 
 
+def fit_f(t, theta0, f0, f1, f2, f3):
+    return theta0 + f0*t + (1/2)*f1*t**2 + (1/6)*f2*t**3 + (1/24)*f3*t**4
+
+
 def fit_time_phase(time_phase, intensity_profile, obs_len):
 
     profile_pars, phase_corr, SNR = get_IP_interp(intensity_profile)
@@ -86,10 +93,6 @@ def fit_time_phase(time_phase, intensity_profile, obs_len):
         fit_err =np.sqrt(np.diag(out[1]))[0]
         subint_err = (np.std(time_phase_arr-fit_phase(phase_arr, *out[0]))/(1-out[0][2]))**2
         err.append(np.sqrt(fit_err**2 + subint_err**2))
-
-
-    def fit_f(t, theta0, f0, f1, f2, f3):
-        return theta0 + f0*t + (1/2)*f1*t**2 + (1/6)*f2*t**3 + (1/24)*f3*t**4
 
     dt = obs_len / time_nbins
     time = (np.arange(time_nbins) + 0.5) * dt - obs_len/2
@@ -127,6 +130,111 @@ def fit_phase_offset(intensity_profile_OPT, intensity_profile_INIT):
     phase_offset = out[0][3]-out[0][2]
     SNR_scale = np.abs(out[0][0]/out[0][1])
     
-    return phase_offset, SNR_scale
+    return phase_offset, SNR_scale, out
+
+
+def plot_OPT(save_path, archive_INIT, archive_OPT, fit_params):
+
+    intensity_profile_INIT = archive_INIT.get_intensity_prof()
+    intensity_profile_OPT = archive_OPT.get_intensity_prof()
+
+    profile_pars, _, _ = get_IP_interp(intensity_profile_INIT)
+
+    prof_nbins = len(intensity_profile_OPT)
+    phase = np.linspace(0, 1, prof_nbins)
+
+    def func_r(x, A1, A2, x1, x2, d):
+        g1 = profile_2((x-x1) % 1, *profile_pars)
+        g2 = profile_2((x-x2) % 1, *profile_pars)
+        return A1*g1 + A2*g2 + d
+
+    fig, ax = plt.subplots(figsize=(12, 8))
+    ax.plot(phase, intensity_profile_OPT)
+    ax.plot(phase, func_r(phase, *fit_params[0]), 'C1--')
+    ax.set_xlabel('Phase')
+
+    plt.savefig(save_path, dpi=200, bbox_inches="tight")
     
 
+def plot_INIT(save_path, archive_INIT, out):
+    fig = plt.figure(figsize=(12, 8))
+
+    gs = fig.add_gridspec(3, 3, height_ratios=[1, 2, 2], hspace=0.0, wspace=0.3)
+
+    axes = []
+    first_ax = fig.add_subplot(gs[0, 0])
+    axes.append([first_ax])
+
+    for j in range(1, 3):
+        ax = fig.add_subplot(gs[0, j], sharex=first_ax)
+        axes[0].append(ax)
+
+    for i in range(1, 3):
+        row = []
+        for j in range(3):
+            ax = fig.add_subplot(gs[i, j], sharex=first_ax)
+            row.append(ax)
+        axes.append(row)
+
+    for i in range(2):
+        for j in range(3):
+            axes[i][j].tick_params(labelbottom=False)
+
+    freq_deriv, phase_offset, time, time_amp, Tobs = out
+
+    IP = archive_INIT.get_intensity_prof()
+    TP = archive_INIT.get_time_phase()
+    FP = archive_INIT.get_freq_phase()
+    FP /= np.max(FP)
+
+    nchans = len(FP)
+    time_nbins = len(TP)
+    phase_bins = len(IP)
+
+    params, phase_corr, _ = get_IP_interp(IP)
+
+    prof2D, _ = scale_freq_phase(FP, IP)
+    prof2D /= np.max(prof2D)
+    prof2D = np.roll(prof2D, phase_bins//2+phase_corr, axis=1)
+
+    axes[1][0].imshow(FP, origin='lower', extent=[0, 1, 0, nchans], aspect='auto')
+    axes[1][1].imshow(prof2D, origin='lower', extent=[0, 1, 0, nchans], aspect='auto')
+    axes[1][2].imshow(FP-prof2D, origin='lower', extent=[0, 1, 0, nchans], aspect='auto')
+
+    phase_arr = np.linspace(0, 1, phase_bins)
+    axes[0][0].plot(phase_arr, IP)
+
+    phase_plot = np.linspace(0, 1, phase_bins*10)
+    axes[0][1].plot(phase_plot, np.roll(profile_2(phase_plot, *params), -10*(phase_bins//2-phase_corr)), 'C0-')
+    axes[0][1].plot(phase_plot, np.roll(profile(phase_plot, *params[:3]), -10*(phase_bins//2-phase_corr)), 'C3--', lw=1)
+    axes[0][1].plot(phase_plot, np.roll(profile(phase_plot, *params[3:]), -10*(phase_bins//2-phase_corr)), 'C3--', lw=1)
+
+    for i in range(3):
+        axes[0][i].set_ylabel('Intensity')
+        axes[1][i].set_ylabel('Channel number')
+        axes[2][i].set_ylabel('Time (s)')
+
+    for i in range(3):
+        axes[2][i].set_xlabel('Phase')
+        axes[2][i].set_xlabel('Phase')
+        axes[2][i].set_xlabel('Phase')
+
+    axes[0][0].set_title('Pulsar fold')
+    axes[0][1].set_title('Pulsar model')
+    axes[0][2].set_title('Theoretical residuals')
+
+    axes[2][0].imshow(TP, origin='lower', extent=[0, 1, 0, Tobs], aspect='auto')
+
+    dt = Tobs / time_nbins
+    time_tp = (np.arange(time_nbins) + 0.5) * dt - Tobs/2
+    phase_tp = fit_f(time_tp, -phase_offset, *(-np.array([*freq_deriv.values()])))
+    TP_model = np.zeros_like(TP)
+
+    time_interp = PchipInterpolator(time, time_amp, extrapolate=True)
+    for i in range(len(TP)):
+        TP_model[i] = np.roll(profile_2(phase_arr-phase_tp[i], *params), -(phase_bins//2-phase_corr)) * time_interp(time_tp[i]+Tobs/2)
+
+    axes[2][1].imshow(TP_model, origin='lower', extent=[0, 1, 0, Tobs], aspect='auto')
+    axes[2][2].imshow(TP/np.mean(TP) - TP_model/np.mean(TP_model), origin='lower', extent=[0, 1, 0, Tobs], aspect='auto')
+
+    plt.savefig(save_path, dpi=200, bbox_inches="tight")
