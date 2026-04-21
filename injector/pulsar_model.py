@@ -143,7 +143,7 @@ class PulsarModel:
         
 
     def get_light_curve(self, pulsar_pars):
-        LC_path = pulsar_pars['light_cuvre']
+        LC_path = pulsar_pars['light_curve']
         if LC_path:
             try:
                 data = np.load(LC_path)
