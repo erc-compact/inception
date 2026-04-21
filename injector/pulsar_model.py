@@ -7,7 +7,8 @@ from math import factorial
 from scipy.stats import norm
 import astropy.constants as const
 from sympy import lambdify, symbols
-from scipy.interpolate import interp1d, RegularGridInterpolator
+from scipy.signal import savgol_filter
+from scipy.interpolate import interp1d, RegularGridInterpolator, PchipInterpolator
 
 from .propagation_effects import PropagationEffects
 from .micro_structure import MicroStructure
@@ -31,6 +32,7 @@ class PulsarModel:
         self.get_spin_functions(pulsar_pars)
 
         self.spectra = self.get_spectra(pulsar_pars)
+        self.light_curve = self.get_light_curve(pulsar_pars)
         self.intrinsic_profile_chan = self.get_intrinsic_profile(pulsar_pars)
         self.micro_structure = pulsar_pars['micro_structure']
         self.prop_effect = PropagationEffects(self.obs, pulsar_pars, self.profile_length, self.period, self.spectra)
@@ -134,10 +136,31 @@ class PulsarModel:
             freq_max = np.max(self.obs.freq_arr) + abs(self.obs.df)/2
             freq_range = np.linspace(freq_min, freq_max, len(spectra_arr))
             spectra_interp = interp1d(freq_range, spectra_arr)
-            return lambda freq: spectra_interp(freq)/np.max(spectra_arr)
+            return lambda freq: spectra_interp(freq)/np.mean(np.abs(spectra_arr))
         else:
             spectral_index = pulsar_pars['spectral_index']
             return lambda freq: (freq/self.obs.f0)**float(spectral_index)
+        
+
+    def get_light_curve(self, pulsar_pars):
+        LC_path = pulsar_pars['light_cuvre']
+        if LC_path:
+            try:
+                data = np.load(LC_path)
+            except FileNotFoundError:
+                sys.exit(f'Unable to load {LC_path} numpy light curve for pulsar {self.ID}.')
+
+            if (not isinstance(data, np.ndarray)) or (data.ndim != 2) or (data.shape[0] != 2):
+                sys.exit(f'{LC_path} must be np.stack([time, LC]) with shape (2, N), got {getattr(data, "shape", None)}.')
+
+            time, LC = data
+            LC /= np.mean(np.abs(LC))
+            LC_smooth = savgol_filter(LC, window_length=11, polyorder=3)
+
+            LC_interp = PchipInterpolator(time, LC_smooth, extrapolate=True)
+            return LC_interp
+        else:
+            return lambda t: np.ones_like(t)
     
     @staticmethod
     def parse_profile(profile, pulse_i):
@@ -229,28 +252,24 @@ class PulsarModel:
         p0 = self.pulsar_pars.get('P0_SNR', self.period)
         n_pulse = self.obs.obs_len/p0
 
-        profile = self.pulsar_pars['profile']
-        if profile == 'test': 
-            spectra_sum = np.sum([self.intrinsic_profile_chan(0.5, chan) for chan in range(n_chan)], axis=0)  
-            Weq = 0.5 * np.sqrt(np.pi/np.log(2)) * self.pulsar_pars['duty_cycle']
+        nbins = self.profile_length
+        phase = np.linspace(0, 1, nbins)
 
-            numerator = self.obs.fb_std * np.sqrt(n_chan)
-            denominator = np.sqrt(Weq) * np.sqrt(n_pulse) * spectra_sum
+        intrinsic_profile_sum = np.sum([self.intrinsic_profile_chan(phase, chan) for chan in range(n_chan)], axis=0) 
+        profile_energy_scale = np.sum((intrinsic_profile_sum*n_pulse)**2)
 
-            self.SNR_scale =  self.SNR * numerator / denominator * beam_scale
+        N_subints = 2**10
+        dt_sub = self.obs.obs_len / N_subints
+        sub_times = (np.arange(N_subints) + 0.5) * dt_sub
+        LC = self.light_curve(sub_times)
+        LC /= np.mean(LC)
+        profile_energy_scale *= np.mean(LC**2)
 
-        else:
-            nbins = self.profile_length
-            phase = np.linspace(0, 1, nbins)
+        samples_per_bin =  nbins / (p0 / self.obs.dt)
+        noise_energy = self.obs.fb_std ** 2 * (n_pulse * n_chan) * samples_per_bin
+        snr = profile_energy_scale/noise_energy
 
-            intrinsic_profile_sum = np.sum([self.intrinsic_profile_chan(phase, chan) for chan in range(n_chan)], axis=0) 
-            profile_energy_scale = np.sum((intrinsic_profile_sum*n_pulse)**2)
-
-            samples_per_bin =  nbins / (p0 / self.obs.dt)
-            noise_energy = self.obs.fb_std ** 2 * (n_pulse * n_chan) * samples_per_bin
-            snr = profile_energy_scale/noise_energy
-
-            self.SNR_scale = self.SNR / np.sqrt(snr) * beam_scale
+        self.SNR_scale = self.SNR / np.sqrt(snr) * beam_scale
      
     def vectorise_observed_profile(self):
         phases = self.prop_effect.phase
@@ -300,7 +319,8 @@ class PulsarModel:
         bary_array = np.tile(bary_times, (len(self.obs.freq_arr),1)).T
 
         phase = self.polycos(phase_time) + self.get_phase(bary_array + DM_array)
-        return self.get_pulse(phase, freq_array)
+        LC = self.light_curve(timeseries)[:, None]
+        return self.get_pulse(phase, freq_array) * LC
         
     def generate_signal_python(self, n_samples, sample_start=0):
         timeseries = np.linspace(self.obs.dt*sample_start, self.obs.dt*(n_samples+sample_start-1), n_samples)
@@ -312,7 +332,8 @@ class PulsarModel:
         bary_array = np.tile(bary_times, (len(self.obs.freq_arr),1)).T
 
         phase_array = self.get_phase(bary_array + DM_array)
-        return self.get_pulse(phase_array, obs_freq_array)
+        LC = self.light_curve(timeseries)[:, None]
+        return self.get_pulse(phase_array, obs_freq_array) * LC
     
     def generate_signal_python_topo(self, n_samples, sample_start=0):
         timeseries = np.linspace(self.obs.dt*sample_start, self.obs.dt*(n_samples+sample_start-1), n_samples)
@@ -321,6 +342,7 @@ class PulsarModel:
         bary_array = np.tile(timeseries, (len(self.obs.freq_arr),1)).T
 
         phase_array = self.get_phase(bary_array + DM_array)
-        return self.get_pulse(phase_array, obs_freq_array)
+        LC = self.light_curve(timeseries)[:, None]
+        return self.get_pulse(phase_array, obs_freq_array) * LC
 
    

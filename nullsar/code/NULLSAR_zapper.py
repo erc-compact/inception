@@ -38,6 +38,8 @@ class NullerProcess:
         self.extract_archive()
         self.create_injection_plan()
 
+        self.gen_plots()
+
     def check_SNR(self):
         SNR_limit = self.processing_args.get('SNR_limit', 15)
         snr_path = f'{self.processing_dir}/02_INIT/INIT_fold_params.json'
@@ -125,12 +127,13 @@ class NullerProcess:
                         self.ar_data[key] = value
                 json.dump(self.ar_data, file, indent=4)
 
-    def parse_archive(self, psr_ID, archive_INIT, archive_OPT, ar_path):
+    def parse_archive(self, psr_ID, archive_INIT, archive_OPT, params_path):
 
         fb = FilterbankReader(self.new_fb_path, load_fb_stats=(128, 6))
         obs_len = fb.dt * fb.n_samples
 
-        profile_path = f'{self.processing_dir}/02_INIT/profile_{psr_ID}.npy'        
+        profile_path = f'{self.processing_dir}/02_INIT/profile_{psr_ID}.npy'
+        flux_time_path = f'{self.processing_dir}/02_INIT/light_curve_{psr_ID}.npy'        
         if self.mode == 'INIT':
             SNR = archive_INIT.get_SNR()
             DM = archive_INIT.get_DM()
@@ -138,14 +141,15 @@ class NullerProcess:
             intensity_profile = archive_INIT.get_intensity_prof()
             
             time_phase = archive_INIT.get_time_phase()
-            freq_deriv, phase_offset, phase_shift, SNR_fit = fit_time_phase(time_phase, intensity_profile, obs_len)
+            freq_deriv, phase_offset, phase_shift, SNR_fit, time, time_amp = fit_time_phase(time_phase, intensity_profile, obs_len)
+
+            np.save(flux_time_path, np.stack([time, time_amp]))
             
             freq_phase_scaled = scale_freq_phase(freq_phase, intensity_profile)
-            print(SNR, SNR_fit)
             np.save(profile_path, freq_phase_scaled)
 
         elif self.mode == "NULL":
-            init_ar_data =  parse_JSON(ar_path)
+            init_ar_data =  parse_JSON(params_path)
             SNR = init_ar_data[psr_ID]['SNR']
             DM = init_ar_data[psr_ID]['DM']
             freq_deriv = init_ar_data[psr_ID]['FX']
@@ -161,6 +165,7 @@ class NullerProcess:
         self.ar_data[psr_ID] = {"SNR": SNR,  
                                 "DM": DM,
                                 "phase_offset": phase_offset-phase_shift, 
+                                "light_curve": flux_time_path,
                                 "profile": profile_path,
                                 "FX": freq_deriv}
             
@@ -191,6 +196,7 @@ class NullerProcess:
                 "SNR": -self.ar_data[psr_ID]['SNR'],
 
                 "profile": self.ar_data[psr_ID]['profile'],
+                "light_curve": self.ar_data[psr_ID]['light_curve'],
                 "polycos": par_file
             }
 
@@ -202,6 +208,9 @@ class NullerProcess:
         self.inject_file = f"{self.work_dir}/NULLSAR_inject_file_mode_{self.mode}.json"
         with open(self.inject_file, 'w') as file:
             json.dump(injection_plan, file, indent=4)
+
+    def gen_plots(self):
+        pass
 
     def run_injector(self, ncpus):
         gulp_size = self.processing_args['injection']['gulp_size_GB']
