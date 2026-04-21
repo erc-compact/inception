@@ -53,7 +53,7 @@ def get_IP_interp(intensity_profile):
     phase = np.linspace(0, 1, len(true_prof))
 
     out = curve_fit(profile_2, phase, true_prof, p0=[0.49, 0.05, 0.5, 0.51, 0.05, 0.5], 
-                    bounds=[[0, 0, 0, 0, 0, 0], [1, 1, 1, 1, 1, 1]])
+                    bounds=[[0, 0.01, 0, 0, 0.01, 0], [1, 1, 1, 1, 1, 1]])
 
     noise = true_prof-profile_2(phase, *out[0])
     SNR = np.sqrt(np.sum((true_prof-np.mean(noise))**2)/np.std(noise)**2)
