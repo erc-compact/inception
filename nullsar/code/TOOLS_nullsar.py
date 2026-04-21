@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.stats import norm
 from scipy.optimize import curve_fit
+from scipy.signal import savgol_filter
 
 
 def profile(t, phase, sigma, Amp):
@@ -100,7 +101,9 @@ def fit_time_phase(time_phase, intensity_profile, obs_len):
     for i, fx in enumerate(out[0][1:]):
         freq_deriv[f'F{i}'] = -fx
 
-    return freq_deriv, phase_offset, phase_shift, SNR, time+obs_len/2, time_amp
+    time_amp_smooth = savgol_filter(time_amp, window_length=11, polyorder=3)
+
+    return freq_deriv, phase_offset, phase_shift, SNR, time+obs_len/2, time_amp_smooth
 
 
 def fit_phase_offset(intensity_profile_OPT, intensity_profile_INIT):
