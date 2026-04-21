@@ -142,7 +142,7 @@ class PulsarxParFolder:
         else:
             search = ''
 
-        fb = FilterbankReader(self.data)
+        fb = FilterbankReader(self.data, load_fb_stats=(128, 6))
         t_subint = fb.obs_len / fold_args['n_subint']
 
         tmp_cwd = f'{self.work_dir}/process_{psr_id}'
