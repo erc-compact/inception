@@ -155,9 +155,8 @@ class PulsarModel:
 
             time, LC = data
             LC /= np.mean(np.abs(LC))
-            LC_smooth = savgol_filter(LC, window_length=11, polyorder=3)
 
-            LC_interp = PchipInterpolator(time, LC_smooth, extrapolate=True)
+            LC_interp = PchipInterpolator(time, LC, extrapolate=True)
             return LC_interp
         else:
             return lambda t: np.ones_like(t)
