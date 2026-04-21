@@ -134,7 +134,8 @@ class PulsarxParFolder:
 
 
         if self.mode == 'INIT':
-            search = '--nof0search --nof1search' 
+            # search = '--nof0search --nof1search' 
+            search = '--nosearch'
         elif self.mode == 'OPTIMISE':
             search = '--nosearch'
             par_file = self.adjust_par_file(par_file, psr_id)
