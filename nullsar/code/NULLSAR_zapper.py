@@ -154,6 +154,13 @@ class NullerProcess:
             freq_phase_scaled = scale_freq_phase(freq_phase, intensity_profile)
             np.save(profile_path, freq_phase_scaled)
 
+            self.ar_data[psr_ID] = {"SNR": SNR,  
+                                    "DM": DM,
+                                    "phase_offset": phase_offset-phase_shift, 
+                                    "light_curve": flux_time_path,
+                                    "profile": profile_path,
+                                    "FX": freq_deriv}
+
             return freq_deriv, phase_offset, time, time_amp, obs_len
 
         elif self.mode == "NULL":
@@ -166,18 +173,17 @@ class NullerProcess:
             intensity_profile_OPT = archive_OPT.get_intensity_prof()
 
             phase_offset, SNR_scale, fit_params = fit_phase_offset(intensity_profile_OPT, intensity_profile_INIT)
-            phase_shift = 0
-            SNR *= SNR_scale
-            phase_offset += init_ar_data[psr_ID]['phase_offset']
 
-            return fit_params
-
-        self.ar_data[psr_ID] = {"SNR": SNR,  
+            self.ar_data[psr_ID] = {"SNR": SNR*SNR_scale,  
                                 "DM": DM,
-                                "phase_offset": phase_offset-phase_shift, 
+                                "phase_offset": phase_offset+init_ar_data[psr_ID]['phase_offset'], 
                                 "light_curve": flux_time_path,
                                 "profile": profile_path,
                                 "FX": freq_deriv}
+
+            return fit_params
+
+        
             
     def create_injection_plan(self):
         injection_plan = {

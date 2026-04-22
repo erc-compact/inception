@@ -193,7 +193,7 @@ def plot_INIT(save_path, archive_INIT, out):
 
     params, phase_corr, _ = get_IP_interp(IP)
 
-    prof2D, _ = scale_freq_phase(FP, IP)
+    prof2D = scale_freq_phase(FP, IP)
     prof2D /= np.max(prof2D)
     prof2D = np.roll(prof2D, phase_bins//2+phase_corr, axis=1)
 
