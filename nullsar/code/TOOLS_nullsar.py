@@ -149,9 +149,10 @@ def plot_OPT(save_path, archive_INIT, archive_OPT, fit_params):
         return A1*g1 + A2*g2 + d
 
     fig, ax = plt.subplots(figsize=(12, 8))
-    ax.plot(phase, np.roll(intensity_profile_OPT, len(intensity_profile_OPT)//2+phase_corr, axis=1))
+    ax.plot(phase, np.roll(intensity_profile_OPT, len(intensity_profile_OPT)//2+phase_corr))
     ax.plot(phase, func_r(phase, *fit_params[0]), 'C1--')
     ax.set_xlabel('Phase')
+    ax.set_ylabel('Intensity')
 
     plt.savefig(save_path, dpi=200, bbox_inches="tight")
     

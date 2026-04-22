@@ -251,7 +251,7 @@ def gen_plot(psr_ID, processing_dir):
             aspect='auto',
             extent=[0, 1, 0, nchans]
         )
-        axes[1, col].set_ylabel('Channel')
+        axes[1, col].set_ylabel('Channel number')
 
         axes[2, col].imshow(
             TP,
@@ -259,7 +259,7 @@ def gen_plot(psr_ID, processing_dir):
             aspect='auto',
             extent=[0, 1, 0, Tobs]
         )
-        axes[2, col].set_ylabel('Time')
+        axes[2, col].set_ylabel('Time (s)')
         axes[2, col].set_xlabel('Phase')
 
     save_path = f'{processing_dir}/04_CONFIRM/CONFIRM_{psr_ID}.png'

@@ -223,6 +223,7 @@ class NullerProcess:
         with open(self.inject_file, 'w') as file:
             json.dump(injection_plan, file, indent=4)
 
+
     def run_injector(self, ncpus):
         gulp_size = self.processing_args['injection']['gulp_size_GB']
         n_samples = self.processing_args['injection']['stats_samples']
