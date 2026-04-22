@@ -6,6 +6,10 @@ import subprocess
 from pathlib import Path
 from multiprocessing import Manager, Pool
 
+import numpy as np
+import matplotlib.pyplot as plt
+
+from TOOLS_ar import ARProcessor
 from TOOLS_io import parse_cand_file, parse_par_file, parse_JSON, rsync
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
@@ -202,6 +206,67 @@ class PulsarxParFolder:
                 init_fb = glob.glob(f'{files_dir}/*INIT.fil')
                 if init_fb:
                     os.remove(init_fb[0])
+
+            for par_file in self.processing_args['par_files']:
+                psr_id = Path(par_file).stem
+                tmp_cwd = f'{self.work_dir}/process_{psr_id}'
+                fits_path = glob.glob(f'{tmp_cwd}/*.px')
+                if fits_path:
+                    gen_plot(psr_id, self.processing_dir)
+
+
+def gen_plot(psr_ID, processing_dir):
+    fits_path_INIT = f'{processing_dir}/02_INIT/FOLDS/{psr_ID}_mode_INIT.fits'
+    fits_path_NULL = f'{processing_dir}/04_CONFIRM/FOLDS/{psr_ID}_mode_CONFIRM.fits'
+
+    archive_INIT = ARProcessor(fits_path_INIT)
+    archive_NULL = ARProcessor(fits_path_NULL)
+
+    archives = [archive_INIT, archive_NULL]
+    titles = ['INIT', 'NULL']
+
+    fig, axes = plt.subplots(3, 2, figsize=(10, 8), sharex='col')
+
+    for col, (archive, title) in enumerate(zip(archives, titles)):
+
+        IP = archive.get_intensity_prof()
+        FP = archive.get_freq_phase()
+        TP = archive.get_time_phase()
+
+        if np.max(FP) != 0:
+            FP = FP / np.max(FP)
+
+        phase_IP = np.linspace(0, 1, len(IP))
+
+        nchans = FP.shape[0]
+        Tobs = TP.shape[0]
+
+        axes[0, col].plot(phase_IP, IP)
+        axes[0, col].set_title(f'{title}, S/N: {archive.get_SNR():.2f}')
+        axes[0, col].set_ylabel('Intensity')
+
+        axes[1, col].imshow(
+            FP,
+            origin='lower',
+            aspect='auto',
+            extent=[0, 1, 0, nchans]
+        )
+        axes[1, col].set_ylabel('Channel')
+
+        axes[2, col].imshow(
+            TP,
+            origin='lower',
+            aspect='auto',
+            extent=[0, 1, 0, Tobs]
+        )
+        axes[2, col].set_ylabel('Time')
+        axes[2, col].set_xlabel('Phase')
+
+    save_path = f'{processing_dir}/04_CONFIRM/CONFIRM_{psr_ID}.png'
+    plt.savefig(save_path, dpi=200, bbox_inches='tight')
+
+
+
 
 
 if __name__=='__main__':

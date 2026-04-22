@@ -138,7 +138,7 @@ def plot_OPT(save_path, archive_INIT, archive_OPT, fit_params):
     intensity_profile_INIT = archive_INIT.get_intensity_prof()
     intensity_profile_OPT = archive_OPT.get_intensity_prof()
 
-    profile_pars, _, _ = get_IP_interp(intensity_profile_INIT)
+    profile_pars, phase_corr, _ = get_IP_interp(intensity_profile_INIT)
 
     prof_nbins = len(intensity_profile_OPT)
     phase = np.linspace(0, 1, prof_nbins)
@@ -149,7 +149,7 @@ def plot_OPT(save_path, archive_INIT, archive_OPT, fit_params):
         return A1*g1 + A2*g2 + d
 
     fig, ax = plt.subplots(figsize=(12, 8))
-    ax.plot(phase, intensity_profile_OPT)
+    ax.plot(phase, np.roll(intensity_profile_OPT, len(intensity_profile_OPT)//2+phase_corr, axis=1))
     ax.plot(phase, func_r(phase, *fit_params[0]), 'C1--')
     ax.set_xlabel('Phase')
 
