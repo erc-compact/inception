@@ -38,8 +38,6 @@ class NullerProcess:
         self.extract_archive()
         self.create_injection_plan()
 
-        self.gen_plots()
-
     def check_SNR(self):
         SNR_limit = self.processing_args.get('SNR_limit', 15)
         snr_path = f'{self.processing_dir}/02_INIT/INIT_fold_params.json'
