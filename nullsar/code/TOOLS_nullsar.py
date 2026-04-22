@@ -209,6 +209,8 @@ def plot_INIT(save_path, archive_INIT, out):
     axes[0][1].plot(phase_plot, np.roll(profile(phase_plot, *params[:3]), -10*(phase_bins//2-phase_corr)), 'C3--', lw=1)
     axes[0][1].plot(phase_plot, np.roll(profile(phase_plot, *params[3:]), -10*(phase_bins//2-phase_corr)), 'C3--', lw=1)
 
+    axes[0][2].plot(phase_arr, IP-np.roll(profile_2(phase_arr, *params), phase_corr-phase_bins//2), 'C2-')
+
     for i in range(3):
         axes[0][i].set_ylabel('Intensity')
         axes[1][i].set_ylabel('Channel number')
