@@ -32,15 +32,16 @@ def scale_freq_phase(freq_phase, intensity_profile):
 
     profile_s = []
     for i in np.arange(nchans):
-        time_phase_arr = freq_phase[i]  
+        freq_phase_arr = freq_phase[i]  
 
-        out = curve_fit(fit_phase, phase_arr, time_phase_arr, p0=[1e-6, 1, 1, 0], bounds =[[-profile_pars[1], 0, 0, -np.inf], [profile_pars[1], np.inf, np.inf, np.inf]])
+        out = curve_fit(fit_phase, phase_arr, freq_phase_arr, p0=[1e-6, 1, 1, 0], bounds =[[-profile_pars[1], 0, 0, -np.inf], [profile_pars[1], np.inf, np.inf, np.inf]])
         
         updated_pars = profile_pars.copy()
         updated_pars[2] = out[0][1]
         updated_pars[5] = out[0][2]
         spectra = profile_2(phase_arr-out[0][0], *updated_pars)
-        profile_s.append(spectra)
+        sigma = np.std(freq_phase_arr-spectra)
+        profile_s.append(spectra/sigma)
 
     return np.array(profile_s)
 
