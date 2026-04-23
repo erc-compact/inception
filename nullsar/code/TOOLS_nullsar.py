@@ -185,7 +185,7 @@ def plot_OPT(save_path, archive_INIT, archive_OPT, fit_params):
         nchans = FP.shape[0]
         Tobs = TP.shape[0]
 
-        axes[0][col].plot(phase, IP)
+        axes[0][col].plot(phase, np.roll(IP, len(IP)//2-phase_corr))
         axes[0][col].set_title(f'{title}, S/N: {archive.get_SNR():.2f}')
         axes[0][col].set_ylabel('Intensity')
 
@@ -206,11 +206,8 @@ def plot_OPT(save_path, archive_INIT, archive_OPT, fit_params):
         axes[2][col].set_ylabel('Time (s)')
         axes[2][col].set_xlabel('Phase')
 
-    
-    axes[0][1].plot(phase, np.roll(intensity_profile_OPT, len(intensity_profile_OPT)//2-phase_corr))
     axes[0][1].plot(phase, func_r(phase, *fit_params[0]), 'C1--')
-
-
+    
     plt.savefig(save_path, dpi=200, bbox_inches="tight")
 
     
