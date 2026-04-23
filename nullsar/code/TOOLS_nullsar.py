@@ -148,13 +148,71 @@ def plot_OPT(save_path, archive_INIT, archive_OPT, fit_params):
         g2 = profile_2((x-x2) % 1, *profile_pars)
         return A1*g1 + A2*g2 + d
 
-    fig, ax = plt.subplots(figsize=(12, 8))
-    ax.plot(phase, np.roll(intensity_profile_OPT, len(intensity_profile_OPT)//2-phase_corr))
-    ax.plot(phase, func_r(phase, *fit_params[0]), 'C1--')
-    ax.set_xlabel('Phase')
-    ax.set_ylabel('Intensity')
+    archives = [archive_INIT, archive_OPT]
+    titles = ['INIT', 'OPT']
+
+    fig = plt.figure(figsize=(8, 8))
+    gs = fig.add_gridspec(3, 2, hspace=0.0, wspace=0.25)
+
+    axes = []
+    first_ax = fig.add_subplot(gs[0, 0])
+    axes.append([first_ax])
+
+    for j in range(1, 2):
+        ax = fig.add_subplot(gs[0, j], sharex=first_ax)
+        axes[0].append(ax)
+
+    for i in range(1, 3):
+        row = []
+        for j in range(2):
+            ax = fig.add_subplot(gs[i, j], sharex=first_ax)
+            row.append(ax)
+        axes.append(row)
+
+    for i in range(2):
+        for j in range(2):
+            axes[i][j].tick_params(labelbottom=False)
+
+    for col, (archive, title) in enumerate(zip(archives, titles)):
+        IP = archive.get_intensity_prof()
+        FP = archive.get_freq_phase()
+        TP = archive.get_time_phase()
+
+        if np.max(FP) != 0:
+            FP = FP / np.max(FP)
+
+        phase = np.linspace(0, 1, len(IP))
+        nchans = FP.shape[0]
+        Tobs = TP.shape[0]
+
+        axes[0][col].plot(phase, IP)
+        axes[0][col].set_title(f'{title}, S/N: {archive.get_SNR():.2f}')
+        axes[0][col].set_ylabel('Intensity')
+
+        axes[1][col].imshow(
+            FP,
+            origin='lower',
+            extent=[0, 1, 0, nchans],
+            aspect='auto'
+        )
+        axes[1][col].set_ylabel('Channel number')
+
+        axes[2][col].imshow(
+            TP,
+            origin='lower',
+            extent=[0, 1, 0, Tobs],
+            aspect='auto'
+        )
+        axes[2][col].set_ylabel('Time (s)')
+        axes[2][col].set_xlabel('Phase')
+
+    
+    axes[0][1].plot(phase, np.roll(intensity_profile_OPT, len(intensity_profile_OPT)//2-phase_corr))
+    axes[0][1].plot(phase, func_r(phase, *fit_params[0]), 'C1--')
+
 
     plt.savefig(save_path, dpi=200, bbox_inches="tight")
+
     
 
 def plot_INIT(save_path, archive_INIT, out):

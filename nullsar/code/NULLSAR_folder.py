@@ -215,6 +215,7 @@ class PulsarxParFolder:
                     gen_plot(psr_id, self.processing_dir)
 
 
+
 def gen_plot(psr_ID, processing_dir):
     fits_path_INIT = f'{processing_dir}/02_INIT/FOLDS/{psr_ID}_mode_INIT.fits'
     fits_path_NULL = f'{processing_dir}/04_CONFIRM/FOLDS/{psr_ID}_mode_CONFIRM.fits'
@@ -223,12 +224,32 @@ def gen_plot(psr_ID, processing_dir):
     archive_NULL = ARProcessor(fits_path_NULL)
 
     archives = [archive_INIT, archive_NULL]
-    titles = ['INIT', 'NULL']
+    titles = ['INIT', 'CONFIRM']
 
-    fig, axes = plt.subplots(3, 2, figsize=(10, 8), sharex='col')
+    fig = plt.figure(figsize=(8, 8))
+
+    gs = fig.add_gridspec(3, 2, hspace=0.0, wspace=0.25)
+
+    axes = []
+    first_ax = fig.add_subplot(gs[0, 0])
+    axes.append([first_ax])
+
+    for j in range(1, 2):
+        ax = fig.add_subplot(gs[0, j], sharex=first_ax)
+        axes[0].append(ax)
+
+    for i in range(1, 3):
+        row = []
+        for j in range(2):
+            ax = fig.add_subplot(gs[i, j], sharex=first_ax)
+            row.append(ax)
+        axes.append(row)
+
+    for i in range(2):
+        for j in range(2):
+            axes[i][j].tick_params(labelbottom=False)
 
     for col, (archive, title) in enumerate(zip(archives, titles)):
-
         IP = archive.get_intensity_prof()
         FP = archive.get_freq_phase()
         TP = archive.get_time_phase()
@@ -236,35 +257,33 @@ def gen_plot(psr_ID, processing_dir):
         if np.max(FP) != 0:
             FP = FP / np.max(FP)
 
-        phase_IP = np.linspace(0, 1, len(IP))
-
+        phase = np.linspace(0, 1, len(IP))
         nchans = FP.shape[0]
         Tobs = TP.shape[0]
 
-        axes[0, col].plot(phase_IP, IP)
-        axes[0, col].set_title(f'{title}, S/N: {archive.get_SNR():.2f}')
-        axes[0, col].set_ylabel('Intensity')
+        axes[0][col].plot(phase, IP)
+        axes[0][col].set_title(f'{title}, S/N: {archive.get_SNR():.2f}')
+        axes[0][col].set_ylabel('Intensity')
 
-        axes[1, col].imshow(
+        axes[1][col].imshow(
             FP,
             origin='lower',
-            aspect='auto',
-            extent=[0, 1, 0, nchans]
+            extent=[0, 1, 0, nchans],
+            aspect='auto'
         )
-        axes[1, col].set_ylabel('Channel number')
+        axes[1][col].set_ylabel('Channel number')
 
-        axes[2, col].imshow(
+        axes[2][col].imshow(
             TP,
             origin='lower',
-            aspect='auto',
-            extent=[0, 1, 0, Tobs]
+            extent=[0, 1, 0, Tobs],
+            aspect='auto'
         )
-        axes[2, col].set_ylabel('Time (s)')
-        axes[2, col].set_xlabel('Phase')
+        axes[2][col].set_ylabel('Time (s)')
+        axes[2][col].set_xlabel('Phase')
 
     save_path = f'{processing_dir}/04_CONFIRM/CONFIRM_{psr_ID}.png'
-    plt.savefig(save_path, dpi=200, bbox_inches='tight')
-
+    plt.savefig(save_path, dpi=200, bbox_inches="tight")
 
 
 
