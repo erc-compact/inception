@@ -154,7 +154,7 @@ class NullerProcess:
 
             self.ar_data[psr_ID] = {"SNR": SNR,  
                                     "DM": DM,
-                                    "phase_offset": phase_offset-phase_shift, 
+                                    "phase_offset": phase_offset-phase_shift+1/3, 
                                     "light_curve": flux_time_path,
                                     "profile": profile_path,
                                     "FX": freq_deriv}
@@ -205,6 +205,7 @@ class NullerProcess:
                 "PEPOCH": 0.5,
                 "phase_offset": float(self.ar_data[psr_ID]['phase_offset']),
                 
+                "P0": 1/float(params['F0']),
                 "P0_SNR": 1/float(params['F0']),
                 "DM": self.ar_data[psr_ID]['DM'],
                 "SNR": -self.ar_data[psr_ID]['SNR'],
@@ -214,8 +215,8 @@ class NullerProcess:
                 "polycos": par_file
             }
 
-            for key, value in self.ar_data[psr_ID]['FX'].items():
-                psr_dict[key] = value
+            # for key, value in self.ar_data[psr_ID]['FX'].items():
+            #     psr_dict[key] = value
 
             injection_plan['pulsars'].append(psr_dict)
 

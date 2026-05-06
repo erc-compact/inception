@@ -65,8 +65,8 @@ def get_IP_interp(intensity_profile):
     return out[0], max_ind, SNR
 
 
-def fit_f(t, theta0, f0, f1, f2, f3):
-    return theta0 + f0*t + (1/2)*f1*t**2 + (1/6)*f2*t**3 + (1/24)*f3*t**4
+def fit_f(t, theta0, f0, f1):
+    return theta0 + f0*t + (1/2)*f1*t**2
 
 
 def fit_time_phase(time_phase, intensity_profile, obs_len):
@@ -97,7 +97,7 @@ def fit_time_phase(time_phase, intensity_profile, obs_len):
 
     dt = obs_len / time_nbins
     time = (np.arange(time_nbins) + 0.5) * dt - obs_len/2
-    out = curve_fit(fit_f, time, phase, sigma=np.array(err), p0=[1e-3,1e-6,1e-8,1e-10,1e-12])
+    out = curve_fit(fit_f, time, phase, sigma=np.array(err), p0=[1e-3,1e-6,1e-10])
     phase_offset = -out[0][0] #- (phase_arr[phase_corr] - phase_arr[prof_nbins//2])
     phase_shift = (phase_arr[phase_corr] - phase_arr[prof_nbins//2])
 

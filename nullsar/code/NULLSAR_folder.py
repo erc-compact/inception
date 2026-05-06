@@ -123,6 +123,13 @@ class PulsarxParFolder:
         init_ar_data = parse_JSON(f"{self.processing_dir}/02_INIT/INIT_fold_params.json")
         
         params['DM'] = init_ar_data[psr_id]['DM']
+
+        for key, value in init_ar_data[psr_id]['FX'].items():
+            if params.get(key):
+                params[key] += value
+            else:
+                params[key] = value
+
         new_par_file = f'{self.work_dir}/{psr_id}_new_parfile.par'
         with open(new_par_file, "w") as f:
             for key, value in params.items():
@@ -138,8 +145,7 @@ class PulsarxParFolder:
 
 
         if self.mode == 'INIT':
-            # search = '--nof0search --nof1search' 
-            search = '--nosearch'
+            search = '--nof0search --nof1search' 
         elif self.mode == 'OPTIMISE':
             search = '--nosearch'
             par_file = self.adjust_par_file(par_file, psr_id)
