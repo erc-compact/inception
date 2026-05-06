@@ -124,12 +124,6 @@ class PulsarxParFolder:
         
         params['DM'] = init_ar_data[psr_id]['DM']
 
-        for key, value in init_ar_data[psr_id]['FX'].items():
-            if params.get(key):
-                params[key] = float(params[key]) + value
-            else:
-                params[key] = value
-
         new_par_file = f'{self.work_dir}/{psr_id}_new_parfile.par'
         with open(new_par_file, "w") as f:
             for key, value in params.items():

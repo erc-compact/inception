@@ -181,7 +181,24 @@ class NullerProcess:
 
             return fit_params
 
+    def adjust_par_file(self, par_file, psr_id):
+        params = parse_par_file(par_file)
+        init_ar_data = parse_JSON(f"{self.processing_dir}/02_INIT/INIT_fold_params.json")
         
+        params['DM'] = init_ar_data[psr_id]['DM']
+
+        for key, value in init_ar_data[psr_id]['FX'].items():
+            if params.get(key):
+                params[key] = float(params[key]) + value
+            else:
+                params[key] = value
+
+        new_par_file = f'{self.work_dir}/{psr_id}_new_parfile.par'
+        with open(new_par_file, "w") as f:
+            for key, value in params.items():
+                f.write(f"{key} {value}\n")
+
+        return new_par_file
             
     def create_injection_plan(self):
         injection_plan = {
@@ -212,7 +229,7 @@ class NullerProcess:
 
                 "profile": self.ar_data[psr_ID]['profile'],
                 "light_curve": self.ar_data[psr_ID]['light_curve'],
-                "polycos": par_file
+                "polycos": self.adjust_par_file(par_file, psr_ID)
             }
 
             # for key, value in self.ar_data[psr_ID]['FX'].items():
