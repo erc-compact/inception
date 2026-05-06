@@ -74,8 +74,7 @@ class PulsarParParser:
     def dict_to_args(self, params):
         args_list = []
         for key, value in params.items():
-            args_list.append(f'--{key}')
-            args_list.append(str(value))
+            args_list.append(f'--{key}={value}')
         return args_list
     
     @staticmethod
