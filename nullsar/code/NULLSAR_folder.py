@@ -126,7 +126,7 @@ class PulsarxParFolder:
 
         for key, value in init_ar_data[psr_id]['FX'].items():
             if params.get(key):
-                params[key] += value
+                params[key] = float(params[key]) + value
             else:
                 params[key] = value
 
