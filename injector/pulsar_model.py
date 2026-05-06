@@ -113,8 +113,8 @@ class PulsarModel:
             self.phase_func = lambda t: phase_func_abs(t - self.accepoch, const.c.value) + phase_offset
 
         else:
-            if self.mode == 'pint':
-                freq_derivs['F0'] = 0
+            # if self.mode == 'pint':
+            #     freq_derivs['F0'] = 0
 
             phase_symbolic = sum([FX[n]*t**(n+1)/factorial(n+1) for n in range(n_freq)])
             phase_func_abs = lambdify(t, phase_symbolic.subs(freq_derivs))
