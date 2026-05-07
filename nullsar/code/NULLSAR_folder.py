@@ -144,7 +144,7 @@ class PulsarxParFolder:
             search = '--nosearch'
             par_file = self.adjust_par_file(par_file, psr_id)
         else:
-            search = ''
+            search = '--nosearch'
 
         fb = FilterbankReader(self.data, load_fb_stats=(128, 6))
         t_subint = fb.obs_len / fold_args['n_subint']

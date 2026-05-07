@@ -135,6 +135,19 @@ def fit_phase_offset(intensity_profile_OPT, intensity_profile_INIT):
     return phase_offset, SNR_scale, out
 
 
+def fit_subint_phase_offset(time_phase_OPT, intensity_profile_INIT):
+
+    phase_arr = []
+    snr_arr = []
+    for i, subint_i in enumerate(time_phase_OPT):
+        phase_offset, SNR_scale, out = fit_phase_offset(subint_i, intensity_profile_INIT)
+        phase_arr.append(phase_offset)
+        snr_arr.append(SNR_scale)
+    
+    time_amp_smooth = savgol_filter(snr_arr, window_length=11, polyorder=3)
+    return time_amp_smooth
+
+
 def plot_OPT(save_path, archive_INIT, archive_OPT, fit_params):
 
     intensity_profile_INIT = archive_INIT.get_intensity_prof()
