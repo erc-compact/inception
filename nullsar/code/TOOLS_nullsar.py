@@ -135,17 +135,113 @@ def fit_phase_offset(intensity_profile_OPT, intensity_profile_INIT):
     return phase_offset, SNR_scale, out
 
 
-def fit_subint_phase_offset(time_phase_OPT, intensity_profile_INIT):
+def fit_subint_phase_offset(time_phase_OPT, intensity_profile_INIT, phase_off):
 
-    phase_arr = []
+    def fit_subint(intensity_profile_OPT, func_r, phase_off):
+        prof_nbins = len(intensity_profile_OPT)
+        phase = np.linspace(0, 1, prof_nbins)
+
+        if np.std(intensity_profile_OPT) == 0:
+            return 1
+
+        intensity_profile_OPT -= np.min(intensity_profile_OPT)
+        intensity_profile_OPT /= np.max(intensity_profile_OPT)
+        intensity_profile_OPT = np.roll(intensity_profile_OPT, prof_nbins//2-np.argmax(intensity_profile_OPT))
+        
+        p0 = [0.5, -0.5, 0, phase_off, np.median(intensity_profile_OPT)]
+        bounds = [[0, -1, -0.4, -0.5, 0],[1, 0, 0.4, 0.5, 1]]
+        try:
+            out = curve_fit(func_r, phase, intensity_profile_OPT, p0=p0, bounds=bounds)
+        except:
+            return 1
+        else:
+            phase_offset = out[0][3]-out[0][2]
+            SNR_scale = np.abs(out[0][0]/out[0][1])
+
+            SNR_A = abs(out[0][0]/np.std(intensity_profile_OPT-func_r(phase, *out[0])))
+            SNR_B = abs(out[0][1]/np.std(intensity_profile_OPT-func_r(phase, *out[0])))
+
+            if (SNR_A  > 5) & (SNR_B > 5):
+                return SNR_scale
+            else:
+                return 1
+
+    profile_pars, phase_corr, _ = get_IP_interp(intensity_profile_INIT)
+    
+    def func_r(x, A1, A2, x1, x2, d):
+        g1 = profile_2((x-x1) % 1, *profile_pars)
+        g2 = profile_2((x-x2) % 1, *profile_pars)
+        return A1*g1 + A2*g2 + d
+
     snr_arr = []
     for i, subint_i in enumerate(time_phase_OPT):
-        phase_offset, SNR_scale, out = fit_phase_offset(subint_i, intensity_profile_INIT)
-        phase_arr.append(phase_offset)
+        SNR_scale = fit_subint(subint_i, func_r, phase_off)
         snr_arr.append(SNR_scale)
     
     time_amp_smooth = savgol_filter(snr_arr, window_length=11, polyorder=3)
     return time_amp_smooth
+
+
+def fit_chan_phase_offset(freq_phase_OPT, intensity_profile_INIT, freq_arr, phase_off, PSR_P0):
+
+    def fit_chan(intensity_profile_OPT, func_r, phase_off):
+        prof_nbins = len(intensity_profile_OPT)
+        phase = np.linspace(0, 1, prof_nbins)
+
+        if np.std(intensity_profile_OPT) == 0:
+            return phase_off, 1000
+
+        intensity_profile_OPT -= np.min(intensity_profile_OPT)
+        intensity_profile_OPT /= np.max(intensity_profile_OPT)
+        intensity_profile_OPT = np.roll(intensity_profile_OPT, prof_nbins//2-np.argmax(intensity_profile_OPT))
+        
+        p0 = [0.5, -0.5, 0, phase_off, np.median(intensity_profile_OPT)]
+        bounds = [[0, -1, -0.4, -0.5, 0],[1, 0, 0.4, 0.5, 1]]
+        try:
+            out = curve_fit(func_r, phase, intensity_profile_OPT, p0=p0, bounds=bounds)
+        except:
+            return phase_off, 1000
+        else:
+            phase_offset = out[0][3]-out[0][2]
+            SNR_scale = np.abs(out[0][0]/out[0][1])
+
+            SNR_A = abs(out[0][0]/np.std(intensity_profile_OPT-func_r(phase, *out[0])))
+            SNR_B = abs(out[0][1]/np.std(intensity_profile_OPT-func_r(phase, *out[0])))
+
+            if (SNR_A  > 5) & (SNR_B > 5):
+                return phase_offset, (2/(SNR_A+SNR_B))**2
+            else:
+                return phase_off, 1000
+
+    profile_pars, phase_corr, _ = get_IP_interp(intensity_profile_INIT)
+    
+    def func_r(x, A1, A2, x1, x2, d):
+        g1 = profile_2((x-x1) % 1, *profile_pars)
+        g2 = profile_2((x-x2) % 1, *profile_pars)
+        return A1*g1 + A2*g2 + d
+
+    def delay(freq_arr, DM, off):
+        DM_const = 4148.80642389
+        return -DM * DM_const / freq_arr**2 + off
+
+    phase_arr = []
+    phase_sigma = []
+    for i, chan_i in enumerate(freq_phase_OPT):
+        phase_offset, phase_err = fit_chan(chan_i, func_r, phase_off)
+        phase_arr.append(phase_offset)
+        phase_sigma.append(phase_err)
+    
+    delays = np.array(phase_arr) * PSR_P0
+    dm_out = curve_fit(delay, freq_arr, delays, sigma=phase_sigma)
+
+    sig_level = dm_out[0][0]/np.sqrt(np.diag(dm_out[1]))[0]
+    if sig_level > 3:
+        DM_offset = dm_out[0][0]
+        phase_delay = dm_out[0][1]/PSR_P0
+        return DM_offset, phase_delay
+    else:
+        return 0, phase_off
+    
 
 
 def plot_OPT(save_path, archive_INIT, archive_OPT, fit_params):

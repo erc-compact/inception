@@ -7,7 +7,7 @@ from pathlib import Path
 
 from TOOLS_ar import ARProcessor
 from TOOLS_io import parse_par_file, parse_JSON, rsync, print_exe
-from TOOLS_nullsar import fit_time_phase, fit_phase_offset, fit_subint_phase_offset, scale_freq_phase, plot_INIT, plot_OPT
+from TOOLS_nullsar import fit_time_phase, fit_phase_offset, fit_subint_phase_offset, fit_chan_phase_offset, scale_freq_phase, plot_INIT, plot_OPT
 
 import os, sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
@@ -98,6 +98,8 @@ class NullerProcess:
             rsync(ephem, self.work_dir)
             self.ephem = f'./{Path(ephem).name}'
 
+        self.fb = FilterbankReader(self.new_fb_path, load_fb_stats=(128, 6))
+
     def extract_archive(self):
         par_files = self.processing_args['par_files']
         params_path = f'{self.processing_dir}/02_INIT/INIT_fold_params.json'
@@ -130,11 +132,17 @@ class NullerProcess:
                     if not self.ar_data.get(key, None):
                         self.ar_data[key] = value
                 json.dump(self.ar_data, file, indent=4)
+        # else:
+        #     with open(f'{self.processing_dir}/03_INIT/OPT_fold_params.json', 'w') as file:
+        #         for key, value in self.SNR_record.items():
+        #             if not self.ar_data.get(key, None):
+        #                 self.ar_data[key] = value
+        #         json.dump(self.ar_data, file, indent=4)
+
 
     def parse_archive(self, psr_ID, archive_INIT, archive_OPT, params_path):
 
-        fb = FilterbankReader(self.new_fb_path, load_fb_stats=(128, 6))
-        obs_len = fb.dt * fb.n_samples
+        obs_len = self.fb.dt * self.fb.n_samples
 
         profile_path = f'{self.processing_dir}/02_INIT/MODELS/profile_{psr_ID}.npy'
         flux_time_path = f'{self.processing_dir}/02_INIT/MODELS/light_curve_{psr_ID}.npy'        
@@ -170,18 +178,21 @@ class NullerProcess:
             intensity_profile_INIT = archive_INIT.get_intensity_prof()
             intensity_profile_OPT = archive_OPT.get_intensity_prof()
             time_phase_OPT = archive_OPT.get_time_phase()
+            freq_phase_OPT = archive_OPT.get_freq_phase()
 
             phase_offset, SNR_scale, fit_params = fit_phase_offset(intensity_profile_OPT, intensity_profile_INIT)
 
-            subint_corr = fit_subint_phase_offset(time_phase_OPT, intensity_profile_INIT)
+            subint_corr = fit_subint_phase_offset(time_phase_OPT, intensity_profile_INIT, phase_offset)
             LC_time, LC_INIT = np.load(flux_time_path)
             LC_OPT = LC_INIT * subint_corr
             opt_LC_path = f'{self.processing_dir}/03_OPT/MODELS/light_curve_{psr_ID}.npy'
             np.save(opt_LC_path, np.stack([LC_time, LC_OPT]))
 
-            self.ar_data[psr_ID] = {"SNR": SNR,  
-                                    "DM": DM,
-                                    "phase_offset": init_ar_data[psr_ID]['phase_offset'] + phase_offset, 
+            DM_offset, phase_delay = fit_chan_phase_offset(freq_phase_OPT, intensity_profile_INIT, self.fb.freq_arr, phase_offset, archive_OPT.get_period())
+
+            self.ar_data[psr_ID] = {"SNR": SNR*SNR_scale,  
+                                    "DM": DM+DM_offset,
+                                    "phase_offset": init_ar_data[psr_ID]['phase_offset'] + phase_delay, 
                                     "light_curve": opt_LC_path,
                                     "profile": profile_path,
                                     "FX": freq_deriv}
