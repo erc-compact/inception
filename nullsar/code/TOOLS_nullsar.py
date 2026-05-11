@@ -34,15 +34,19 @@ def scale_freq_phase(freq_phase, intensity_profile):
     amps = []
     for i in np.arange(nchans):
         time_phase_arr = freq_phase[i]  
-
-        out = curve_fit(fit_phase, phase_arr, time_phase_arr, p0=[1e-6, 1, 1, 0], bounds =[[-profile_pars[1], 0, 0, -np.inf], [profile_pars[1], np.inf, np.inf, np.inf]])
-        
-        updated_pars = profile_pars.copy()
-        updated_pars[2] = out[0][1]
-        updated_pars[5] = out[0][2]
-        amps.append((out[0][1], out[0][2]))
-        spectra = profile_2(phase_arr-out[0][0], *updated_pars)
-        profile_s.append(spectra)
+        try:
+            out = curve_fit(fit_phase, phase_arr, time_phase_arr, p0=[1e-6, 1, 1, 0], bounds =[[-profile_pars[1], 0, 0, -np.inf], [profile_pars[1], np.inf, np.inf, np.inf]])
+        except:
+            amps.append((0, 0))
+            spectra = profile_2(phase_arr, *profile_pars)
+            profile_s.append(spectra)
+        else:
+            updated_pars = profile_pars.copy()
+            updated_pars[2] = out[0][1]
+            updated_pars[5] = out[0][2]
+            amps.append((out[0][1], out[0][2]))
+            spectra = profile_2(phase_arr-out[0][0], *updated_pars)
+            profile_s.append(spectra)
 
     return np.array(profile_s)
 
@@ -352,7 +356,6 @@ def plot_INIT(save_path, archive_INIT, out):
     IP = archive_INIT.get_intensity_prof()
     TP = archive_INIT.get_time_phase()
     FP = archive_INIT.get_freq_phase()
-    FP /= np.max(FP)
 
     nchans = len(FP)
     time_nbins = len(TP)
@@ -363,6 +366,7 @@ def plot_INIT(save_path, archive_INIT, out):
     prof2D = scale_freq_phase(FP, IP)
     prof2D /= np.max(prof2D)
     prof2D = np.roll(prof2D, phase_bins//2+phase_corr, axis=1)
+    FP /= np.max(FP)
 
     axes[1][0].imshow(FP, origin='lower', extent=[0, 1, 0, nchans], aspect='auto')
     axes[1][1].imshow(prof2D, origin='lower', extent=[0, 1, 0, nchans], aspect='auto')
