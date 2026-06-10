@@ -95,22 +95,6 @@ def fold_cand2csv(cand_file, output):
     df_cands.to_csv(output)
 
 
-def freq_correction(pulsar, pepoch_ref=0.5):
-    obs = pulsar.obs
-    topo_mjd_mid = obs.obs_start +  obs.obs_len*pepoch_ref * u.s.to(u.day)
-
-    radial_velocity = obs.earth_radial_velocity(topo_mjd_mid)
-
-    if pulsar.binary.period:
-        bary_sec = obs.topo2bary(np.array([topo_mjd_mid]), mjd=False, interp=False) + pulsar.orbit_ref
-        binary_radial_velocity = pulsar.binary.get_radial_velocity_coord(bary_sec)
-
-        radial_velocity += binary_radial_velocity
-
-    doppler_shift =  1 - radial_velocity/const.c.value
-    return doppler_shift[0]
-
-
 def DM_curve(pulsar, snr_limit):
     period = pulsar.PX_list[0]
     snr = pulsar.pulsar_pars['SNR']
@@ -131,32 +115,49 @@ def correct_fftsize_offset(period, acc, fftsize, nsamples, dt):
     return period - pdot * (fftsize - nsamples) * dt / 2
 
 
-def fit_orbit(pulsar, pepoch_ref=0.5, mode='accel', coord_frame=True):
-    from scipy.optimize import curve_fit
+def get_freq_bounds(pulsar, acc_det=0.0, jerk_det=0.0, pepoch_ref=0.5):
 
-    topo_sec = np.linspace(0, pulsar.obs.obs_len, 1000)
+    topo_sec = np.linspace(0, pulsar.obs.obs_len, 2000)
     topo_mjd = pulsar.obs.sec2mjd(topo_sec)
 
-    if mode == 'accel':
-        def fit_func(t, vel, acc):
-            return vel + acc*t
-        
-    elif mode == 'jerk':
-        def fit_func(t, vel, acc, jerk):
-            return vel + acc*t + 0.5*jerk*t**2
+    tref = pulsar.obs.obs_len * pepoch_ref
+    dt = topo_sec - tref
 
-    r_v = np.zeros_like(topo_sec)
+    rv = np.zeros_like(topo_sec)
+    rv += pulsar.obs.earth_radial_velocity(topo_mjd)
+
     if pulsar.binary.period:
-        bary_sec = pulsar.obs.topo2bary(topo_mjd, mjd=False, interp=False) + pulsar.orbit_ref
-        r_v += pulsar.binary.get_radial_velocity_coord(bary_sec)
-    if coord_frame:
-        r_v += pulsar.obs.earth_radial_velocity(topo_mjd)
+        bary_sec = (
+            pulsar.obs.topo2bary(topo_mjd, mjd=False, interp=False)
+            + pulsar.orbit_ref
+        )
+        rv += pulsar.binary.get_radial_velocity_coord(bary_sec)
 
-    fit_pars = curve_fit(fit_func, topo_sec - pulsar.obs.obs_len*pepoch_ref, r_v)
+    else:
+        v_deriv = pulsar.AX_list
+        if len(v_deriv) == 1:
+            a_inj = v_deriv[0]
+            j_inj = 0
+        elif len(v_deriv) > 1:
+            a_inj = v_deriv[0]
+            j_inj = v_deriv[1]
+        else:
+            a_inj = 0
+            j_inj = 0
 
-    vel_max_ind = topo_sec[np.argmax(r_v)]/pulsar.obs.obs_len
-    vel_min_ind = topo_sec[np.argmin(r_v)]/pulsar.obs.obs_len
-    return fit_pars, vel_max_ind, vel_min_ind
+        rv += a_inj * dt + 0.5 * j_inj * dt**2
+
+    rv -= acc_det * dt + 0.5 * jerk_det * dt**2
+
+    F0 = pulsar.FX_list[0]
+
+    rv_min = np.min(rv)
+    rv_max = np.max(rv)
+
+    F_max = F0 * (1 - rv_min / const.c.value)
+    F_min = F0 * (1 - rv_max / const.c.value)
+
+    return F_min, F_max
 
 
 def create_cand_file_acc(cands, cand_file_path):
@@ -210,12 +211,6 @@ class CandMatcher:
         pulsar_cands = {}
         for pm in self.setup.pulsar_models:
 
-            pulsar_acc_fit, vel_max_ind, vel_min_ind = fit_orbit(pm, pepoch_ref=pepoch_ref, mode='accel')
-
-            doppler_shift_ref = freq_correction(pm, pepoch_ref=pepoch_ref)
-            doppler_shift_min_vel= freq_correction(pm, pepoch_ref=vel_min_ind)
-            doppler_shift_max_vel = freq_correction(pm, pepoch_ref=vel_max_ind)
-
             fft_bin = 1/(self.fftsize*pm.obs.dt)
             F0 = pm.FX_list[0]
             cands_F = (1/self.cands['period'])
@@ -223,9 +218,25 @@ class CandMatcher:
             harmonic_div[harmonic_div > max_harmonic] = 1
             cands_F /= harmonic_div
 
-            nbins_offset = (F0*doppler_shift_ref - cands_F) / fft_bin
+            F_min = np.zeros(len(self.cands))
+            F_max = np.zeros(len(self.cands))
 
-            F_min, F_max = min(F0*doppler_shift_min_vel, F0*doppler_shift_max_vel), max(F0*doppler_shift_min_vel, F0*doppler_shift_max_vel)
+            for idx in range(len(self.cands)):
+
+                acc_det = self.cands.iloc[idx]['acc']
+
+                if 'jerk' in self.cands.columns:
+                    jerk_det = self.cands.iloc[idx]['jerk']
+                else:
+                    jerk_det = 0.0
+
+                F_min[idx], F_max[idx] = get_freq_bounds(
+                    pm,
+                    acc_det=acc_det,
+                    jerk_det=jerk_det,
+                    pepoch_ref=pepoch_ref
+                )
+
             freq_cond = ((cands_F >= F_min-fft_bin) & (cands_F <= F_max+fft_bin)) 
             
             DM_limit = DM_curve(pm, snr_limit)
@@ -233,13 +244,9 @@ class CandMatcher:
             snr_offset = (pm.SNR - self.cands['snr'])
             dm_cond = np.abs(dm_offset) <= DM_limit
 
-            
-            accel_drift = (pulsar_acc_fit[0][1] - self.cands['acc']) * F0 * doppler_shift_ref / (const.c.value * fft_bin**2)
-
-
             candidates = self.cands[freq_cond & dm_cond]
-            candidates['nbins_offset'] = nbins_offset[freq_cond & dm_cond]
-            candidates['accel_bin_drift'] = accel_drift[freq_cond & dm_cond]
+            candidates['nbins_offset'] = F_min[freq_cond & dm_cond] # rename
+            candidates['accel_bin_drift'] = F_max[freq_cond & dm_cond] # rename
             candidates['dm_offset'] = dm_offset[freq_cond & dm_cond]
             candidates['snr_offset'] = snr_offset[freq_cond & dm_cond]
     

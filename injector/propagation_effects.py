@@ -21,6 +21,7 @@ class PropagationEffects:
           
     def get_DM_delays(self):
         self.DM = self.pulsar_pars['DM']
+        self.cDM = self.pulsar_pars.get('cDM', 0)
         self.DM_const = (const.e.si**2/(8*np.pi**2*const.m_e*const.c) /(const.eps0) * u.pc.to(u.m)*u.m).value*1e-6   # Mhz^2 pc^-1 cm^3 s
         self.DM_delays = -self.DM * self.DM_const / self.obs.freq_arr**2  
 
@@ -66,7 +67,7 @@ class PropagationEffects:
     def intra_channel_DM_smearing(self, intrinsic_pulse):
         
         def channel_profile(phase, freq, channel_freq, chan_num):
-            dt = self.DM_const * self.DM * (channel_freq**-2 - freq**-2)
+            dt = self.DM_const * (self.DM - self.cDM) * (channel_freq**-2 - freq**-2)
             phase_freq = phase + dt/self.period
             PSD_corr = self.spectra(freq)/self.spectra(channel_freq)
             return intrinsic_pulse(phase_freq % 1, chan_num) * PSD_corr
@@ -107,7 +108,7 @@ class PropagationEffects:
                     chan_top = channel_freq + self.obs.df/2
                     chan_bottom = channel_freq - self.obs.df/2
                     
-                    W_eff = np.sqrt(W_int**2 + (self.DM_const * self.DM * (chan_top**-2 - chan_bottom**-2 ))**2)
+                    W_eff = np.sqrt(W_int**2 + (self.DM_const * (self.DM - self.cDM) * (chan_top**-2 - chan_bottom**-2 ))**2)
                     if W_eff >= self.period:
                         snr_scale = 0.0
                         W_eff = 0.99*self.period
