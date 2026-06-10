@@ -118,7 +118,7 @@ class PeasoupProcess:
         self.tscrunch = int(self.ddplan.tscrunch)
         
         if self.processing_args['peasoup_args']['inj_DM']:
-            DM_values = [pulsar['DM'] for pulsar in self.injection_report['pulsars']]
+            DM_values = np.array([pulsar['DM'] for pulsar in self.injection_report['pulsars']])
             DM_values = DM_values[(DM_values >= self.ddplan.low_dm) & (DM_values <= self.ddplan.high_dm)]
             if len(DM_values) == 0:
                 print_exe('No DMs to search.')
