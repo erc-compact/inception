@@ -212,12 +212,8 @@ class CandMatcher:
         for pm in self.setup.pulsar_models:
 
             fft_bin = 1/(self.fftsize*pm.obs.dt)
-            F0 = pm.FX_list[0]
+
             cands_F = (1/self.cands['period'])
-            harmonic_div = np.round(cands_F/F0).astype(int)
-            harmonic_div[harmonic_div < 1] = 1
-            harmonic_div[harmonic_div > max_harmonic] = 1
-            cands_F /= harmonic_div
 
             F_min = np.zeros(len(self.cands))
             F_max = np.zeros(len(self.cands))
@@ -238,7 +234,11 @@ class CandMatcher:
                     pepoch_ref=pepoch_ref
                 )
 
-            freq_cond = ((cands_F >= F_min-fft_bin) & (cands_F <= F_max+fft_bin)) 
+            freq_cond = np.zeros(len(self.cands), dtype=bool)
+            for h in range(1, max_harmonic + 1):
+                freq_cond |= ((cands_F / h >= F_min - fft_bin) & (cands_F / h <= F_max + fft_bin))
+                if h > 1:
+                    freq_cond |= ((cands_F * h >= F_min - fft_bin) & (cands_F * h <= F_max + fft_bin))
             
             DM_limit = DM_curve(pm, snr_limit)
             dm_offset =  (pm.prop_effect.DM - self.cands['dm'])
