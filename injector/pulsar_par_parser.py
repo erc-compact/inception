@@ -64,6 +64,7 @@ class PulsarParParser:
         parser.add_argument('--AoP', metavar='(deg)', required=False,  default=0, type=float, help='Argument of periapsis')
         parser.add_argument('--LoAN', metavar='(deg)', required=False,  default=0, type=float, help='Longitude of the ascending node')
         parser.add_argument('--double_pulsar', metavar='(ID)', required=False, type=str, help='Make pulsar the companion of pulsar {double_pulsar:ID}')
+        parser.add_argument('--M_func', metavar='(M_sun)', required=False,  default=0, type=float, help='Mass function')
 
         parser.add_argument('--mode', metavar='(str)', required=False, default='python', type=str, help="Inject using analytical 'python' code or polycos from 'pint'")
         parser.add_argument('--pint_N', metavar='(-)', required=False, default=12, type=int, help='Number of coefficients per timestep for polycos generation')
@@ -209,6 +210,11 @@ class PulsarParParser:
         elif find == 'A1':
             sini = np.sin(np.deg2rad(inc))
             return BinaryModel.get_semi_major(period, M1+M2) * M2/(M1+M2) * sini / const.c.value
+    
+    @staticmethod
+    def Mfunc2x(M_func, period):
+        T = const.G.value * period**2 / (4*np.pi**2)
+        return (M_func * T) ** (1/3) / const.c.value
         
     def calc_binary_pars(self, pulsar_pars):
         if not pulsar_pars['binary_period']:
@@ -219,8 +225,15 @@ class PulsarParParser:
         M1 = pulsar_pars['M1']
         M2 = pulsar_pars['M2']
         inc = pulsar_pars['inc']
+        Mass_func = pulsar_pars['M_func']
         M1_default, inc_default = 1.4, 90
-        if A1:
+
+        if Mass_func:
+            A1 = self.Mfunc2x(Mass_func, period)
+            M1 = M1_default
+            inc = inc_default
+            M2 = self.orbit_par_converter(period, find='M2', A1=A1, M1=M1_default, inc=inc_default) 
+        elif A1:
             if not (M1 and M2 and inc):
                 if (not M1) and (not M2) and (not inc):
                     M1 = M1_default
