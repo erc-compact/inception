@@ -214,7 +214,7 @@ class PulsarParParser:
     @staticmethod
     def Mfunc2x(M_func, period):
         T = const.G.value * period**2 / (4*np.pi**2)
-        return (M_func * T) ** (1/3) / const.c.value
+        return (M_func * const.M_sun.value * T) ** (1/3) / const.c.value
         
     def calc_binary_pars(self, pulsar_pars):
         if not pulsar_pars['binary_period']:
