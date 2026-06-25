@@ -206,7 +206,7 @@ class CandMatcher:
         self.cands['period'] = new_periods
 
 
-    def match_candidates(self, pepoch_ref=0.5, snr_limit=3, max_harmonic=4):
+    def match_candidates(self, pepoch_ref=0.5, snr_limit=3, max_harmonic=2):
         self.cands['cand_id'] = np.arange(len(self.cands))
 
         pulsar_cands = {}
