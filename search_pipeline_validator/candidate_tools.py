@@ -115,7 +115,7 @@ def correct_fftsize_offset(period, acc, fftsize, nsamples, dt):
     return period - pdot * (fftsize - nsamples) * dt / 2
 
 
-def get_freq_bounds(pulsar, acc_det=0.0, jerk_det=0.0, pepoch_ref=0.5):
+def calc_pulsar_obs_params(pulsar, pepoch_ref=0.5):
 
     topo_sec = np.linspace(0, pulsar.obs.obs_len, 2000)
     topo_mjd = pulsar.obs.sec2mjd(topo_sec)
@@ -126,11 +126,18 @@ def get_freq_bounds(pulsar, acc_det=0.0, jerk_det=0.0, pepoch_ref=0.5):
     rv = np.zeros_like(topo_sec)
     rv += pulsar.obs.earth_radial_velocity(topo_mjd)
 
+    return topo_mjd, rv, dt
+
+
+def get_freq_bounds(topo_mjd, rv_, dt, pulsar, acc_det=0.0, jerk_det=0.0):
+    rv = rv_.copy()
+
     if pulsar.binary.period:
         bary_sec = (
             pulsar.obs.topo2bary(topo_mjd, mjd=False, interp=False)
             + pulsar.orbit_ref
         )
+
         rv += pulsar.binary.get_radial_velocity_coord(bary_sec)
 
     else:
@@ -218,6 +225,8 @@ class CandMatcher:
             F_min = np.zeros(len(self.cands))
             F_max = np.zeros(len(self.cands))
 
+
+            topo_mjd, rv_earth, dt = calc_pulsar_obs_params(pm, pepoch_ref=pepoch_ref)
             for idx in range(len(self.cands)):
 
                 acc_det = self.cands.iloc[idx]['acc']
@@ -228,10 +237,8 @@ class CandMatcher:
                     jerk_det = 0.0
 
                 F_min[idx], F_max[idx] = get_freq_bounds(
-                    pm,
-                    acc_det=acc_det,
-                    jerk_det=jerk_det,
-                    pepoch_ref=pepoch_ref
+                    topo_mjd, rv_earth, dt, pm,
+                    acc_det=acc_det, jerk_det=jerk_det
                 )
 
             freq_cond = np.zeros(len(self.cands), dtype=bool)
