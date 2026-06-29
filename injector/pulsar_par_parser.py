@@ -50,6 +50,7 @@ class PulsarParParser:
         parser.add_argument('--light_curve', metavar='(file)', required=False, help='2 x 1D NumPy .npy containing time vs flux')
         parser.add_argument('--micro_structure', metavar='(microsec)', required=False, default=0, type=float, help='Mean timescale of pulse microstructure')
         parser.add_argument('--scattering_time', metavar='(millisec)', required=False, default='', type=str, help='Scattering timescale due to ISM')
+        parser.add_argument('--scattering_sigma', metavar='(sigma)', required=False, default=0, type=int, help='standard devitations from DM-scattering law')
         parser.add_argument('--scattering_index', metavar='(-)', required=False, default=4, type=float, help='Scattering index to describe frequency evolution')
         parser.add_argument('--cDM', metavar='(pc/cm^3)', required=False, default=0, type=float, help='coherent Dispersion measure')
         parser.add_argument('--DM_smear', metavar='(0 or 1)', required=False, default=0, type=int, help='Smear the pulse profile due to intra-channel DM smearing')

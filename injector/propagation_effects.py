@@ -22,7 +22,7 @@ class PropagationEffects:
     def get_DM_delays(self):
         self.DM = self.pulsar_pars['DM']
         self.cDM = self.pulsar_pars.get('cDM', 0)
-        self.DM_const = (const.e.si**2/(8*np.pi**2*const.m_e*const.c) /(const.eps0) * u.pc.to(u.m)*u.m).value*1e-6   # Mhz^2 pc^-1 cm^3 s
+        self.DM_const = (const.e.si**2/(8*np.pi**2*const.m_e*const.c) /(const.eps0) * u.pc.to(u.m)*u.m).value*1e-6   # MHz^2 pc^-1 cm^3 s
         self.DM_delays = -self.DM * self.DM_const / self.obs.freq_arr**2  
 
     def scattering_relation_TPA(self, freq):
@@ -30,26 +30,42 @@ class PropagationEffects:
         f_term = (freq/327)**-self.pulsar_pars.get('scattering_index', 4)
         Tau_s = DM_term * f_term / 1000
 
-        return Tau_s/self.period
+        return Tau_s
+    
+    def scattering_relation_CORDES(self, freq):
+        f_term = (freq/1000)**-self.pulsar_pars.get('scattering_index', 4)
+        A_ms = 2.98e-7
+        a = 1.4
+        B = 3.55e-5
+        b = 3.1
+
+        sigma_T = 0.76 * self.pulsar_pars.get('scattering_sigma', 0)
+
+        A = A_ms/1000
+        Tau_s = A * self.DM ** a * (1 + B * self.DM ** b) * f_term
+
+        return 10 ** (np.log10(Tau_s) + sigma_T)
 
     def ISM_scattering(self, intrinsic_pulse):
         ref_scattering_time = self.pulsar_pars['scattering_time']
 
-        if (ref_scattering_time == '') or (ref_scattering_time == '0'):
+        if (ref_scattering_time == '') or (ref_scattering_time == '0') or (ref_scattering_time == 0):
             return intrinsic_pulse
         else:
             if ref_scattering_time == 'TPA':
                 scattering_relation = self.scattering_relation_TPA
+            elif ref_scattering_time == 'CORDES':
+                scattering_relation = self.scattering_relation_CORDES
             else:
                 scattering_index = self.pulsar_pars['scattering_index']
                 ref_scattering_time = float(ref_scattering_time)
             
                 def scattering_relation(freq):
-                    scattering_phase = ref_scattering_time * u.ms.to(u.s) / self.period
+                    scattering_phase = ref_scattering_time * u.ms.to(u.s) 
                     return scattering_phase * (freq/self.obs.f0) ** -scattering_index 
                         
             def scattering_kernal(nchan):
-                scattering_time = scattering_relation(self.obs.freq_arr[nchan])
+                scattering_time = scattering_relation(self.obs.freq_arr[nchan]) / self.period
                 kernal = np.exp(-self.phase/scattering_time)
                 return kernal / np.sum(kernal)
             

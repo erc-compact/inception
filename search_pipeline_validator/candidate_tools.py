@@ -259,7 +259,7 @@ class CandMatcher:
         return pulsar_cands
 
 
-    def generate_files(self, candidate_root, max_cand_per_inj=-1, pepoch_ref=0.5, snr_limit=3, max_harmonic=4, create_candfile=True):
+    def generate_files(self, candidate_root, max_cand_per_inj=-1, pepoch_ref=0.5, snr_limit=3, max_harmonic=2, create_candfile=True):
         pulsar_cands = self.match_candidates(pepoch_ref=pepoch_ref, snr_limit=snr_limit, max_harmonic=max_harmonic)
         cands_data = []
         for pm in self.setup.pulsar_models:
