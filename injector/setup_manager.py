@@ -320,7 +320,12 @@ class SetupManager:
         if pm.binary.period:
             with open(cand_file_path, 'w') as file:
                 file.write("#id DM accel F0 F1 F2 Pb A1 T0 OM ECC S/N\n")
-                binary_str = f'{pm.binary.period*u.s.to(u.day)} {pm.binary.a1_sini_c} {pm.binary.T0} {np.rad2deg(pm.binary.AoP+pm.binary.LoAN)} {pm.binary.e}'
+
+                om = np.rad2deg(pm.binary.AoP+pm.binary.LoAN)
+                pb = pm.binary.period*u.s.to(u.day)
+                T0_eff = pm.binary.T0 + pb * (360-om)/360
+
+                binary_str = f'{pb} {pm.binary.a1_sini_c} {T0_eff} {0} {pm.binary.e}'
                 file.write(f"{0} {pm.prop_effect.DM} {accel} {F0} 0 {F2} {binary_str} {pm.SNR}\n")
         else:
             with open(cand_file_path, 'w') as file:
