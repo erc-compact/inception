@@ -22,7 +22,7 @@ class PulsarParParser:
         parser.add_argument('--ID', metavar='(str)', required=True, type=str, help='Identifier for injected pulsar')
         parser.add_argument('--seed', metavar='(positive int)', required=False, default=0, type=int, help='Random number generator seed for pulsar')
         parser.add_argument('--create_parfile', metavar='(0 or 1)', required=False, default='1', type=str, help="If '1', then create a TEMPO style parfile for injected pulsar")
-        parser.add_argument('--frame', metavar='(topo or bary)', required=False, default='bary', type=str, help="barycentric/topocentric injection")
+        parser.add_argument('--frame', metavar='(bary or topo)', required=False, default='bary', choices=['bary', 'topo'], help="barycentric/topocentric injection")
 
         parser.add_argument('--RAJ', metavar='(hh:mm:ss)', required=False, type=str, help='Right Ascension (J2000) (default: beam centre)')
         parser.add_argument('--DECJ', metavar='(dd:mm:ss)', required=False, type=str, help='Declination (J2000) (default: beam centre)')
@@ -47,7 +47,7 @@ class PulsarParParser:
         parser.add_argument('--spectral_index', metavar='(-)', required=False, default=0, type=float, help='Spectral index of pulsar')
         parser.add_argument('--duty_cycle', metavar='(phase)', required=False, default=0.1, type=float, help='Duty cycle of default gaussian pulse profile')
         parser.add_argument('--profile', metavar='(file/dict)', required=False, default='default', help='NumPy .npy or EPN .txt file containing a custom pulsar pulse profile (1D or 2D), or multi-component dictionary')
-        parser.add_argument('--light_curve', metavar='(file)', required=False, help='2 x 1D NumPy .npy containing time vs flux')
+        parser.add_argument('--light_curve', metavar='(file)', default='', required=False, help='2 x 1D NumPy .npy containing time vs flux')
         parser.add_argument('--micro_structure', metavar='(microsec)', required=False, default=0, type=float, help='Mean timescale of pulse microstructure')
         parser.add_argument('--scattering_time', metavar='(millisec)', required=False, default='', type=str, help='Scattering timescale due to ISM')
         parser.add_argument('--scattering_sigma', metavar='(sigma)', required=False, default=0, type=int, help='standard devitations from DM-scattering law')

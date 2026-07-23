@@ -48,11 +48,17 @@ class PulsarModel:
 
     def get_mode_generators(self, pulsar_pars, generate):
         if self.mode == 'python':
-            self.generate_signal = self.generate_signal_python
+            if  pulsar_pars['frame'] == 'topo':
+                self.generate_signal = self.generate_signal_python_topo
+            else: # bary
+                self.generate_signal = self.generate_signal_python_bary
         elif self.mode == 'pint':
             self.polycos_path = pulsar_pars['polycos']
             self.get_polyco_interp(generate)
-            self.generate_signal = self.generate_signal_polcos
+            if  pulsar_pars['frame'] == 'topo':
+                self.generate_signal = self.generate_signal_polcos_topo
+            else: # bary
+                self.generate_signal = self.generate_signal_polcos_bary
 
     def get_observed_profile(self):
         smeared_profile = self.prop_effect.intra_channel_DM_smearing(self.intrinsic_profile_chan)
@@ -61,34 +67,36 @@ class PulsarModel:
         return scatterd_profile
 
     def get_epochs(self, pulsar_pars):
-        pepoch = pulsar_pars['PEPOCH'] if pulsar_pars['PEPOCH'] else self.obs.obs_start_bary
-        if np.abs(pepoch) <= 1:
-            pepoch = self.obs.obs_start_bary + pulsar_pars['PEPOCH'] * self.obs.obs_len * u.s.to(u.day)
-        
-        # posepoch = pulsar_pars['POSEPOCH'] if pulsar_pars['POSEPOCH'] else pepoch
-        T0 = pulsar_pars['T0'] if pulsar_pars['T0'] else self.obs.obs_start_bary
 
-        spin_ref = (self.obs.obs_start_bary - pepoch) * u.day.to(u.s)
-        # pos_ref = (self.obs.obs_start_bary - posepoch) * u.day.to(u.s)
-        orbit_ref = (self.obs.obs_start_bary - T0) * u.day.to(u.s)
+        if pulsar_pars['frame'] == 'topo':
+            pepoch = pulsar_pars['PEPOCH'] if pulsar_pars['PEPOCH'] else self.obs.obs_start
+            if np.abs(pepoch) <= 1:
+                pepoch = self.obs.obs_start + pulsar_pars['PEPOCH'] * self.obs.obs_len * u.s.to(u.day)
+
+            T0 = pulsar_pars['T0'] if pulsar_pars['T0'] else self.obs.obs_start
+
+            spin_ref = (self.obs.obs_start - pepoch) * u.day.to(u.s)
+            orbit_ref = (self.obs.obs_start - T0) * u.day.to(u.s)
+            
+        elif pulsar_pars['frame'] == 'bary':
+            pepoch = pulsar_pars['PEPOCH'] if pulsar_pars['PEPOCH'] else self.obs.obs_start_bary
+            if np.abs(pepoch) <= 1:
+                pepoch = self.obs.obs_start_bary + pulsar_pars['PEPOCH'] * self.obs.obs_len * u.s.to(u.day)
+
+            T0 = pulsar_pars['T0'] if pulsar_pars['T0'] else self.obs.obs_start_bary
+
+            spin_ref = (self.obs.obs_start_bary - pepoch) * u.day.to(u.s)
+            orbit_ref = (self.obs.obs_start_bary - T0) * u.day.to(u.s) 
 
         self.pepoch = pepoch
-        # self.posepoch = posepoch
         self.binary.T0 = T0
         self.spin_ref = spin_ref
-        # self.pos_ref = pos_ref
         self.orbit_ref = orbit_ref
         self.accepoch = pulsar_pars['ACCEPOCH'] * self.obs.obs_len
 
     def get_pulsar_spin(self, pulsar_pars):
         self.PX_list = pulsar_pars['PX']
         self.FX_list = pulsar_pars['FX']
-
-        if pulsar_pars.get('frame', 'bary') == 'topo':
-            doppler_conv = (1 - self.obs.earth_radial_velocity(self.obs.obs_start)/const.c.value)[0]
-            self.PX_list[0] *= doppler_conv
-            self.FX_list[0] /= doppler_conv
-
     
     def get_spin_functions(self, pulsar_pars):
         t, c = symbols('t, c')
@@ -305,7 +313,7 @@ class PulsarModel:
         phase_abs = self.phase_func(T_proper)
         return phase_abs 
     
-    def generate_signal_polcos(self, n_samples, sample_start=0):
+    def generate_signal_polcos_bary(self, n_samples, sample_start=0):
         timeseries = np.linspace(self.obs.dt*sample_start, self.obs.dt*(n_samples+sample_start-1), n_samples)
         freq_array = np.tile(self.obs.freq_arr, (len(timeseries),1))
         DM_array = np.tile(self.prop_effect.DM_delays, (len(timeseries),1))
@@ -320,8 +328,22 @@ class PulsarModel:
         phase = self.polycos(phase_time) + self.get_phase(bary_array + DM_array)
         LC = self.light_curve(timeseries)[:, None]
         return self.get_pulse(phase, freq_array) * LC
+    
+    def generate_signal_polcos_topo(self, n_samples, sample_start=0):
+        timeseries = np.linspace(self.obs.dt*sample_start, self.obs.dt*(n_samples+sample_start-1), n_samples)
+        freq_array = np.tile(self.obs.freq_arr, (len(timeseries),1))
+        DM_array = np.tile(self.prop_effect.DM_delays, (len(timeseries),1))
+
+        topo_times = self.obs.sec2mjd(timeseries)
+        phase_array = np.tile(topo_times, (len(self.obs.freq_arr),1)).T
+        phase_time = (phase_array + DM_array*u.s.to(u.day))
+        topo_array = np.tile(timeseries, (len(self.obs.freq_arr),1)).T
+
+        phase = self.polycos(phase_time) + self.get_phase(topo_array + DM_array)
+        LC = self.light_curve(timeseries)[:, None]
+        return self.get_pulse(phase, freq_array) * LC
         
-    def generate_signal_python(self, n_samples, sample_start=0):
+    def generate_signal_python_bary(self, n_samples, sample_start=0):
         timeseries = np.linspace(self.obs.dt*sample_start, self.obs.dt*(n_samples+sample_start-1), n_samples)
         DM_array = np.tile(self.prop_effect.DM_delays, (len(timeseries),1))
         obs_freq_array = np.tile(self.obs.freq_arr, (len(timeseries),1))
@@ -338,9 +360,9 @@ class PulsarModel:
         timeseries = np.linspace(self.obs.dt*sample_start, self.obs.dt*(n_samples+sample_start-1), n_samples)
         DM_array = np.tile(self.prop_effect.DM_delays, (len(timeseries),1))
         obs_freq_array = np.tile(self.obs.freq_arr, (len(timeseries),1))
-        bary_array = np.tile(timeseries, (len(self.obs.freq_arr),1)).T
+        topo_array = np.tile(timeseries, (len(self.obs.freq_arr),1)).T
 
-        phase_array = self.get_phase(bary_array + DM_array)
+        phase_array = self.get_phase(topo_array + DM_array)
         LC = self.light_curve(timeseries)[:, None]
         return self.get_pulse(phase_array, obs_freq_array) * LC
 
