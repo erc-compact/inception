@@ -23,7 +23,12 @@ class PropagationEffects:
         self.DM = self.pulsar_pars['DM']
         self.cDM = self.pulsar_pars.get('cDM', 0)
         self.DM_const = (const.e.si**2/(8*np.pi**2*const.m_e*const.c) /(const.eps0) * u.pc.to(u.m)*u.m).value*1e-6   # MHz^2 pc^-1 cm^3 s
-        self.DM_delays = -self.DM * self.DM_const / self.obs.freq_arr**2  
+
+        ref_freq = self.pulsar_pars['DM_ref']
+        if ref_freq == 'inf':
+            self.DM_delays = -self.DM * self.DM_const / self.obs.freq_arr**2  
+        else:
+            self.DM_delays = -self.DM * self.DM_const * (1/self.obs.freq_arr**2  - 1/self.obs.high_f**2)
 
     def scattering_relation_TPA(self, freq):
         DM_term = 3.6e-6 * self.DM**2.2 * (1 + 0.00194*self.DM**2)
@@ -64,97 +69,100 @@ class PropagationEffects:
                     scattering_phase = ref_scattering_time * u.ms.to(u.s) 
                     return scattering_phase * (freq/self.obs.f0) ** -scattering_index 
                         
-            def scattering_kernal(nchan):
+            def scattering_kernel(nchan):
                 scattering_time = scattering_relation(self.obs.freq_arr[nchan]) / self.period
                 kernal = np.exp(-self.phase/scattering_time)
                 return kernal / np.sum(kernal)
             
-            conv_profiles = [convolve1d(intrinsic_pulse(self.phase, nchan), scattering_kernal(nchan), mode='wrap') for nchan in range(self.obs.n_chan)]
+            conv_profiles = [convolve1d(intrinsic_pulse(self.phase, nchan), scattering_kernel(nchan), mode='wrap') for nchan in range(self.obs.n_chan)]
             phase_shift = [np.roll(profile, int(round(len(self.phase)/2))) for profile in conv_profiles]
-            profile_shift = [profile-np.min(profile) for profile in phase_shift]
-            self.scattered_profiles = [interp1d(self.phase, profile) for profile in profile_shift]
+            self.scattered_profiles = [interp1d(self.phase, profile) for profile in phase_shift]
 
             def scattered_pulse(phase, chan_num):
                 return self.scattered_profiles[chan_num](phase)
             
             return scattered_pulse
+        
+    def intra_channel_DM_smearing(self, intrinsic_pulse):
+
+        if self.pulsar_pars["DM_smear"] == 'off':
+            return intrinsic_pulse
+
+        elif (self.pulsar_pars["profile"] == "default") and (self.pulsar_pars["DM_smear"] == 'approx'):
+            return self.gaussian_DM_smearing()
+
+        elif (self.pulsar_pars["DM_smear"] == 'exact'):
+            return self.numerical_DM_smearing(intrinsic_pulse)
+        
+        else:
+            sys.exit(f"Invalid DM_smear flag for pulsar {self.ID}. 'approx' can only be used for profile == 'defualt'")
+
+    def gaussian_DM_smearing(self):
+        duty_cycle = self.pulsar_pars["duty_cycle"]
+        W_int = self.period * duty_cycle
+        
+        def single_pulse(phase, DC):
+            sigma = DC / (2 * np.sqrt(2 * np.log(2)))
+            return np.exp(-(phase - 0.5) ** 2 / (2 * sigma**2))
+
+        self.smeared_profiles = []
+        for chan, freq in enumerate(self.obs.freq_arr):
+
+            chan_top = freq + self.obs.df / 2
+            chan_bottom = freq - self.obs.df / 2
+
+            smear = self.DM_const * (self.DM - self.cDM) * (chan_top**-2 - chan_bottom**-2)
+            W_eff = np.sqrt(W_int**2 + smear**2)
+
+            eff_DC = W_eff / self.period
+            phase = np.linspace(-1, 2, len(self.phase) * 3)
+
+            profile = (
+                single_pulse(phase, eff_DC)
+                + single_pulse(phase - 1, eff_DC)
+                + single_pulse(phase + 1, eff_DC)
+            )
+
+            profile /= profile.max()
+            profile *= W_int / W_eff
+
+            mask = (phase > -0.5) & (phase < 1.5)
+            interp = interp1d(phase[mask], profile[mask] * self.spectra(freq))
+            self.smeared_profiles.append(interp)
+
+        def smeared_pulse(phase, chan_num):
+            return self.smeared_profiles[chan_num](phase)
+
+        return smeared_pulse
+    
+    def numerical_DM_smearing(self, intrinsic_pulse):
+
+        def dm_smearing_kernel(nchan):
+            freq = self.obs.freq_arr[nchan]
+            chan_top = freq + abs(self.obs.df) / 2
+            chan_bottom = freq - abs(self.obs.df) / 2
+
+            smear = abs(self.DM_const * (self.DM - self.cDM) * (chan_top**-2 - chan_bottom**-2))
+
+            smear_phase = smear / self.period
+            width = max(1, int(round(smear_phase * len(self.phase))))
+            width = min(width, len(self.phase))
+            if width % 2 == 0:
+                width += 1
+
+            kernel = np.ones(width)
+            kernel /= kernel.sum()
+
+            return kernel
+
+        conv_profiles = [convolve1d(intrinsic_pulse(self.phase, nchan), dm_smearing_kernel(nchan), mode="wrap") for nchan in range(self.obs.n_chan)]
+        self.smeared_profiles = [ interp1d( self.phase, profile, bounds_error=False, fill_value="extrapolate") for profile in conv_profiles ]
+
+        def smeared_pulse(phase, chan_num):
+            return self.smeared_profiles[chan_num](phase)
+
+        return smeared_pulse
+
     
 
-    def intra_channel_DM_smearing(self, intrinsic_pulse):
-        
-        def channel_profile(phase, freq, channel_freq, chan_num):
-            dt = self.DM_const * (self.DM - self.cDM) * (channel_freq**-2 - freq**-2)
-            phase_freq = phase + dt/self.period
-            PSD_corr = self.spectra(freq)/self.spectra(channel_freq)
-            return intrinsic_pulse(phase_freq % 1, chan_num) * PSD_corr
-        
-        if not self.pulsar_pars['DM_smear']:
-            return intrinsic_pulse
-        else:
-            if self.pulsar_pars['profile'] == 'default':
-                duty_cycle = self.pulsar_pars['duty_cycle']
-                W_int = self.period * duty_cycle
-                snr_int = np.sqrt((self.period-W_int) / W_int)
-
-                def single_pulse(phase, duty_cycle): 
-                    pulse_sigma = (duty_cycle)/(2*np.sqrt(2*np.log(2)))
-                    return np.exp(-(phase-0.5)**2/(2*(pulse_sigma)**2))
-
-                def pulse_profile(phase, duty_cycle=duty_cycle, snr_scale=1, chan_num=0): 
-                    phase_range = np.linspace(-1, 2, len(self.phase)*3)
-                    profile_arr = single_pulse(phase_range, duty_cycle)
-                    profile_arr += single_pulse(phase_range-1, duty_cycle)
-                    profile_arr += single_pulse(phase_range+1, duty_cycle)
-                    profile_arr /= np.max(profile_arr)
-
-                    cut = (phase_range > -0.5) & (phase_range < 1.5)
-                    phase_range = phase_range[cut]
-                    profile_arr = profile_arr[cut]
-                    profile_arr -= np.min(profile_arr)
-                    interp_func = interp1d(phase_range, profile_arr)
-                    return interp_func(phase) * self.spectra(self.obs.freq_arr[chan_num]) * snr_scale
-
-                # def intrinsic_pulse(phase, duty_cycle=duty_cycle, snr_scale=1, chan_num=0): 
-                #     pulse_sigma = (duty_cycle)/(2*np.sqrt(2*np.log(2)))
-                #     return np.exp(-(phase-0.5)**2/(2*(pulse_sigma)**2)) * self.spectra(self.obs.freq_arr[chan_num]) * snr_scale
-                
-                self.smeared_values = []
-                for chan in range(self.obs.n_chan):
-                    channel_freq = self.obs.freq_arr[chan]
-                    chan_top = channel_freq + self.obs.df/2
-                    chan_bottom = channel_freq - self.obs.df/2
-                    
-                    W_eff = np.sqrt(W_int**2 + (self.DM_const * (self.DM - self.cDM) * (chan_top**-2 - chan_bottom**-2 ))**2)
-                    if W_eff >= self.period:
-                        snr_scale = 0.0
-                        W_eff = 0.99*self.period
-                    else:
-                        snr_scale = np.sqrt((self.period-W_eff) / W_eff) / snr_int
-
-                    self.smeared_values.append([W_eff, snr_scale])
-
-                def smeared_pulse(phase, chan_num):
-                    W_eff, snr_scale = self.smeared_values[chan_num]
-                    return pulse_profile(phase, W_eff/self.period, snr_scale, chan_num)
-
-            else:
-                self.smeared_profiles = []
-                for chan in range(self.obs.n_chan):
-                    channel_freq = self.obs.freq_arr[chan]
-                    channel_top = abs(self.obs.df)/2 + channel_freq
-                    channel_bottom = -abs(self.obs.df)/2 + channel_freq
-
-                    integrate_freq = quad_vec(lambda freq: channel_profile(self.phase, freq, channel_freq, chan),
-                                            a=channel_bottom, b=channel_top,
-                                            epsabs=1e-3, epsrel=1e-3)
-                    
-                    self.smeared_profiles.append(interp1d(self.phase, integrate_freq[0]/np.abs(self.obs.df)))
-                    # if integrate_freq[1] < 1:
-                    #     sys.exit(f"Unable to DM smear pulse profile for pulsar {self.pulsar_pars['ID']}.")
-
-                def smeared_pulse(phase, chan_num):
-                    return self.smeared_profiles[chan_num](phase)
-                
-            return smeared_pulse
-        
-
+    

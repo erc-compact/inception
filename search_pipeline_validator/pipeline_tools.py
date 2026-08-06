@@ -36,3 +36,19 @@ def create_DDplan(ddplan):
 
 def presto_CAND_parser(cand_path):
     pass
+
+
+def next_fast_len(n, primes=(2, 3, 5)):
+    """Return the smallest integer >= n with prime factors only in `primes`."""
+
+    def is_smooth(x):
+        for p in primes:
+            while x % p == 0:
+                x //= p
+        return x == 1
+
+    m = n
+    while not is_smooth(m):
+        m += 1
+
+    return m

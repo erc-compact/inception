@@ -148,7 +148,7 @@ def setup_psr_rv(pulsar, pepoch_ref=0.5):
 
 def get_freq_bounds(rv_, dt, pulsar, acc_det=0.0, jerk_det=0.0):
     rv = rv_.copy()
-    rv -= acc_det * dt + 0.5 * jerk_det * dt**2
+    # rv -= acc_det * dt + 0.5 * jerk_det * dt**2
 
     F0 = pulsar.FX_list[0]
 

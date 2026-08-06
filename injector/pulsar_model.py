@@ -1,16 +1,12 @@
-import sys
 import numpy as np 
-import pandas as pd
-from pathlib import Path
 import astropy.units as u
 from math import factorial
-from scipy.stats import norm
 import astropy.constants as const
 from sympy import lambdify, symbols
-from scipy.signal import savgol_filter
-from scipy.interpolate import interp1d, RegularGridInterpolator, PchipInterpolator
+from scipy.interpolate import interp1d, RegularGridInterpolator
 
 from .propagation_effects import PropagationEffects
+from .pulsar_emission import PulsarEmission
 from .micro_structure import MicroStructure
 
 
@@ -24,18 +20,19 @@ class PulsarModel:
         self.pulsar_pars = pulsar_pars
         self.obs = obs
         self.binary = binary
-        
-        
-        self.get_epochs(pulsar_pars)
-        self.get_pulsar_spin(pulsar_pars)
-        self.AX_list = pulsar_pars['AX']
-        self.get_spin_functions(pulsar_pars)
 
-        self.spectra = self.get_spectra(pulsar_pars)
-        self.light_curve = self.get_light_curve(pulsar_pars)
-        self.intrinsic_profile_chan = self.get_intrinsic_profile(pulsar_pars)
+        self.PX_list = pulsar_pars['PX']
+        self.FX_list = pulsar_pars['FX']
+        self.AX_list = pulsar_pars['AX']
+        
         self.micro_structure = pulsar_pars['micro_structure']
-        self.prop_effect = PropagationEffects(self.obs, pulsar_pars, self.profile_length, self.period, self.spectra)
+        
+        self.get_epochs()
+        self.get_spin_functions(pulsar_pars)
+        
+        self.emission = PulsarEmission(obs, pulsar_pars)
+        self.intrinsic_profile_chan = self.emission.get_intrinsic_profile()
+        self.prop_effect = PropagationEffects(self.obs, pulsar_pars, self.emission.profile_length, self.period, self.emission.spectra)
 
         if generate:
             self.get_mode_generators(pulsar_pars, generate)
@@ -45,59 +42,33 @@ class PulsarModel:
 
             self.observed_profile = self.vectorise_observed_profile()
 
-
     def get_mode_generators(self, pulsar_pars, generate):
         if self.mode == 'python':
             if  pulsar_pars['frame'] == 'topo':
                 self.generate_signal = self.generate_signal_python_topo
-            else: # bary
+            else: 
                 self.generate_signal = self.generate_signal_python_bary
         elif self.mode == 'pint':
             self.polycos_path = pulsar_pars['polycos']
             self.get_polyco_interp(generate)
             if  pulsar_pars['frame'] == 'topo':
                 self.generate_signal = self.generate_signal_polcos_topo
-            else: # bary
+            else:
                 self.generate_signal = self.generate_signal_polcos_bary
 
     def get_observed_profile(self):
         smeared_profile = self.prop_effect.intra_channel_DM_smearing(self.intrinsic_profile_chan)
         scatterd_profile = self.prop_effect.ISM_scattering(smeared_profile)
-        
         return scatterd_profile
-
-    def get_epochs(self, pulsar_pars):
-
-        if pulsar_pars['frame'] == 'topo':
-            pepoch = pulsar_pars['PEPOCH'] if pulsar_pars['PEPOCH'] else self.obs.obs_start
-            if np.abs(pepoch) <= 1:
-                pepoch = self.obs.obs_start + pulsar_pars['PEPOCH'] * self.obs.obs_len * u.s.to(u.day)
-
-            T0 = pulsar_pars['T0'] if pulsar_pars['T0'] else self.obs.obs_start
-
-            spin_ref = (self.obs.obs_start - pepoch) * u.day.to(u.s)
-            orbit_ref = (self.obs.obs_start - T0) * u.day.to(u.s)
-            
-        elif pulsar_pars['frame'] == 'bary':
-            pepoch = pulsar_pars['PEPOCH'] if pulsar_pars['PEPOCH'] else self.obs.obs_start_bary
-            if np.abs(pepoch) <= 1:
-                pepoch = self.obs.obs_start_bary + pulsar_pars['PEPOCH'] * self.obs.obs_len * u.s.to(u.day)
-
-            T0 = pulsar_pars['T0'] if pulsar_pars['T0'] else self.obs.obs_start_bary
-
-            spin_ref = (self.obs.obs_start_bary - pepoch) * u.day.to(u.s)
-            orbit_ref = (self.obs.obs_start_bary - T0) * u.day.to(u.s) 
-
-        self.pepoch = pepoch
-        self.binary.T0 = T0
-        self.spin_ref = spin_ref
-        self.orbit_ref = orbit_ref
-        self.accepoch = pulsar_pars['ACCEPOCH'] * self.obs.obs_len
-
-    def get_pulsar_spin(self, pulsar_pars):
-        self.PX_list = pulsar_pars['PX']
-        self.FX_list = pulsar_pars['FX']
     
+    def get_epochs(self):
+        self.binary.T0 = self.obs.T0
+        self.posepoch = self.obs.posepoch
+        self.pepoch = self.obs.pepoch
+        self.spin_ref = self.obs.spin_ref
+        self.orbit_ref = self.obs.orbit_ref
+        self.accepoch = self.obs.accepoch
+
     def get_spin_functions(self, pulsar_pars):
         t, c = symbols('t, c')
         phase_offset = pulsar_pars['phase_offset']
@@ -121,136 +92,9 @@ class PulsarModel:
             self.phase_func = lambda t: phase_func_abs(t - self.accepoch, const.c.value) + phase_offset
 
         else:
-            # if self.mode == 'pint':
-            #     freq_derivs['F0'] = 0
-
             phase_symbolic = sum([FX[n]*t**(n+1)/factorial(n+1) for n in range(n_freq)])
             phase_func_abs = lambdify(t, phase_symbolic.subs(freq_derivs))
             self.phase_func = lambda t: phase_func_abs(t) + phase_offset
-
-    def get_spectra(self, pulsar_pars):            
-        PSD_file = pulsar_pars['PSD']
-        if PSD_file:
-            suffix = Path(PSD_file).suffix
-            if suffix == '.npy':
-                try:
-                    spectra_arr = np.load(PSD_file)
-                except FileNotFoundError:
-                    sys.exit(f'Unable to load {PSD_file} numpy spectra for pulsar {self.ID}.')
-            else:
-                sys.exit(f'Pulsar {self.ID} has an invalid spectra file extension: {PSD_file}. Must be a numpy .npy file.')
-
-            freq_min = np.min(self.obs.freq_arr) - abs(self.obs.df)/2
-            freq_max = np.max(self.obs.freq_arr) + abs(self.obs.df)/2
-            freq_range = np.linspace(freq_min, freq_max, len(spectra_arr))
-            spectra_interp = interp1d(freq_range, spectra_arr)
-            return lambda freq: spectra_interp(freq)/np.mean(np.abs(spectra_arr))
-        else:
-            spectral_index = pulsar_pars['spectral_index']
-            return lambda freq: (freq/self.obs.f0)**float(spectral_index)
-        
-
-    def get_light_curve(self, pulsar_pars):
-        LC_path = pulsar_pars['light_curve']
-        if LC_path:
-            try:
-                data = np.load(LC_path)
-            except FileNotFoundError:
-                sys.exit(f'Unable to load {LC_path} numpy light curve for pulsar {self.ID}.')
-
-            if (not isinstance(data, np.ndarray)) or (data.ndim != 2) or (data.shape[0] != 2):
-                sys.exit(f'{LC_path} must be np.stack([time, LC]) with shape (2, N), got {getattr(data, "shape", None)}.')
-
-            time, LC = data
-            LC /= np.mean(np.abs(LC))
-
-            LC_interp = PchipInterpolator(time, LC, extrapolate=True)
-            return LC_interp
-        else:
-            return lambda t: np.ones_like(t)
-    
-    @staticmethod
-    def parse_profile(profile, pulse_i):
-        dc = profile['duty_cycle'][pulse_i]
-        phase = profile['phase'][pulse_i]
-        amp =  profile['amp'][pulse_i]
-
-        phase_range = np.linspace(0, 1, 1000)
-        pulse_sigma = (dc)/(2*np.sqrt(2*np.log(2)))
-        pulse = norm(phase, pulse_sigma).pdf(phase_range)
-        pulse /= np.max(pulse)
-        return pulse * amp
-    
-    def get_intrinsic_profile(self, pulsar_pars):
-        profile = pulsar_pars['profile']
-        if profile == 'default':
-            duty_cycle = pulsar_pars['duty_cycle']
-            pulse_sigma = (duty_cycle)/(2*np.sqrt(2*np.log(2)))
-            self.profile_length = 1000
-
-            phase_range = np.linspace(-1, 2, self.profile_length*3)
-
-            def single_pulse(phase): 
-                return np.exp(-(phase-0.5)**2/(2*(pulse_sigma)**2))
-            
-            profile_arr = single_pulse(phase_range)
-            profile_arr += single_pulse(phase_range-1)
-            profile_arr += single_pulse(phase_range+1)
-            profile_arr /= np.max(profile_arr)
-            
-            cut = (phase_range > -0.5) & (phase_range < 1.5)
-            phase_range = phase_range[cut]
-            profile_arr = profile_arr[cut]
-            profile_arr -= np.min(profile_arr)
-            interp_func = interp1d(phase_range, profile_arr)
-
-            def intrinsic_pulse(phase, chan_num=0): 
-                return interp_func(phase) * self.spectra(self.obs.freq_arr[chan_num])
-            
-        else:
-            if type(profile) == str:
-                suffix = Path(profile).suffix
-                if suffix == '.npy':
-                    try:
-                        profile_arr = np.load(profile)
-                    except FileNotFoundError:
-                        sys.exit(f'Unable to load {profile} numpy pulse profile for pulsar {self.ID}.')
-                elif suffix == '.txt':
-                    try:
-                        epn_profile = pd.read_csv(profile, delimiter=' ', 
-                                                names=['col0', 'col1', 'col2', 'intensity'])
-                        profile_arr = epn_profile['intensity'].values
-                    except (FileNotFoundError, KeyError, ValueError):
-                        sys.exit(f'Unable to load {profile} EPN pulse profile for pulsar {self.ID}.')
-                else:
-                    sys.exit(f'Pulsar {self.ID} has an invalid profile file extension: {profile}. Must be a numpy .npy or EPN .txt file.')
-
-            elif type(profile) == dict:
-                profile_arr = np.zeros(1000)
-                for pulse_i in range(len(profile['phase'])):
-                    profile_arr += self.parse_profile(profile, pulse_i)
-
-            else:
-                sys.exit(f'Invalid pulse profile for pulsar {self.ID}.')
-
-            if profile_arr.ndim == 1:
-                phase_range = np.linspace(0, 1, len(profile_arr))
-                interp_func = interp1d(phase_range, profile_arr/np.max(profile_arr))
-                self.profile_length = len(profile_arr)
-                def intrinsic_pulse(phase, chan_num=0): 
-                    return interp_func(phase) * self.spectra(self.obs.freq_arr[chan_num]) 
-                
-            elif (profile_arr.ndim == 2) and (len(profile_arr) == self.obs.n_chan):
-                phase_range = np.linspace(0, 1, len(profile_arr.T))
-                interp_funcs = [interp1d(phase_range, profile_arr[i]/np.max(profile_arr)) for i in range(self.obs.n_chan)]
-                self.profile_length = len(profile_arr.T)
-                def intrinsic_pulse(phase, chan_num): 
-                    return interp_funcs[chan_num](phase) * self.spectra(self.obs.freq_arr[chan_num])
-                
-            else:
-                sys.exit(f'Unable to interpret {profile} numpy pulse profile for pulsar {self.ID}.')
-
-        return intrinsic_pulse
 
     def calculate_SNR(self):
         beam_scale = self.obs.get_beam_snr() 
@@ -259,7 +103,7 @@ class PulsarModel:
         p0 = self.pulsar_pars.get('P0_SNR', self.period)
         n_pulse = self.obs.obs_len/p0
 
-        nbins = self.profile_length
+        nbins = self.emission.profile_length
         phase = np.linspace(0, 1, nbins)
 
         intrinsic_profile_sum = np.sum([self.intrinsic_profile_chan(phase, chan) for chan in range(n_chan)], axis=0) 
@@ -268,7 +112,7 @@ class PulsarModel:
         N_subints = 2**10
         dt_sub = self.obs.obs_len / N_subints
         sub_times = (np.arange(N_subints) + 0.5) * dt_sub
-        LC = self.light_curve(sub_times)
+        LC = self.emission.light_curve(sub_times)
         LC /= np.mean(LC)
         profile_energy_scale *= np.mean(LC**2)
 
@@ -293,7 +137,7 @@ class PulsarModel:
     def get_polyco_interp(self, generate_range):
         from pint.polycos import Polycos # type: ignore
         polycos_model = Polycos.read(self.polycos_path)
-        interp_topo_mjd = self.obs.observation_span(generate_range, n_samples=10**5)
+        interp_topo_mjd = self.obs.observation_span(generate_range, n_samples=10**5, return_mjd=True)
         abs_phase_interp = polycos_model.eval_abs_phase(interp_topo_mjd).value
 
         self.polycos = interp1d(interp_topo_mjd.astype(np.float64), abs_phase_interp.astype(np.float64))
@@ -322,11 +166,11 @@ class PulsarModel:
         phase_array = np.tile(topo_times, (len(self.obs.freq_arr),1)).T
         phase_time = (phase_array + DM_array*u.s.to(u.day))
 
-        bary_times = self.obs.topo2bary(topo_times, mjd=False, interp=True)
+        bary_times = self.obs.topo2bary(timeseries, return_mjd=False, interp=True)
         bary_array = np.tile(bary_times, (len(self.obs.freq_arr),1)).T
 
         phase = self.polycos(phase_time) + self.get_phase(bary_array + DM_array)
-        LC = self.light_curve(timeseries)[:, None]
+        LC = self.emission.light_curve(timeseries)[:, None]
         return self.get_pulse(phase, freq_array) * LC
     
     def generate_signal_polcos_topo(self, n_samples, sample_start=0):
@@ -340,7 +184,7 @@ class PulsarModel:
         topo_array = np.tile(timeseries, (len(self.obs.freq_arr),1)).T
 
         phase = self.polycos(phase_time) + self.get_phase(topo_array + DM_array)
-        LC = self.light_curve(timeseries)[:, None]
+        LC = self.emission.light_curve(timeseries)[:, None]
         return self.get_pulse(phase, freq_array) * LC
         
     def generate_signal_python_bary(self, n_samples, sample_start=0):
@@ -348,12 +192,11 @@ class PulsarModel:
         DM_array = np.tile(self.prop_effect.DM_delays, (len(timeseries),1))
         obs_freq_array = np.tile(self.obs.freq_arr, (len(timeseries),1))
 
-        topo_times = self.obs.sec2mjd(timeseries)
-        bary_times = self.obs.topo2bary(topo_times, mjd=False, interp=True)
+        bary_times = self.obs.topo2bary(timeseries, return_mjd=False, interp=True)
         bary_array = np.tile(bary_times, (len(self.obs.freq_arr),1)).T
 
         phase_array = self.get_phase(bary_array + DM_array)
-        LC = self.light_curve(timeseries)[:, None]
+        LC = self.emission.light_curve(timeseries)[:, None]
         return self.get_pulse(phase_array, obs_freq_array) * LC
     
     def generate_signal_python_topo(self, n_samples, sample_start=0):
@@ -363,7 +206,7 @@ class PulsarModel:
         topo_array = np.tile(timeseries, (len(self.obs.freq_arr),1)).T
 
         phase_array = self.get_phase(topo_array + DM_array)
-        LC = self.light_curve(timeseries)[:, None]
+        LC = self.emission.light_curve(timeseries)[:, None]
         return self.get_pulse(phase_array, obs_freq_array) * LC
 
    

@@ -18,7 +18,6 @@ from .pulsar_model import PulsarModel
 from .observation import Observation
 
 
-
 class SetupManager:
     def __init__(self, pulsar_data_path, filterbank_path, ephem_path='builtin', output_path=None, generate=False, override_length=0, gulp_size_GB=0.01, stats_samples=0):
         self.fb = self.get_filterbank(filterbank_path, gulp_size_GB, stats_samples) 
@@ -86,16 +85,14 @@ class SetupManager:
     
     def resolve_ID(self, pulsar_list, pulsar_data_path):
         ID_list = []
-        help="See 'example.inject' file in https://github.com/erc-compact/inception/tree/main/injector."
         if pulsar_list:
             for i, pulsar in enumerate(pulsar_list):
                 if not pulsar.get('ID', None):
-                    sys.exit(f'No "ID" key word found in pulsar {i+1} in {pulsar_data_path}. {help}')
+                    sys.exit(f'No "ID" key word found in pulsar {i+1} in {pulsar_data_path}.')
                 else:
                     ID_list.append(pulsar['ID'])
         else:
-            sys.exit(f'No "pulsars" key word found in {pulsar_data_path}. {help}')
-
+            sys.exit(f'No "pulsars" key word found in {pulsar_data_path}.')
 
         non_dict_elements = [item for item in ID_list if not isinstance(item, dict)]
         if len(non_dict_elements) != len(set(non_dict_elements)):
@@ -170,29 +167,28 @@ class SetupManager:
         return pulsar_pars
 
     def double_pulsar(self, pulsar_list, ID_list):
-        dble_psr_pars = ['RAJ', 'DECJ', 'separation', 'position_angle', 'beam_fwhm', 'DM', 'scattering_time', 'scattering_index', 'DM_smear',
-                      'binary_period', 'T0', 'inc', 'ecc', 'LoAN']
+        dble_psr_pars = ['RAJ', 'DECJ', 'separation', 'position_angle', 'beam_fwhm', 'cDM', 'DM', 'scattering_time', 'scattering_index', 'DM_smear',
+                      'binary_period', 'T0', 'inc', 'ecc', 'frame', 'DM_ref']
         
-        for i in range(len((pulsar_list))):
-            double_psr = pulsar_list[i]['double_pulsar']
+        for i, psr in enumerate(pulsar_list):
+            double_psr = psr['double_pulsar']
             if double_psr:
                 if double_psr in ID_list:
                     c_psr = pulsar_list[ID_list.index(double_psr)]
                     if (not c_psr['double_pulsar']):
                         for par in dble_psr_pars:
-                            pulsar_list[i][par] = c_psr[par]
-                        pulsar_list[i]['M1'] = c_psr['M2']
-                        pulsar_list[i]['M2'] = c_psr['M1']
-                        pulsar_list[i]['AoP'] = c_psr['AoP'] + 180
-                        pulsar_list[i]['x'] = PulsarParParser.orbit_par_converter(c_psr['binary_period'], find='A1', 
+                            psr[par] = c_psr[par]
+                        psr['M1'] = c_psr['M2']
+                        psr['M2'] = c_psr['M1']
+                        psr['AoP'] = (c_psr["AoP"] + 180) % 360
+                        psr['x'] = PulsarParParser.orbit_par_converter(c_psr['binary_period'], find='A1', 
                                                                                      M1=c_psr['M2'], M2=c_psr['M1'], inc=c_psr['inc']) 
                     else:
                          sys.exit(f"Only one 'double_pulsar' parameter allowed per binary pulsar pair.")                    
                 else:
-                    sys.exit(f"Invalid double_pulsar ID parameter for pulsar {pulsar_list[i]['ID']}.")
+                    sys.exit(f"Invalid double_pulsar ID parameter for pulsar {psr['ID']}.")
         return pulsar_list
     
-
     def conv_accel_units(self, pulsar_pars):
         if pulsar_pars['AX']:
             if (pulsar_pars['AX'][0] == 'presto'):
@@ -258,7 +254,10 @@ class SetupManager:
 
         parfile_params = {'PSR': f'0000+{i+1:04}i'}
         parfile_params['RAJ'], parfile_params['DECJ'] = self.source2str(pulsar_model.obs.source)
-        # parfile_params['POSEPOCH'] = pulsar_model.posepoch
+
+        parfile_params['POSEPOCH'] = pulsar_model.obs.posepoch
+        parfile_params['PMRA'] = pulsar_model.obs.source.pm_ra_cosdec.to_value(u.mas/u.yr)
+        parfile_params['PMDEC'] = pulsar_model.obs.source.pm_dec.to_value(u.mas/u.yr)
 
         parfile_params['DM'] = pulsar_model.prop_effect.DM
 
@@ -269,7 +268,7 @@ class SetupManager:
             
         # ephem = Path(pulsar_model.obs.ephem).stem.upper()
         # parfile_params['EPHEM'] = ephem if (ephem != 'BUILTIN') else 'DE440'
-        parfile_params['EPHEM'] = 'DE421' # some singularities seg fault with DE440
+        parfile_params['EPHEM'] = 'DE421' # some old TEMPO singularities seg fault with DE440
 
         parfile_params['TZRMJD'] = pulsar_model.obs.obs_start_bary
         parfile_params['TZRFRQ'] = 0
@@ -288,7 +287,7 @@ class SetupManager:
             parfile_params['A1'] = pulsar_model.binary.a1_sini_c
             parfile_params['PB'] = pulsar_model.binary.period * u.s.to(u.day)
             parfile_params['ECC'] = pulsar_model.binary.e
-            parfile_params['OM'] =  np.rad2deg(pulsar_model.binary.AoP+pulsar_model.binary.LoAN)
+            parfile_params['OM'] =  np.rad2deg(pulsar_model.binary.AoP) % 360
 
         par_file = pd.Series(parfile_params)
         par_file_path = self.output_path+f'/{pulsar_model.ID}.par'
@@ -320,12 +319,14 @@ class SetupManager:
         if pm.binary.period:
             with open(cand_file_path, 'w') as file:
                 file.write("#id DM accel F0 F1 F2 Pb A1 T0 OM ECC S/N\n")
-
-                om = np.rad2deg(pm.binary.AoP+pm.binary.LoAN)
                 pb = pm.binary.period*u.s.to(u.day)
-                T0_eff = pm.binary.T0 + pb * (360-om)/360
+                T0 = pm.binary.T0
 
-                binary_str = f'{pb} {pm.binary.a1_sini_c} {T0_eff} {0} {pm.binary.e}'
+                if pm.pulsar_pars['DM_ref'] == 'inf':
+                    dt_ref = pm.prop_effect.DM_const * pm.prop_effect.DM / pm.obs.high_f**2 
+                    T0 += dt_ref * u.s.to(u.day)
+                
+                binary_str = f'{pb} {pm.binary.a1_sini_c} {T0} {pm.binary.AoP} {pm.binary.e}'
                 file.write(f"{0} {pm.prop_effect.DM} {accel} {F0} 0 {F2} {binary_str} {pm.SNR}\n")
         else:
             with open(cand_file_path, 'w') as file:
@@ -341,14 +342,12 @@ class SetupManager:
         parfile_paths = []
         for i in range(len(self.pulsars)):
             fold_type = self.pulsars[i]['create_parfile']
-            if (fold_type == 'par') or (str(fold_type) == '1'):
-                fold_file_path = self.create_parfile(i)
-            elif fold_type == 'pulsarx':
+            if fold_type == 'pulsarx':
                 fold_file_path = self.create_psrfold_candfile(i)
             elif fold_type == 'presto':
                 fold_file_path = self.create_presto_candfile(i)
             else:
-                fold_file_path = ''
+                fold_file_path = self.create_parfile(i)
             parfile_paths.append(fold_file_path)
 
         return parfile_paths
@@ -381,7 +380,6 @@ class SetupManager:
                 except ImportError:
                     sys.exit('pint-pulsar package not installed, cannot use polycos.')
                 else:
-                    
                     if (not polycos_path):
                         created_polyco_path = self.polycos_creator(self.parfile_paths[i], pulsar_pars, self.pulsar_models[i].obs,  pint_func=[models, Polycos])
                         self.pulsars[i]['polycos'] = created_polyco_path

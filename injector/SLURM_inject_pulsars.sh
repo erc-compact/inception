@@ -9,7 +9,6 @@
 fb_path="/path/filterbank.fil"
 inj_path="/path/example.inject"
 ephem_path="/path/de440.bsp"
-profile_path="/path/profile.npy"
 binds="binds"
 
 sing_img="/path/singularity.sif"

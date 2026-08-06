@@ -61,7 +61,7 @@ class PeasoupProcess:
         fd = self.processing_args.get('filtool_args', {"cmd": {}})['cmd'].get('fd', 1)
         self.default_dedisp_gulp = int((2048.0 / (fb_reader.nchans/fd)) * 1e6)
 
-        self.default_fft_size = 2**int(np.ceil(np.log2(fb_reader.n_samples)))
+        self.default_fft_size = inj_tools.next_fast_len(fb_reader.n_samples)
 
         fb_size_GB = self.default_fft_size * fb_reader.nchans * fb_reader.nbits * 1e-9 
         self.default_ram_limit_gb = fb_size_GB * 3

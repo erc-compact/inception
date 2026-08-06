@@ -16,7 +16,7 @@ class BinaryModel:
 
             self.e = min(pulsar_pars['ecc'], 0.99)
             self.AoP = np.deg2rad(pulsar_pars['AoP']) 
-            self.LoAN = np.deg2rad(pulsar_pars['LoAN']) 
+            self.LoAN = np.deg2rad(pulsar_pars.get('LoAN', 0)) 
             self.I = np.deg2rad(pulsar_pars['inc'])
             self.sini = np.sin(self.I)
 

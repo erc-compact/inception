@@ -81,12 +81,6 @@ class FilterbankReader:
             sys.exit("Cannot parse filterbank header, HEADER_START was not found")
         self.read_data_pos=self.read_file.tell()
 
-    # def get_FB_stats_gulp(self, nsamples):
-    #     current_loc = self.read_file.tell()
-    #     data = self.read_block(nsamples)
-    #     self.read_file.seek(current_loc, 0)
-    #     return np.median(np.mean(data, axis=0)), np.median(np.std(data, axis=0))
-    
     @staticmethod
     def Welford_alg(count, mean, M2, new_data):
         n = new_data.shape[0]
@@ -217,7 +211,6 @@ class FilterbankWriter:
 
     def write_block(self, block):
         block = np.clip(block, 0, 2**self.nbits-1)
-        # block = np.mod(block, 2**self.nbits-1) overflows values, too slow
 
         if self.nbits == 16:
             out = block.flatten(order='C').astype('uint16')
