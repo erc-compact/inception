@@ -216,6 +216,26 @@ class Observation:
         else:
             return (bary_times - self.obs_start_bary_TIME).sec
         
+    def bary2topo_calc(self, bary_time, return_mjd=True, tol=1e-12, max_iter=5):
+        if isinstance(bary_time, Time):
+            bary_time = bary_time.tdb
+        else:
+            bary_time = Time(bary_time, format="mjd", scale="tdb")
+
+        topo_time = bary_time.utc
+        for _ in range(max_iter):
+            bary_est = self.topo2bary_calc(topo_time, return_mjd=True)
+            dt = bary_time.mjd - bary_est
+
+            topo_time = topo_time + TimeDelta(dt, format="jd")
+            if np.max(np.abs(dt)) < tol:
+                break
+
+        if return_mjd:
+            return topo_time.mjd
+        else:
+            return (topo_time - self.obs_start_time_TIME).sec
+        
     def earth_radial_velocity(self, topo_time):
         topo_time = np.atleast_1d(topo_time)
 
