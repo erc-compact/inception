@@ -167,8 +167,9 @@ class SetupManager:
         return pulsar_pars
 
     def double_pulsar(self, pulsar_list, ID_list):
-        dble_psr_pars = ['RAJ', 'DECJ', 'separation', 'position_angle', 'beam_fwhm', 'cDM', 'DM', 'scattering_time', 'scattering_index', 'DM_smear',
-                      'binary_period', 'T0', 'inc', 'ecc', 'frame', 'DM_ref']
+        dble_psr_pars = ['RAJ', 'DECJ', 'PMRA', 'PMDEC', 'DIST', 'parallax', 'RV', 'POSEPOCH', 'separation', 'position_angle', 'beam_fwhm', 'cDM', 'DM',
+                         'scattering_time', 'scattering_index', 'DM_smear',
+                         'binary_period', 'T0', 'inc', 'ecc', 'frame', 'DM_ref']
         
         for i, psr in enumerate(pulsar_list):
             double_psr = psr['double_pulsar']
