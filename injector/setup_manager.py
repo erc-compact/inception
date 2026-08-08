@@ -324,7 +324,7 @@ class SetupManager:
                 T0 = pm.binary.T0
 
                 if frame == 'bary':
-                    T0 = pm.obs.bary2topo_calc(T0)
+                    T0 = pm.obs.bary2topo_calc([T0])[0]
 
                 if pm.pulsar_pars['DM_ref'] == 'inf':
                     dt_ref = pm.prop_effect.DM_const * pm.prop_effect.DM / pm.obs.high_f**2 

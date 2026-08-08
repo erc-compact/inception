@@ -11,8 +11,8 @@ class PulsarEmission:
         self.pulsar_pars = pulsar_pars
         self.ID = pulsar_pars['ID']
 
-        self.PSD_file = pulsar_pars['PSD']
-        self.LC_path = pulsar_pars['light_curve']
+        self.spectrum = pulsar_pars['spectrum']
+        self.gain_path = pulsar_pars['gain_map']
         self.profile = pulsar_pars['profile']
 
         self.build_emission_model()
@@ -20,19 +20,19 @@ class PulsarEmission:
     def build_emission_model(self):
 
         self.spectra = self.get_spectra()
-        self.light_curve = self.get_light_curve()
+        self.gain = self.get_gain_map()
         self.intrinsic_profile_chan = self.get_intrinsic_profile()
 
     def get_spectra(self):            
-        if self.PSD_file:
-            suffix = Path(self.PSD_file).suffix
+        if type(self.spectrum) == str:
+            suffix = Path(self.spectrum).suffix
             if suffix == '.npy':
                 try:
-                    spectra_arr = np.load(self.PSD_file)
+                    spectra_arr = np.load(self.spectrum)
                 except FileNotFoundError:
-                    sys.exit(f'Unable to load {self.PSD_file} numpy spectra for pulsar {self.ID}.')
+                    sys.exit(f'Unable to load {self.spectrum} numpy spectra for pulsar {self.ID}.')
             else:
-                sys.exit(f'Pulsar {self.ID} has an invalid spectra file extension: {self.PSD_file}. Must be a numpy .npy file.')
+                sys.exit(f'Pulsar {self.ID} has an invalid spectra file extension: {self.spectrum}. Must be a numpy .npy file.')
 
             freq_min = np.min(self.obs.freq_arr) - abs(self.obs.df)/2
             freq_max = np.max(self.obs.freq_arr) + abs(self.obs.df)/2
@@ -41,25 +41,48 @@ class PulsarEmission:
             norm = np.mean(np.abs(spectra_arr))
             return lambda freq: np.interp(freq, freq_range, spectra_arr) / norm
         else:
-            return lambda freq: (freq/self.obs.f0)**float(self.pulsar_pars['spectral_index'])
+            return lambda freq: (freq/self.obs.f0)**float(self.spectrum)
         
-    def get_light_curve(self):
-        if self.LC_path:
+    def get_gain_map(self):
+        if self.gain_path:
             try:
-                data = np.load(self.LC_path)
+                gain = np.load(self.gain_path)
             except FileNotFoundError:
-                sys.exit(f'Unable to load {self.LC_path} numpy light curve for pulsar {self.ID}.')
-
-            if (not isinstance(data, np.ndarray)) or (data.ndim != 2) or (data.shape[0] != 2):
-                sys.exit(f'{self.LC_path} must be np.stack([time, LC]) with shape (2, N), got {getattr(data, "shape", None)}.')
-
-            time, LC = data
-            LC /= np.mean(np.abs(LC))
-
-            LC_interp = PchipInterpolator(time, LC, extrapolate=True)
-            return LC_interp
+                sys.exit(f'Unable to load {self.gain_path} numpy gain map for pulsar {self.ID}.')
         else:
-            return lambda t: np.ones_like(t)
+            return lambda t: np.ones((len(np.atleast_1d(t)), self.obs.n_chan))
+
+        n_chan = self.obs.n_chan
+        gain_axis = self.pulsar_pars.get('gain_axis', 'time')
+        if gain.ndim == 1:
+            if gain_axis == 'time':
+                n_subints = len(gain)
+                gain_times = (np.arange(n_subints) + 0.5) * self.obs.obs_len / n_subints
+                gain = np.tile(gain[:, None], (1, n_chan))
+
+            elif gain_axis == 'freq':
+                if len(gain) != n_chan:
+                    raise ValueError(f'Frequency gain must have {n_chan} values, got {len(gain)}.')
+
+                gain_times = np.array([0., self.obs.obs_len])
+                gain = np.tile(gain, (2, 1))
+
+            else:
+                raise ValueError("gain_axis must be 'time' or 'freq'.")
+
+        elif gain.ndim == 2:
+            if gain.shape[0] != n_chan:
+                raise ValueError(f'2D gain must have shape ({n_chan}, n_subints), got {gain.shape}.')
+
+            n_subints = gain.shape[1]
+
+            gain_times = (np.arange(n_subints) + 0.5) * self.obs.obs_len / n_subints
+            gain = gain.T
+        else:
+            raise ValueError('Gain map must be a 1D or 2D numpy array.')
+
+        return interp1d(gain_times, gain, axis=0,
+                        kind='linear',bounds_error=False, fill_value=(gain[0], gain[-1]))
         
     def get_intrinsic_profile(self):
 

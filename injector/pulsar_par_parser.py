@@ -32,7 +32,6 @@ class PulsarParParser:
         parser.add_argument('--parallax', metavar='(mas)', required=False, default=None, type=float, help='Parallax (default: use DIST)')
         parser.add_argument('--RV', metavar='(km/s)', required=False, default=0.0, type=float, help='Radial velocity (positive = receding) (default: 0 km/s)')
         parser.add_argument('--POSEPOCH', metavar='(MJD)', required=False, type=float, help='Reference epoch for pulsar position (TDB MJD)')
-
         parser.add_argument('--separation', metavar='(arcmin)', required=False, default=0, type=float, help='Pulsar offset from beam centre')
         parser.add_argument('--position_angle', metavar='(deg)', required=False, default=0, type=float, help='Position angle of pulsar')
         parser.add_argument('--beam_fwhm', metavar='(arcmin)', required=False, default=0, type=float, help='FWHM of injected beam, required for (separation, position_angle)')
@@ -41,26 +40,27 @@ class PulsarParParser:
         parser.add_argument('--FX', metavar='(Hz)', required=False, type=list, help='Xth frequency derivative of pulsar spin')
         parser.add_argument('--PX', metavar='(sec)', required=False, type=list, help='Xth period derivative of pulsar spin')
         parser.add_argument('--P0_SNR', metavar='(sec)', required=False, type=float, help='Spin period for calculating pulsar SNR (only used in Nullsar)')
+        parser.add_argument('--phase_offset', metavar='(phase)', required=False, default=0, type=float, help='Phase offset from PEPOCH')
 
         parser.add_argument('--AX', metavar='(m/s^(2+X))', required=False, type=list, help='Xth acceleration derivative')
         parser.add_argument('--ACCEPOCH', metavar='(obs phase)', required=False,  default=0.5, type=float, help='Reference epoch for AX, (0 - 1) T_obs')
         parser.add_argument('--presto_z', metavar='(z)', required=False, type=float, help='presto acceleration')
         parser.add_argument('--presto_w', metavar='(w)', required=False, type=float, help='presto jerk')
-        parser.add_argument('--phase_offset', metavar='(phase)', required=False, default=0, type=float, help='Phase offset from PEPOCH')
-
-        parser.add_argument('--DM', metavar='(pc/cm^3)', required=False, default=0, type=float, help='Dispersion measure')
+        
         parser.add_argument('--SNR', metavar='(-)', required=True, type=float, help='Injected signal-to-noise')
-        parser.add_argument('--PSD', metavar='(file)', required=False, type=str, help='NumPy .npy file containing a pulsar power spectrum (1D)')
-        parser.add_argument('--spectral_index', metavar='(-)', required=False, default=0, type=float, help='Spectral index of pulsar')
+        parser.add_argument('--spectrum', metavar='(FILE.npy/float)', required=False, default=0, help='1D pulsar sepctrum / Spectral index of pulsar')
         parser.add_argument('--duty_cycle', metavar='(phase)', required=False, default=0.1, type=float, help='Duty cycle of default gaussian pulse profile')
-        parser.add_argument('--profile', metavar='(file/dict)', required=False, default='default', help='NumPy .npy or EPN .txt file containing a custom pulsar pulse profile (1D or 2D), or multi-component dictionary')
-        parser.add_argument('--light_curve', metavar='(file)', default='', required=False, help='2 x 1D NumPy .npy containing time vs flux')
+        parser.add_argument('--profile', metavar='(FILE.npy/dict)', required=False, default='default', help='NumPy .npy or EPN .txt file containing a custom pulsar pulse profile (1D or 2D), or multi-component dictionary')
+        parser.add_argument('--gain_map', metavar='FILE.npy', default='', required=False, help='1D/2D NumPy .npy gain map')
+        parser.add_argument('--gain_axis', choices=['time', 'freq'], default='time', required=False, help='Axis for a 1D gain map: time or freq')
         parser.add_argument('--micro_structure', metavar='(microsec)', required=False, default=0, type=float, help='Mean timescale of pulse microstructure')
+        
+        parser.add_argument('--DM', metavar='(pc/cm^3)', required=False, default=0, type=float, help='Dispersion measure')
         parser.add_argument('--scattering_time', metavar='(millisec)', required=False, default='', type=str, help='Scattering timescale due to ISM')
         parser.add_argument('--scattering_sigma', metavar='(sigma)', required=False, default=0, type=int, help='standard devitations from DM-scattering law')
         parser.add_argument('--scattering_index', metavar='(-)', required=False, default=4, type=float, help='Scattering index to describe frequency evolution')
         parser.add_argument('--cDM', metavar='(pc/cm^3)', required=False, default=0, type=float, help='coherent Dispersion measure')
-        parser.add_argument('--DM_smear', metavar='(0 or 1)', required=False, default='off', choices=['off', 'approx', 'exact'], help='Smear the pulse profile due to intra-channel DM smearing')
+        parser.add_argument('--DM_smear', metavar='(off, approx or exact)', required=False, default='off', choices=['off', 'approx', 'exact'], help='Smear the pulse profile due to intra-channel DM smearing')
         parser.add_argument('--DM_ref', metavar='(top or inf)', required=False, default='inf', choices=['top', 'inf'], help='reference frequency for DM dispersion')
 
         parser.add_argument('--binary_period', metavar='(hour)', required=False, type=float, help='Period of binary oribit')

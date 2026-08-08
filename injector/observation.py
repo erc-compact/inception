@@ -22,6 +22,7 @@ class Observation:
         self.get_pointing_data(fb_header, pulsar_pars)
         self.get_beam_data(pulsar_pars)
         self.get_freq_data(fb_header)
+        self.get_beam_scale()
         
         self.obs_start_bary = self.topo2bary([self.obs_start], return_mjd=True)[0]
 
@@ -160,14 +161,14 @@ class Observation:
         )
         return SkyCoord(r, frame=self.source.frame, obstime=topo_time.tdb)
 
-    def get_beam_snr(self):
+    def get_beam_scale(self):
         if self.beam_fwhm != 0:
             beam_sigma = self.beam_fwhm/(2*np.sqrt(2*np.log(2)))
             beam_offset = self.source.separation(self.obs_pointing).arcmin
-            beam_SNR = np.exp(-(beam_offset)**2/(2*(beam_sigma)**2))
-            return beam_SNR
+            beam_scale = np.exp(-(beam_offset)**2/(2*(beam_sigma)**2))
+            self.beam_scale = beam_scale
         else:
-            return 1
+            self.beam_scale = 1
     
     def sec2mjd(self, time_sec):
         return (self.obs_start_time_TIME + TimeDelta(time_sec, format="sec")).mjd

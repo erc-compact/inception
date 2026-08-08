@@ -97,8 +97,6 @@ class PulsarModel:
             self.phase_func = lambda t: phase_func_abs(t) + phase_offset
 
     def calculate_SNR(self):
-        beam_scale = self.obs.get_beam_snr() 
-
         n_chan = self.obs.n_chan
         p0 = self.pulsar_pars.get('P0_SNR', self.period)
         n_pulse = self.obs.obs_len/p0
@@ -109,18 +107,11 @@ class PulsarModel:
         intrinsic_profile_sum = np.sum([self.intrinsic_profile_chan(phase, chan) for chan in range(n_chan)], axis=0) 
         profile_energy_scale = np.sum((intrinsic_profile_sum*n_pulse)**2)
 
-        N_subints = 2**10
-        dt_sub = self.obs.obs_len / N_subints
-        sub_times = (np.arange(N_subints) + 0.5) * dt_sub
-        LC = self.emission.light_curve(sub_times)
-        LC /= np.mean(LC)
-        profile_energy_scale *= np.mean(LC**2)
-
         samples_per_bin =  nbins / (p0 / self.obs.dt)
         noise_energy = self.obs.fb_std ** 2 * (n_pulse * n_chan) * samples_per_bin
         snr = profile_energy_scale/noise_energy
 
-        self.SNR_scale = self.SNR / np.sqrt(snr) * beam_scale
+        self.SNR_scale = self.SNR / np.sqrt(snr) * self.obs.beam_scale
      
     def vectorise_observed_profile(self):
         phases = self.prop_effect.phase
@@ -170,8 +161,8 @@ class PulsarModel:
         bary_array = np.tile(bary_times, (len(self.obs.freq_arr),1)).T
 
         phase = self.polycos(phase_time) + self.get_phase(bary_array + DM_array)
-        LC = self.emission.light_curve(timeseries)[:, None]
-        return self.get_pulse(phase, freq_array) * LC
+        gain_map = self.emission.gain(bary_times)
+        return self.get_pulse(phase, freq_array) * gain_map
     
     def generate_signal_polcos_topo(self, n_samples, sample_start=0):
         timeseries = np.linspace(self.obs.dt*sample_start, self.obs.dt*(n_samples+sample_start-1), n_samples)
@@ -184,8 +175,8 @@ class PulsarModel:
         topo_array = np.tile(timeseries, (len(self.obs.freq_arr),1)).T
 
         phase = self.polycos(phase_time) + self.get_phase(topo_array + DM_array)
-        LC = self.emission.light_curve(timeseries)[:, None]
-        return self.get_pulse(phase, freq_array) * LC
+        gain_map = self.emission.gain(timeseries)
+        return self.get_pulse(phase, freq_array) * gain_map
         
     def generate_signal_python_bary(self, n_samples, sample_start=0):
         timeseries = np.linspace(self.obs.dt*sample_start, self.obs.dt*(n_samples+sample_start-1), n_samples)
@@ -196,8 +187,8 @@ class PulsarModel:
         bary_array = np.tile(bary_times, (len(self.obs.freq_arr),1)).T
 
         phase_array = self.get_phase(bary_array + DM_array)
-        LC = self.emission.light_curve(timeseries)[:, None]
-        return self.get_pulse(phase_array, obs_freq_array) * LC
+        gain_map = self.emission.gain(bary_times)
+        return self.get_pulse(phase_array, obs_freq_array) * gain_map
     
     def generate_signal_python_topo(self, n_samples, sample_start=0):
         timeseries = np.linspace(self.obs.dt*sample_start, self.obs.dt*(n_samples+sample_start-1), n_samples)
@@ -206,7 +197,7 @@ class PulsarModel:
         topo_array = np.tile(timeseries, (len(self.obs.freq_arr),1)).T
 
         phase_array = self.get_phase(topo_array + DM_array)
-        LC = self.emission.light_curve(timeseries)[:, None]
-        return self.get_pulse(phase_array, obs_freq_array) * LC
+        gain_map = self.emission.gain(timeseries)
+        return self.get_pulse(phase_array, obs_freq_array) * gain_map
 
    
