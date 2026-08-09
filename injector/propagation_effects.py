@@ -32,13 +32,13 @@ class PropagationEffects:
 
     def scattering_relation_TPA(self, freq):
         DM_term = 3.6e-6 * self.DM**2.2 * (1 + 0.00194*self.DM**2)
-        f_term = (freq/327)**-self.pulsar_pars.get('scattering_index', 4)
+        f_term = (freq/327)**self.pulsar_pars.get('scattering_index', -4)
         Tau_s = DM_term * f_term / 1000
 
         return Tau_s
     
     def scattering_relation_CORDES(self, freq):
-        f_term = (freq/1000)**-self.pulsar_pars.get('scattering_index', 4)
+        f_term = (freq/1000)**self.pulsar_pars.get('scattering_index', -4)
         A_ms = 2.98e-7
         a = 1.4
         B = 3.55e-5
@@ -67,7 +67,7 @@ class PropagationEffects:
             
                 def scattering_relation(freq):
                     scattering_phase = ref_scattering_time * u.ms.to(u.s) 
-                    return scattering_phase * (freq/self.obs.f0) ** -scattering_index 
+                    return scattering_phase * (freq/self.obs.f0) ** scattering_index 
                         
             def scattering_kernel(nchan):
                 scattering_time = scattering_relation(self.obs.freq_arr[nchan]) / self.period

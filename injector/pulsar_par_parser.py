@@ -58,7 +58,7 @@ class PulsarParParser:
         parser.add_argument('--DM', metavar='(pc/cm^3)', required=False, default=0, type=float, help='Dispersion measure')
         parser.add_argument('--scattering_time', metavar='(millisec)', required=False, default='', type=str, help='Scattering timescale due to ISM')
         parser.add_argument('--scattering_sigma', metavar='(sigma)', required=False, default=0, type=int, help='standard devitations from DM-scattering law')
-        parser.add_argument('--scattering_index', metavar='(-)', required=False, default=4, type=float, help='Scattering index to describe frequency evolution')
+        parser.add_argument('--scattering_index', metavar='(-)', required=False, default=-4, type=float, help='Scattering index to describe frequency evolution')
         parser.add_argument('--cDM', metavar='(pc/cm^3)', required=False, default=0, type=float, help='coherent Dispersion measure')
         parser.add_argument('--DM_smear', metavar='(off, approx or exact)', required=False, default='off', choices=['off', 'approx', 'exact'], help='Smear the pulse profile due to intra-channel DM smearing')
         parser.add_argument('--DM_ref', metavar='(top or inf)', required=False, default='inf', choices=['top', 'inf'], help='reference frequency for DM dispersion')

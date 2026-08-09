@@ -24,7 +24,9 @@ class PulsarEmission:
         self.intrinsic_profile_chan = self.get_intrinsic_profile()
 
     def get_spectra(self):            
-        if type(self.spectrum) == str:
+        try:
+            spectral_index = float(self.spectrum)
+        except:
             suffix = Path(self.spectrum).suffix
             if suffix == '.npy':
                 try:
@@ -41,7 +43,7 @@ class PulsarEmission:
             norm = np.mean(np.abs(spectra_arr))
             return lambda freq: np.interp(freq, freq_range, spectra_arr) / norm
         else:
-            return lambda freq: (freq/self.obs.f0)**float(self.spectrum)
+            return lambda freq: (freq/self.obs.f0)**spectral_index
         
     def get_gain_map(self):
         if self.gain_path:

@@ -359,7 +359,7 @@ class SetupManager:
     def create_injection_report(self):
         report_path = os.path.join(self.output_path, f'report_{self.inj_ID}_{self.seed}.json')
         report = {'injection_report': {'ID': self.inj_ID, 'global_seed': self.seed, 'datetime': str(datetime.now()), 'ephem': self.ephem,
-                                'fb': self.fb.path, 'fb_mean': self.fb.fb_mean, 'fb_sigma': self.fb.fb_std}, 
+                                'fb': self.fb.path, 'fb_mean': self.fb.fb_mean, 'fb_sigma': self.fb.fb_std, 'version': 0}, 
                   'pulsars': self.pulsars}
         with open(report_path, 'w') as report_file:
             json.dump(report, report_file, indent=4)
