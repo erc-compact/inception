@@ -306,7 +306,6 @@ def plot_OPT(save_path, archive_INIT, archive_OPT, fit_params):
 
         axes[1][col].imshow(
             FP,
-            origin='lower',
             extent=[0, 1, 0, nchans],
             aspect='auto'
         )
@@ -368,9 +367,9 @@ def plot_INIT(save_path, archive_INIT, out):
     prof2D = np.roll(prof2D, phase_bins//2+phase_corr, axis=1)
     FP /= np.max(FP)
 
-    axes[1][0].imshow(FP, origin='lower', extent=[0, 1, 0, nchans], aspect='auto')
-    axes[1][1].imshow(prof2D, origin='lower', extent=[0, 1, 0, nchans], aspect='auto')
-    axes[1][2].imshow(FP-prof2D, origin='lower', extent=[0, 1, 0, nchans], aspect='auto')
+    axes[1][0].imshow(FP,  extent=[0, 1, 0, nchans], aspect='auto')
+    axes[1][1].imshow(prof2D,  extent=[0, 1, 0, nchans], aspect='auto')
+    axes[1][2].imshow(FP-prof2D,  extent=[0, 1, 0, nchans], aspect='auto')
 
     phase_arr = np.linspace(0, 1, phase_bins)
     axes[0][0].plot(phase_arr, IP)

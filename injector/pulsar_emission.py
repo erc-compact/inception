@@ -163,14 +163,20 @@ class PulsarEmission:
         amp = self.profile["amp"][pulse_i]
 
         pulse_sigma = self.DC2sigma(DC)
-        pulse = self.single_pulse(phase_range, centre, pulse_sigma)
+
+        pulse = (
+            self.single_pulse(phase_range, centre, pulse_sigma)
+            + self.single_pulse(phase_range, centre - 1, pulse_sigma)
+            + self.single_pulse(phase_range, centre + 1, pulse_sigma)
+        )
 
         pulse /= pulse.max()
         return pulse * amp
 
     def build_parametric_profile(self):
         profile_length = 1000
-        phase_range = np.linspace(0, 1, profile_length)
+        phase_range = np.linspace(-0.5, 1.5, profile_length)
+
         multi_profile = np.zeros(profile_length)
 
         for i in range(len(self.profile["phase"])):
