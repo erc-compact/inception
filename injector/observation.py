@@ -36,6 +36,13 @@ class Observation:
 
     def get_pointing_data(self, fb_header, pulsar_pars):
         self.telescope_ID, self.tempo_id = Observation.telescope_id[fb_header['telescope_id']]
+
+        Meerkat = EarthLocation( # TODO: implement fall back in case astropy cache fails
+            lat=-30.711055553291878* u.deg,
+            lon=21.443888889697842 * u.deg,
+            height=1086.59948488 * u.m,
+        )
+
         self.observatory = EarthLocation.of_site(self.telescope_ID)
 
         self.obs_pointing = SkyCoord(ra=self.convert_coord(fb_header['src_raj']), 

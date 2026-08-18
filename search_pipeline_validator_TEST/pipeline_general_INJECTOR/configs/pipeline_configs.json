@@ -1,0 +1,77 @@
+{
+    "injection_args": {
+        "id": "test_1",
+        "ephem": "./ephem/de440.bsp",
+        "python": "python3",
+
+        "filterbank" : "random",
+        "gulp_size_GB": 0.01,
+        "stats_samples": 1e6,
+
+        "save_merged_fb": false,
+        "save_inj_fb": true,
+        "save_report": true,
+        "save_pars": true
+    },
+
+    "candidate_matcher": {
+
+        "mode": "PEASOUP",
+        "max_folds": 5,
+        "harmonics": [0.5, 1, 2]
+
+    },
+
+
+    "pulsarx_parfold_args": {
+        "mode": "psrfold_fil",
+        "transfer_TMP": true,
+
+        "channel_mask": "856.0:863.94,923.1:946.2",
+        "template": "./meerkat_fold.template",
+
+        "blocksize_plan": {
+            "period_cutoff_s": [0.1, "inf"],
+            "blocksize": [2, 10]
+        },
+
+        "nbin_plan": {
+            "period_cutoff_s": [0.1, "inf"],
+            "nbins": [64, 128]
+        },
+        
+        "nsubint": 64,
+        "cmd": {
+            "nsubband": 64,
+            "clfd": 2,
+            "fillPatch": "rand",
+            "rfi": "zdot"
+        },
+
+        "cmd_flags": [
+            "-v",
+            "--render",
+            "--plotx"
+        ],
+        
+        "save_png": true,
+        "save_ar": true,
+        "save_fits": false,
+        "save_cand": true,
+
+        "delete_inj_fb": false
+
+    },
+
+    "data": [
+        ["./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00011/2024-09-15-14:13:59_cfbf00011_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00011/2024-09-15-14:13:59_cfbf00011_0000005099999232.fil"],
+
+        ["./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00322/2024-09-15-14:14:00_cfbf00322_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00322/2024-09-15-14:14:00_cfbf00322_0000005099999232.fil"],
+
+        ["./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00375/2024-09-15-14:13:59_cfbf00375_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00375/2024-09-15-14:13:59_cfbf00375_0000005099999232.fil"]
+    ]
+    
+}

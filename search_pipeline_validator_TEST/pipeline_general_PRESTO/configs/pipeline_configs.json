@@ -1,0 +1,101 @@
+{
+    "injection_args": {
+        "id": "test_1",
+        "ephem": "builtin",
+        "python": "python3",
+        "filterbank" : "random",
+        "gulp_size_GB": 0.01,
+        "stats_samples": 1e6,
+
+        "save_merged_fb": false,
+        "save_inj_fb": true,
+        "save_report": true,
+        "save_pars": true
+    },
+
+    "presto_rfi_args":  {
+        "rfifind": {
+            "time": 2
+        },
+
+        "birdies": {
+            "numharm": 4
+        },
+
+        "save_dat": false,
+        "save_fft": false
+    },
+
+    "presto_search_args": {
+        "ddplan": " 0.000 103.800 0.03 1 3460 0.7544\r\n 103.800 167.300 0.05 2 1270 0.1384\r\n 167.300 318.500 0.10 4 1512 0.08242\r\n 318.500 500.100 0.20 8 908 0.02475",
+
+        "bary": false,
+        "zmax": 200,
+        "wmax": 0,
+        "numharm": 8,
+
+        "mask": "rfifind",
+        "birdies": "rfifind",
+
+        "inj_DM": true
+    },
+
+    "presto_sifter": {
+        
+    },
+
+    "presto_fold_args": {
+
+        "bary": false,
+        "mask": "rfifind",
+
+        "save_png": true,
+        "save_pfd": true,
+        
+        "delete_inj_fb": true
+    },
+
+
+    "PICS_scorer": {
+        "code_path": "./pipeline_validator_MMGPS/PICS_python2.py",
+        "models_dir": "./pipeline_validator_MMGPS/configs/pics_models"
+    },
+
+
+    "data": [
+        ["./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00011/2024-09-15-14:13:59_cfbf00011_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00011/2024-09-15-14:13:59_cfbf00011_0000005099999232.fil"],
+
+        ["./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00322/2024-09-15-14:14:00_cfbf00322_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00322/2024-09-15-14:14:00_cfbf00322_0000005099999232.fil"],
+
+        ["./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00375/2024-09-15-14:13:59_cfbf00375_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00375/2024-09-15-14:13:59_cfbf00375_0000005099999232.fil"],
+
+        ["./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00050/2024-09-15-14:13:59_cfbf00050_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00050/2024-09-15-14:13:59_cfbf00050_0000005099999232.fil"],
+
+        ["./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00088/2024-09-15-14:13:59_cfbf00088_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00088/2024-09-15-14:13:59_cfbf00088_0000005099999232.fil"],
+
+        ["./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00349/2024-09-15-14:14:00_cfbf00349_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0033/cfbf00349/2024-09-15-14:14:00_cfbf00349_0000005099999232.fil"],
+
+        ["./MMGPS_UHF_DATA/MMGPS_U_0025/cfbf00164/2024-09-15-16:59:41_cfbf00164_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0025/cfbf00164/2024-09-15-16:59:41_cfbf00164_0000005099999232.fil"],
+
+        ["./MMGPS_UHF_DATA/MMGPS_U_0018/cfbf00125/2024-09-15-15:42:10_cfbf00125_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0018/cfbf00125/2024-09-15-15:42:10_cfbf00125_0000005099999232.fil"],
+
+        ["./MMGPS_UHF_DATA/MMGPS_U_0012/cfbf00000/2024-09-15-14:46:16_cfbf00000_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0012/cfbf00000/2024-09-15-14:46:16_cfbf00000_0000005099999232.fil"],
+
+        ["./MMGPS_UHF_DATA/MMGPS_U_0009/cfbf00258/2024-09-15-14:05:22_cfbf00258_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0009/cfbf00258/2024-09-15-14:05:22_cfbf00258_0000005099999232.fil"],
+
+        ["./MMGPS_UHF_DATA/MMGPS_U_0004/cfbf00001/2024-09-15-13:18:40_cfbf00001_0000000000000000.fil",
+         "./MMGPS_UHF_DATA/MMGPS_U_0004/cfbf00001/2024-09-15-13:18:40_cfbf00001_0000005099999232.fil"]
+    ]
+    
+    
+}

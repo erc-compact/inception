@@ -127,7 +127,7 @@ def setup_psr_rv(pulsar, pepoch_ref=0.5):
     rv += pulsar.obs.earth_radial_velocity(topo_mjd)
 
     if pulsar.binary.period:
-        bary_sec = pulsar.obs.topo2bary(topo_mjd, mjd=False, interp=False) + pulsar.orbit_ref
+        bary_sec = pulsar.obs.topo2bary(topo_mjd, return_mjd=False, interp=False) + pulsar.orbit_ref
         rv += pulsar.binary.get_radial_velocity_coord(bary_sec)
     else:
         v_deriv = pulsar.AX_list

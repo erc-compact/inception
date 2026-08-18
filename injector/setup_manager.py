@@ -263,9 +263,14 @@ class SetupManager:
         parfile_params['DM'] = pulsar_model.prop_effect.DM
 
         parfile_params['PEPOCH'] = pulsar_model.pepoch
+
+        harmonic = pulsar_model.pulsar_pars.get('fold_harmonic', None)
+        if not harmonic:
+            harmonic = 1
+            
         for i, freq_deriv in enumerate(pulsar_model.FX_list):
             if freq_deriv != 0:
-                parfile_params[f'F{i}'] = str(freq_deriv).replace('e', 'D')
+                parfile_params[f'F{i}'] = str(freq_deriv / harmonic).replace('e', 'D')
             
         # ephem = Path(pulsar_model.obs.ephem).stem.upper()
         # parfile_params['EPHEM'] = ephem if (ephem != 'BUILTIN') else 'DE440'
@@ -300,7 +305,11 @@ class SetupManager:
         cand_file_path = self.output_path+f'/{pm.ID}.candfile'
         frame = pm.pulsar_pars['frame']
 
-        F0_psr = pm.FX_list[0]
+        harmonic = pm.pulsar_pars.get('fold_harmonic', None)
+        if not harmonic:
+            harmonic = 1
+
+        F0_psr = pm.FX_list[0] / harmonic
         if frame == 'bary':
             F0 = F0_psr * (1 - pm.obs.earth_radial_velocity(pm.obs.obs_start)/const.c.value)[0]
         elif frame == 'topo':
@@ -359,7 +368,7 @@ class SetupManager:
     def create_injection_report(self):
         report_path = os.path.join(self.output_path, f'report_{self.inj_ID}_{self.seed}.json')
         report = {'injection_report': {'ID': self.inj_ID, 'global_seed': self.seed, 'datetime': str(datetime.now()), 'ephem': self.ephem,
-                                'fb': self.fb.path, 'fb_mean': self.fb.fb_mean, 'fb_sigma': self.fb.fb_std, 'version': 0}, 
+                                'fb': self.fb.path, 'obs_len': self.fb.obs_len, 'fb_mean': self.fb.fb_mean, 'fb_sigma': self.fb.fb_std, 'version': 0}, 
                   'pulsars': self.pulsars}
         with open(report_path, 'w') as report_file:
             json.dump(report, report_file, indent=4)

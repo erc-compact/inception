@@ -21,7 +21,6 @@ class PulsarParParser:
         parser = argparse.ArgumentParser(description='Pulsar parameters in --signal', formatter_class=CustomFormatter)
         parser.add_argument('--ID', metavar='(str)', required=True, type=str, help='Identifier for injected pulsar')
         parser.add_argument('--seed', metavar='(positive int)', required=False, default=0, type=int, help='Random number generator seed for pulsar')
-        parser.add_argument('--create_parfile', metavar='(par or pulsarx)', required=False, default='par', choices=['par', 'pulsarx'], help="Fold file for injected pulsar")
         parser.add_argument('--frame', metavar='(bary or topo)', required=False, default='bary', choices=['bary', 'topo'], help="barycentric/topocentric injection")
 
         parser.add_argument('--RAJ', metavar='(hh:mm:ss)', required=False, type=str, help='Right Ascension (J2000) (default: beam centre)')
@@ -75,6 +74,8 @@ class PulsarParParser:
         parser.add_argument('--M_func', metavar='(M_sun)', required=False,  default=0, type=float, help='Mass function')
 
         parser.add_argument('--mode', metavar='(str)', required=False, default='python', choices=['python', 'pint'], help="Inject using analytical 'python' code or polycos from 'pint'")
+        parser.add_argument('--create_parfile', metavar='(par or pulsarx)', required=False, default='par', choices=['par', 'pulsarx'], help="Fold file for injected pulsar")
+        parser.add_argument('--fold_harmonic', metavar='(float)', required=False, type=float, help="Generate fold file with p0 * harmonic")
         parser.add_argument('--pint_N', metavar='(-)', required=False, default=12, type=int, help='Number of coefficients per timestep for polycos generation')
         parser.add_argument('--pint_T', metavar='(min)', required=False, default=5, type=float, help='Timestep for polycos generation')
         parser.add_argument('--polycos', metavar='(file)', required=False, default='', type=str, help='.polycos: Pint will use this file, .par: Pint will make polycos from par file, (None) Pint will make from injection params.')
