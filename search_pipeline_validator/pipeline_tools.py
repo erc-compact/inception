@@ -1,5 +1,7 @@
+import os
 import sys
 import json
+import hashlib
 import subprocess
 from collections import namedtuple
 
@@ -22,23 +24,7 @@ def rsync(source, destination, shell=True):
     except (subprocess.CalledProcessError, FileNotFoundError):
         subprocess.run(f'cp -av {source} {destination}', shell=shell)
     
-
-def create_DDplan(ddplan):
-    DMRange = namedtuple('DMRange', ['low_dm', 'high_dm', 'dm_step', 'tscrunch'])
-
-    segments = []
-    for line in ddplan.splitlines():
-        low_dm, high_dm, dm_step, tscrunch = list(map(float, line.split()[:4]))
-        segments.append(DMRange(low_dm, high_dm, dm_step, tscrunch))
-
-    return list(sorted(segments, key=lambda x: x.tscrunch))
-
-
-def presto_CAND_parser(cand_path):
-    pass
-
-
-def next_fast_len(n, primes=(2, 3, 5)):
+def next_fast_len(n, primes=[2, 3, 5]):
     """Return the smallest integer >= n with prime factors only in `primes`."""
 
     def is_smooth(x):
@@ -52,3 +38,15 @@ def next_fast_len(n, primes=(2, 3, 5)):
         m += 1
 
     return m
+
+def string2seed(s):
+    hash_object = hashlib.sha256(s.encode())
+    hash_int = int(hash_object.hexdigest(), 16)
+    return hash_int % (10**12)
+
+
+def execute(cmd):
+    os.system(cmd)
+
+def print_exe(output):
+    execute("echo " + str(output))

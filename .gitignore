@@ -2,7 +2,6 @@
 
 /.vscode
 
-
 /dev_offline_injector
 
 /dev_nulsar
@@ -13,5 +12,4 @@
 
 /search_pipeline_validator/__pycache__
 
-/injector/TODO.txt
 

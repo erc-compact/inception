@@ -52,7 +52,7 @@ class PrestoFoldProcess:
         else:
             self.mask = ''
 
-        candfile = f"{presto_out_dir}/PRESTO_CANDS/PRESTO_candidates.txt"
+        candfile = f"{presto_out_dir}/PRESTO/PRESTO_candidates.txt"
         df = pd.read_csv(candfile)
         all_cands = []
         for i, row in df.iterrows():

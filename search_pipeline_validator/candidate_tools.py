@@ -4,16 +4,10 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 import astropy.units as u
+from math import factorial
 import astropy.constants as const
 
 import xml.etree.ElementTree as ET
-
-import pipeline_tools as inj_tools
-
-import os, sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-
 
 
 def xml_to_dict(element):
@@ -43,57 +37,61 @@ def xml_to_dict(element):
     return {element.tag: result}
 
 
-def xml2csv(xml_file, output, save=True):
+def xml2csv(xml_file):
     tree = ET.parse(xml_file)
     root = tree.getroot()
+
     xml_dict = xml_to_dict(root)
-    csv_cands = pd.DataFrame(xml_dict['peasoup_search']['candidates']['candidate'])
-    csv_cands = csv_cands.astype(np.float64)[['period', 'dm', 'acc', 'snr']]
-    if save:
-        csv_cands.to_csv(output)
-    return csv_cands
-
-
-def par_cand2csv(injection_report, work_dir, output, match=[]):
-    psr_candfiles = []
-    for psr in injection_report['pulsars']:
-        cand_file = glob.glob(f"{work_dir}/{psr['ID']}*.cands")[0]
-        cand_df = pd.read_csv(cand_file, skiprows=11, engine='python', sep=r'\s+').iloc[0]
-        fold_pars = [psr['ID'], *cand_df[['f0_new', 'dm_new', 'acc_new', 'S/N_new']].values]
-        psr_candfiles.append(fold_pars)
+    peasoup = xml_dict.get('peasoup_search') or {}
+    candidates_dict = peasoup.get('candidates') or {}
+    candidates = candidates_dict.get('candidate')
     
-    df_cands = pd.DataFrame(psr_candfiles, columns=['ID', 'f0', 'dm', 'acc', 'SNR'])
-    if match:
-        matched = []
-        report, tol, harmonic_log = match
-        for i, row in df_cands.iterrows():
-            ID, f0, dm, acc, SNR = row
-            psr = report['pulsars'][i]
-            p0 = 1/(f0 * harmonic_log.get(psr['ID'], 1))
-            p_cond = np.abs(psr['PX'][0]-p0)/psr['PX'][0] <= tol['p0']
-            dm_cond = np.abs(psr['DM'] - dm) <= tol['dm']
-            snr_cond= (SNR/psr['SNR'] <= tol['snr_upp']) and (SNR/psr['SNR'] >= tol['snr_low'])
+    if candidates is None:
+        csv_cands = pd.DataFrame(columns=['period', 'dm', 'acc', 'snr'])
+    elif not isinstance(candidates, list):
+        candidates = [candidates]
+        csv_cands = pd.DataFrame(candidates)
+        csv_cands = csv_cands.astype(np.float64)[['period', 'dm', 'acc', 'snr']]
+    else:
+        csv_cands = pd.DataFrame(candidates)
+        csv_cands = csv_cands.astype(np.float64)[['period', 'dm', 'acc', 'snr']]
 
-            if p_cond and dm_cond and snr_cond:
-                matched.append(True)
-            else:
-                matched.append(False)
-        
-        df_cands['match'] = matched
-
-    df_cands.to_csv(output)
-
-
-def fold_cand2csv(cand_file, output):
-    candidates = []
-    cand_df = pd.read_csv(cand_file, skiprows=11, engine='python', sep=r'\s+')
-    for _, row in cand_df.iterrows():
-        fold_pars = row[['#id', 'f0_new', 'dm_new', 'acc_new', 'S/N_new']].values
-        candidates.append(fold_pars)
+    pepoch = float(xml_dict['peasoup_search'].get('segment_parameters', {'segment_pepoch': None})['segment_pepoch'])
+    fftsize = float(xml_dict['peasoup_search']['search_parameters']['size'])
+    dt = float(xml_dict['peasoup_search']['header_parameters']['tsamp'])
     
-    df_cands = pd.DataFrame(candidates, columns=['ID', 'f0', 'dm', 'acc', 'SNR'])
-    df_cands.to_csv(output)
+    return csv_cands, pepoch, fftsize, dt
 
+
+def add_PSR_rv_curve(pulsar, time, rv_seg, pepoch_ref):
+
+    tref = pulsar.obs.obs_len * pepoch_ref
+    dt = time - tref
+
+    if pulsar.binary.period:
+        rv_seg += pulsar.binary.get_radial_velocity_coord(time + pulsar.orbit_ref)
+    else:
+        v_deriv = pulsar.AX_list
+        rv_seg = 0
+        for n, deriv in enumerate(v_deriv):
+            rv_seg += deriv * dt**(n + 1) / factorial(n + 1)
+
+    return rv_seg
+
+def get_freq_bounds(rv, pulsar, pepoch):
+    F0 = pulsar.FX_list[0]
+    obs = pulsar.obs
+
+    if pulsar.pulsar_pars['frame'] == 'bary':
+        F0 *= (1 - obs.earth_radial_velocity(pepoch)/const.c.value)
+
+    rv_min = np.min(rv)
+    rv_max = np.max(rv)
+
+    F_max = F0 * (1 - rv_min / const.c.value)
+    F_min = F0 * (1 - rv_max / const.c.value)
+
+    return F_min, F_max
 
 def DM_curve(pulsar, snr_limit):
     period = pulsar.PX_list[0]
@@ -110,170 +108,37 @@ def DM_curve(pulsar, snr_limit):
     return DM_range
 
 
-def correct_fftsize_offset(period, acc, fftsize, nsamples, dt):
-    pdot = acc * period / const.c.value
-    return period - pdot * (fftsize - nsamples) * dt / 2
+def create_PULSARX_candfile(cands, candfile_path):
 
-
-def setup_psr_rv(pulsar, pepoch_ref=0.5):
-
-    topo_sec = np.linspace(0, pulsar.obs.obs_len, 2000)
-    topo_mjd = pulsar.obs.sec2mjd(topo_sec)
-
-    tref = pulsar.obs.obs_len * pepoch_ref
-    dt = topo_sec - tref
-
-    rv = np.zeros_like(topo_sec)
-    rv += pulsar.obs.earth_radial_velocity(topo_mjd)
-
-    if pulsar.binary.period:
-        bary_sec = pulsar.obs.topo2bary(topo_mjd, return_mjd=False, interp=False) + pulsar.orbit_ref
-        rv += pulsar.binary.get_radial_velocity_coord(bary_sec)
-    else:
-        v_deriv = pulsar.AX_list
-        if len(v_deriv) == 1:
-            a_inj = v_deriv[0]
-            j_inj = 0
-        elif len(v_deriv) > 1:
-            a_inj = v_deriv[0]
-            j_inj = v_deriv[1]
-        else:
-            a_inj = 0
-            j_inj = 0
-
-        rv += a_inj * dt + 0.5 * j_inj * dt**2
-
-    return rv, dt
-
-
-def get_freq_bounds(rv_, dt, pulsar, acc_det=0.0, jerk_det=0.0):
-    rv = rv_.copy()
-    # rv -= acc_det * dt + 0.5 * jerk_det * dt**2
-
-    F0 = pulsar.FX_list[0]
-
-    rv_min = np.min(rv)
-    rv_max = np.max(rv)
-
-    F_max = F0 * (1 - rv_min / const.c.value)
-    F_min = F0 * (1 - rv_max / const.c.value)
-
-    return F_min, F_max
-
-
-def create_cand_file_acc(cands, cand_file_path):
-
-    with open(cand_file_path, 'w') as file:
+    with open(candfile_path, 'w') as file:
         file.write("#id DM accel F0 F1 S/N\n")
         for i, cand in cands.iterrows():
             file.write(f"{i} {cand['dm']} {cand['acc']} {1/cand['period']} 0 {cand['snr']}\n")
 
 
-def merge_cand_file_acc(cand_list, cand_file_path):
-
-    cand_data = []
-    for cand_file in cand_list:
-        data = pd.read_csv(cand_file, delimiter=' ')
-        for i, row in data.iterrows():
-            cand_data.append(row.values[1:].tolist())
-
-    with open(cand_file_path, 'w') as file:
-        file.write("#id DM accel F0 F1 S/N\n")
-        for i, cand in enumerate(cand_data):
-            file.write(f"{i} {cand[0]} {cand[1]} {cand[2]} {cand[3]} {cand[4]}\n")
-
-
-class CandMatcher:
-    def __init__(self, injection_report, candidates, filterbank, fftsize, ephem, corr_period=False, override_length=0):
-        from injector.io_tools import FilterbankReader
-        from injector.setup_manager import SetupManager
-
-        self.cands = pd.read_csv(candidates, index_col=0) if type(candidates) == str else candidates
-
-        self.fb = FilterbankReader(filterbank, stats_samples=0)
-        self.fftsize = fftsize
-
-        self.setup = SetupManager(injection_report, filterbank, ephem, generate=False, override_length=override_length)
-
-        if corr_period:
-            self.correct_periods(fftsize, override_length)
-
-    def correct_periods(self, fftsize, override_length):
-        n_samples = override_length if override_length else self.fb.n_samples
-        new_periods = correct_fftsize_offset(self.cands['period'], self.cands['acc'], fftsize, n_samples, self.fb.dt)
-
-        self.cands = self.cands.rename(columns={'period': 'period_input'})
-        self.cands['period'] = new_periods
-
-
-    def match_candidates(self, pepoch_ref=0.5, snr_limit=3, max_harmonic=2):
-        self.cands['cand_id'] = np.arange(len(self.cands))
-
-        pulsar_cands = {}
-        for pm in self.setup.pulsar_models:
-
-            fft_bin = 1/(self.fftsize*pm.obs.dt)
-
-            cands_F = (1/self.cands['period'])
-
-            F_min = np.zeros(len(self.cands))
-            F_max = np.zeros(len(self.cands))
-
-
-            rv_psr, dt = setup_psr_rv(pm, pepoch_ref=pepoch_ref)
-            for idx in range(len(self.cands)):
-
-                acc_det = self.cands.iloc[idx]['acc']
-
-                if 'jerk' in self.cands.columns:
-                    jerk_det = self.cands.iloc[idx]['jerk']
-                else:
-                    jerk_det = 0.0
-
-                F_min[idx], F_max[idx] = get_freq_bounds(
-                    rv_psr, dt, pm,
-                    acc_det=acc_det, jerk_det=jerk_det
-                )
-
-            freq_cond = np.zeros(len(self.cands), dtype=bool)
-            for h in range(1, max_harmonic + 1):
-                freq_cond |= ((cands_F / h >= F_min - fft_bin) & (cands_F / h <= F_max + fft_bin))
-                if h > 1:
-                    freq_cond |= ((cands_F * h >= F_min - fft_bin) & (cands_F * h <= F_max + fft_bin))
-            
-            DM_limit = DM_curve(pm, snr_limit)
-            dm_offset =  (pm.prop_effect.DM - self.cands['dm'])
-            snr_offset = (pm.SNR - self.cands['snr'])
-            dm_cond = np.abs(dm_offset) <= DM_limit
-
-            candidates = self.cands[freq_cond & dm_cond]
-            candidates['nbins_offset'] = F_min[freq_cond & dm_cond] # rename
-            candidates['accel_bin_drift'] = F_max[freq_cond & dm_cond] # rename
-            candidates['dm_offset'] = dm_offset[freq_cond & dm_cond]
-            candidates['snr_offset'] = snr_offset[freq_cond & dm_cond]
+def par_cand2csv(injection_report, work_dir, output): # add width
+    psr_candfiles = []
+    for psr in injection_report['pulsars']:
+        cand_file = glob.glob(f"{work_dir}/{psr['ID']}*.cands")[0]
+        cand_df = pd.read_csv(cand_file, skiprows=11, engine='python', sep=r'\s+').iloc[0]
+        fold_pars = [psr['ID'], *cand_df[['f0_new', 'dm_new', 'acc_new', 'S/N_new']].values]
+        psr_candfiles.append(fold_pars)
     
-            candidates_sorted = candidates.sort_values(by='snr', key=abs, ascending=False)
-
-            pulsar_cands[pm.ID] = candidates_sorted
-
-        return pulsar_cands
+    df_cands = pd.DataFrame(psr_candfiles, columns=['ID', 'f0', 'dm', 'acc', 'SNR'])
+    df_cands.to_csv(output)
 
 
-    def generate_files(self, candidate_root, max_cand_per_inj=-1, pepoch_ref=0.5, snr_limit=3, max_harmonic=2, create_candfile=True):
-        pulsar_cands = self.match_candidates(pepoch_ref=pepoch_ref, snr_limit=snr_limit, max_harmonic=max_harmonic)
-        cands_data = []
-        for pm in self.setup.pulsar_models:
-            candidates = pulsar_cands[pm.ID].reset_index(drop=True)
-            for i, row in candidates.iterrows():
-                if (i < max_cand_per_inj) or (max_cand_per_inj == -1):
-                    cands_data.append([pm.ID, *row.values])
-                else:
-                    break
-        
-        cands_df = pd.DataFrame(cands_data, columns=['inj_id', *pulsar_cands[next(iter(pulsar_cands))].columns])
-        cands_df.to_csv(f'{candidate_root}.csv')
-        if create_candfile:
-            create_cand_file_acc(cands_df, f'{candidate_root}.candfile')
+def fold_cand2csv(cand_file, output):
+    candidates = []
+    cand_df = pd.read_csv(cand_file, skiprows=11, engine='python', sep=r'\s+')
+    for _, row in cand_df.iterrows():
+        fold_pars = row[['#id', 'f0_new', 'dm_new', 'acc_new', 'S/N_new']].values
+        candidates.append(fold_pars)
+    
+    df_cands = pd.DataFrame(candidates, columns=['ID', 'f0', 'dm', 'acc', 'SNR'])
+    df_cands.to_csv(output)
 
 
-
+def correct_fftsize_offset(period, acc, fftsize, nsamples, dt):
+    pdot = acc * period / const.c.value
+    return period - pdot * (fftsize - nsamples) * dt / 2

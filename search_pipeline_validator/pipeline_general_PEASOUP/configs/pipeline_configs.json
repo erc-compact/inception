@@ -1,0 +1,176 @@
+{
+    "injection_args": {
+        "id": "test",
+        "ephem": ".../de440.bsp",
+        "python": "python3",
+
+        "filterbank" : "random",
+        "gulp_size_GB": 0.01,
+        "stats_samples": 1e6,
+
+        "save_merged_fb": false,
+        "save_inj_fb": true,
+        "save_report": true,
+        "save_pars": true
+    },
+    
+    
+    "pulsarx_parfold_args": {
+        "mode": "psrfold_fil",
+        "transfer_TMP": false,
+
+        "channel_mask": "856.0:863.94,923.1:946.2",
+        "template": ".../meerkat_fold.template",
+
+        "blocksize_plan": {
+            "period_cutoff_s": [0.1, "inf"],
+            "blocksize": [2, 10]
+        },
+
+        "nbin_plan": {
+            "period_cutoff_s": [0.1, "inf"],
+            "nbins": [64, 128]
+        },
+        
+        "nsubint": 64,
+        "cmd": {
+            "nsubband": 64,
+            "clfd": 2,
+            "fillPatch": "rand",
+            "rfi": "zdot"
+        },
+
+        "cmd_flags": [
+            "-v",
+            "--render",
+            "--plotx"
+        ],
+        
+        "save_png": true,
+        "save_ar": true,
+        "save_cand": true,
+        "save_fits": false,
+
+        "delete_inj_fb": false
+
+    },
+    
+    "filtool_args":  {
+        "transfer_TMP": true,
+
+        "filplan": {
+            "frequency_downsample": 1,
+            "nbits": 8,
+            "outmean": 128.0,
+            "outstd": 6.0,
+            "baseline_width": 0
+        },
+
+        "cmd": {
+            "rfi": "kadaneF 8 4 zdot",
+            "zapthre": 4,
+            "seglen": 2,
+            "baseline": "0 0",
+            "fillPatch": "rand"
+        },
+
+
+        "cmd_flags": [
+            "-v"
+        ],
+
+        "tscrunch": [1, 2, 4],
+
+        "save_filtool_fb": true,
+        "save_filplan": false,
+
+        "delete_inj_fb": false
+    },
+
+    "peasoup_args": {
+        "transfer_TMP": true,
+        "filtool": true,
+        "inj_DM": false,
+        
+        "ddplan" : {
+            "1": [40, 60, 0.1],
+            "2": [40, 60, 0.1],
+            "4": [40, 60, 0.1]
+        },
+
+        "segment_plan" : {
+            "1": {"acc_start" :-50, "acc_end": 50, "min_snr": 7.0, "fftsize": [2, 3, 5]},
+            "2": {"acc_start" :-100, "acc_end": 100, "min_snr": 7.0, "fftsize": [2, 3, 5]}
+        },
+
+        "birdie_list": "1000.00:0.05,1500.00:0.05,1300.00:0.05",
+        "channel_mask": "932.00:961.00",
+
+        "cmd": {
+            "nharmonics": "4",
+            "acc_tol": 1.11,
+            "limit": 1000
+        },
+
+        "save_xml": true,
+        "save_peasoup": false,
+        "save_birdie": false,
+        "save_cmask": false,
+        "save_dm_list": false,
+
+        "delete_filtool_fb": false,
+        "delete_inj_fb": false
+    },
+
+
+
+    "candidate_matcher_args": {
+
+        "mode": "PEASOUP",
+        "max_folds": 5,
+        "harmonics": [0.5, 1, 2]
+
+    },
+
+    "pulsarx_candfold_args": {
+        "mode": "psrfold_fil2",
+        "transfer_TMP": true,
+
+        "channel_mask": "856.0:863.94,923.1:946.2",
+        "template": ".../meerkat_fold.template",
+        
+
+        "nsubint": 64,
+        "cmd": {
+            "nbin": 64,
+            "nbinplan": "0.1 128",
+            "nsubband": 64,
+            "clfd": 2,
+            "fillPatch": "rand",
+            "rfi": "zdot"
+        },
+
+        "cmd_flags": [
+            "-v",
+            "--plotx",
+            "--render"
+        ],
+        
+        "save_png": true,
+        "save_ar": true,
+        "save_cand": true,
+
+        "delete_inj_fb": false
+    },
+
+
+    
+    "data": [
+        [".../obs1.fil", 56],
+
+        [".../obs2_0000000000000000.fil",
+         ".../obs2_0000005099999232.fil", 0]
+
+    ]
+    
+}

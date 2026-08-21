@@ -1,0 +1,24 @@
+TODO:
+    input multi fb and parse options
+    nextflow pipeline 
+
+    create beam_map reader
+    compute noise statistic more robust
+    optimise profile_length
+    speed up DM_smearing for custom profiles+scattering
+
+FEATURES:
+    create background script in login node that submits jobs and handles injections
+    verbose outputs
+    scintillation
+    microsturcture DM smearing
+    injection removal
+    time estimator
+    allow pint mode to use any binary model
+    
+
+BUGS:
+    redo overflow of bits 
+    psd at freq0 is 0
+    microstructure recursively check for pulse lengths
+ 

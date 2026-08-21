@@ -1,9 +1,7 @@
 import os
 import glob
-import hashlib
 import argparse
 import subprocess
-import numpy as np
 from pathlib import Path
 from multiprocessing import Pool
 
@@ -32,14 +30,18 @@ class PulsarxFoldParProcess:
         report_path = glob.glob(f'{results_dir}/report_*.json')[0]
         self.injection_report = inj_tools.parse_JSON(report_path)
         self.inj_id = self.injection_report['injection_report']['ID']
+        self.cdm = self.injection_report['pulsars'][0]['cDM']
 
     def transfer_data(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
 
         data = glob.glob(f"{results_dir}/*_{self.inj_id}.fil")[0]
-        inj_tools.rsync(data, self.work_dir)
 
-        self.data = f'{self.work_dir}/{Path(data).name}'
+        if self.processing_args['pulsarx_parfold_args'].get('transfer_TMP', True):
+            inj_tools.rsync(data, self.work_dir)
+            self.data = f'{self.work_dir}/{Path(data).name}'
+        else:
+            self.data = data
 
     def create_zap_sting(self):
         cmask = self.processing_args['pulsarx_parfold_args'].get('channel_mask', '')
@@ -50,78 +52,72 @@ class PulsarxFoldParProcess:
             self.zap_string = ''
 
     def set_blocksize(self, psr):
-        blocksize_plan = self.processing_args['pulsarx_parfold_args'].get('blocksize_plan', [2, 10, 0.1])
-        input_blocksize = self.processing_args['pulsarx_parfold_args'].get('blocksize', False)
-        if not input_blocksize:
-            if psr['PX'][0] > blocksize_plan[2]:
-                block_size = blocksize_plan[1]
-            else:
-                block_size = blocksize_plan[0]
-        else:
-            block_size = input_blocksize
-        return block_size
-    
-    @staticmethod
-    def string2seed(s):
-        hash_object = hashlib.sha256(s.encode())
-        hash_int = int(hash_object.hexdigest(), 16)
-        return hash_int % (10**12)
+        default_plan = {'period_cutoff_s': [0.1, float('inf')], 'blocksize': [2, 10]}
+        blocksize_plan = self.processing_args['pulsarx_parfold_args'].get('blocksize_plan', default_plan)
+
+        period = psr['PX'][0]
+        for period_max, block_size in zip(blocksize_plan['period_cutoff_s'], blocksize_plan['blocksize']):
+            if period <= float(period_max):
+                return block_size
+            
+    def set_nbins(self, psr):
+        default_plan = {'period_cutoff_s': [0.1, float('inf')], 'nbins': [64, 128]}
+        nbin_plan = self.processing_args['pulsarx_parfold_args'].get('nbin_plan', default_plan)
+
+        period = psr['PX'][0]
+        for period_max, nbins in zip(nbin_plan['period_cutoff_s'], nbin_plan['nbins']):
+            if period <= float(period_max):
+                return nbins
+            
+    def set_tsubints(self):
+        fold_args = self.processing_args['pulsarx_parfold_args']
+        obs_len = self.injection_report['injection_report']['obs_len']
+        nsubint = fold_args.get('nsubint', 64)
+        tsubint = fold_args['cmd'].get('tsubint', obs_len/64)
+        if nsubint:
+            tsubint = obs_len / nsubint
+        return tsubint
 
     def get_parfile(self, psr):
         par_file =  f"{self.out_dir}/inj_{self.injection_number:06}/inj_pulsars/{psr['ID']}.par"
         if glob.glob(par_file):
-            harmonic_pars = self.processing_args['pulsarx_parfold_args'].get('harmonic_fold', None)
-            if harmonic_pars:
-                import pandas as pd
-            
-                max_duty_cycle = harmonic_pars.get('max_duty_cycle', 1)
-                values = harmonic_pars.get('values', [1])
-                weights =  harmonic_pars.get('weights', [1])
-
-                if psr['duty_cycle'] <= max_duty_cycle:
-                    id_hash = self.string2seed(psr['ID'])
-                    rng = np.random.default_rng(self.injection_number+id_hash)
-                    p = np.array(weights)/np.sum(weights)
-                    harmonic = rng.choice(values, p=p)
-                else:
-                    harmonic = 1
-
-                par_df = pd.read_csv(par_file, sep='\t', index_col=0, header=None)
-                par_df.T.iloc[0]['F0'] = np.float64(par_df.T.iloc[0]['F0'])/harmonic
-
-                new_par = f"{self.work_dir}/{psr['ID']}.par"
-                par_df.to_csv(new_par, sep='\t', header=False)
-
-                self.harmonic_log[psr['ID']] = harmonic
-                return new_par, '--parfile'
-            else:
-                return par_file, '--parfile' 
+            return f'--parfile {par_file}'
         else:
             cand_file =  f"{self.out_dir}/inj_{self.injection_number:06}/inj_pulsars/{psr['ID']}.candfile"
-            return cand_file, '--candfile'
+            return f'--candfile {cand_file}'
 
     def run_parfold(self, psr):
         fold_args = self.processing_args['pulsarx_parfold_args']
 
         psr_id = psr['ID']
-        par_file, mode_cmd =  self.get_parfile(psr)
+        fold_file =  self.get_parfile(psr)
         block_size = self.set_blocksize(psr)
+        nbins = self.set_nbins(psr)
+        tsubint = self.set_tsubints()
+
+        save_fits = '--saveimage' if fold_args.get('save_fits', False) else ''
 
         tmp_cwd = f'{self.work_dir}/process_{psr_id}'
         os.makedirs(tmp_cwd, exist_ok=True)
-        cmd = f"{fold_args['mode']} -o {tmp_cwd}/{psr_id} -f {self.data} --template {fold_args['template']} {mode_cmd} {par_file} --blocksize {block_size} {self.zap_string}"
+        cmd = f"{fold_args['mode']} -o {tmp_cwd}/{psr_id} --cdm {self.cdm} -f {self.data} --tsubint {tsubint} --output_width  --template {fold_args['template']} {fold_file} --blocksize {block_size} --nbin {nbins} {self.zap_string} {save_fits}"
     
         for flag in self.processing_args['pulsarx_parfold_args']['cmd_flags']:
+            if flag in ['--output_width', '--saveimage']:
+                pass
             cmd += f" {flag}"
 
         for key, value in self.processing_args['pulsarx_parfold_args']['cmd'].items():
+            if key in ['nbin', 'blocksize', 'tsubint']:
+                pass
             cmd += f" --{key} {value}"
         
+        inj_tools.print_exe(cmd)
         subprocess.run(cmd, shell=True, cwd=tmp_cwd)
 
         inj_tools.rsync(f'{tmp_cwd}/{psr_id}*.png', self.work_dir)
         inj_tools.rsync(f'{tmp_cwd}/{psr_id}*.ar', self.work_dir)
         inj_tools.rsync(f'{tmp_cwd}/{psr_id}*.cands', self.work_dir)
+        inj_tools.rsync(f'{tmp_cwd}/{psr_id}*.fits', self.work_dir)
 
     def run_fold(self, ncpus):
         args = self.injection_report['pulsars']
@@ -133,31 +129,33 @@ class PulsarxFoldParProcess:
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}/inj_pulsars'
         psr_ids = [arg['ID'] for arg in self.injection_report['pulsars']]
 
-        if self.processing_args['pulsarx_parfold_args']['save_png']:
+        if self.processing_args['pulsarx_parfold_args'].get('save_png', True):
             for pID in psr_ids:
                 png = glob.glob(f'{self.work_dir}/{pID}*.png')
                 if png:
                     os.rename(png[0], f"{Path(png[0]).parent}/{pID}_{self.processing_args['injection_args']['id']}_{self.inj_id}_inj_{self.injection_number:06}.png")
             inj_tools.rsync(f'{self.work_dir}/*.png', results_dir)
 
-        if self.processing_args['pulsarx_parfold_args']['save_ar']:
+        if self.processing_args['pulsarx_parfold_args'].get('save_ar', True):
             for pID in psr_ids:
                 arc = glob.glob(f'{self.work_dir}/{pID}*.ar')
                 if arc:
                     os.rename(arc[0], f"{Path(arc[0]).parent}/{pID}_{self.processing_args['injection_args']['id']}_{self.inj_id}_inj_{self.injection_number:06}.ar")
             inj_tools.rsync(f'{self.work_dir}/*.ar', results_dir)
 
-        if self.processing_args['pulsarx_parfold_args']['save_cand']:
-            inj_tools.rsync(f'{self.work_dir}/*.cands', results_dir)
-        if self.processing_args['pulsarx_parfold_args']['save_csv']:
-            from candidate_tools import par_cand2csv
+        if self.processing_args['pulsarx_parfold_args'].get('save_fits', False):
+            for pID in psr_ids:
+                fits = glob.glob(f'{self.work_dir}/{pID}*.fits')
+                if fits:
+                    os.rename(fits[0], f"{Path(fits[0]).parent}/{pID}_{self.processing_args['injection_args']['id']}_{self.inj_id}_inj_{self.injection_number:06}.fits")
+            inj_tools.rsync(f'{self.work_dir}/*.fits', results_dir)
 
-            output = f"{results_dir}/{self.processing_args['injection_args']['id']}_{self.inj_id}_parfold.csv"
-            tol = self.processing_args['pulsarx_parfold_args'].get('tol', [])
-            if tol:
-                par_cand2csv(self.injection_report, self.work_dir, output, match=[self.injection_report, tol, self.harmonic_log])
-            else:
-                par_cand2csv(self.injection_report, self.work_dir, output)
+        if self.processing_args['pulsarx_parfold_args'].get('save_cand', True):
+            for pID in psr_ids:
+                cands = glob.glob(f'{self.work_dir}/{pID}*.cands')
+                if cands:
+                    os.rename(cands[0], f"{Path(cands[0]).parent}/{pID}_{self.processing_args['injection_args']['id']}_{self.inj_id}_inj_{self.injection_number:06}.cands")
+            inj_tools.rsync(f'{self.work_dir}/*.cands', results_dir)
 
         if self.processing_args['pulsarx_parfold_args']['delete_inj_fb']:
             os.remove(f'{self.out_dir}/inj_{self.injection_number:06}/{Path(self.data).name}')

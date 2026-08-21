@@ -1,0 +1,21 @@
+{
+
+    "psr_global":
+    {   
+        "injection_id": "inj_test",
+        "global_seed": "random",
+        "create_parfile": 1  
+    },
+
+    "pulsars": [
+        {   
+            "ID": "test_psr",
+            "P0": 0.007123,
+            "SNR": 20,
+            "DM": 31.4,
+            "duty_cycle": 0,
+            "A0": 10
+        }
+    ]
+
+}

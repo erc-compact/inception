@@ -30,15 +30,16 @@ class InjectorProcess:
         self.rng = np.random.default_rng(injection_number)
         
     def injector_setup(self):
-        self.resolve_seed()
         self.choose_data()
         self.transfer_merge()
+        self.resolve_seed()
 
     def resolve_seed(self):
         self.seed = int(self.rng.integers(1e11, 1e12))
 
         self.seeded_inject_file = f'{self.work_dir}/{Path(self.injection_plan_path).name}'
         self.injection_plan['psr_global']['global_seed'] = self.seed
+        self.injection_plan['psr_global']['cDM'] = self.cdm
         with open(self.seeded_inject_file, 'w') as file:
             json.dump(self.injection_plan, file, indent=4)
 
@@ -53,6 +54,11 @@ class InjectorProcess:
 
     def transfer_merge(self):
         if type(self.data) == list:
+
+            if type(self.data[-1]) != str:
+                self.cdm = self.data.pop()
+            else:
+                self.cdm = 0
             fb_names = [Path(fb).stem for fb in self.data]
 
             prefix = os.path.commonprefix(fb_names)
@@ -70,6 +76,8 @@ class InjectorProcess:
             self.new_fb_path = f"{self.work_dir}/{prefix}_{self.processing_args['injection_args']['id']}.fil"
 
             inj_tools.rsync(self.data, self.new_fb_path)
+
+            self.cdm = 0
 
     def run_injector(self, ncpus):
         ephem = self.processing_args['injection_args']['ephem']

@@ -131,7 +131,7 @@ class PrestoSearchProcess:
 
     def transfer_products(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
-        presto_out_dir = f'{results_dir}/processing/PRESTO_CANDS'
+        presto_out_dir = f'{results_dir}/processing/PRESTO'
         os.makedirs(presto_out_dir, exist_ok=True)
 
         inj_tools.rsync(f'{self.work_dir}/*/*.inf', presto_out_dir)

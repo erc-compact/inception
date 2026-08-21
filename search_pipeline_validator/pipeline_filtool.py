@@ -34,9 +34,11 @@ class FiltoolProcess:
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
 
         data = glob.glob(f"{results_dir}/*_{self.inj_id}.fil")[0]
-        inj_tools.rsync(data, self.work_dir)
-
-        self.data = f'{self.work_dir}/{Path(data).name}'
+        if self.processing_args['filtool_args'].get('transfer_TMP', True):
+            inj_tools.rsync(data, self.work_dir)
+            self.data = f'{self.work_dir}/{Path(data).name}'
+        else:
+            self.data = data
 
     def create_filplan(self):
         filtool_args = self.processing_args['filtool_args']
@@ -72,7 +74,7 @@ class FiltoolProcess:
 
     def transfer_products(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
-        filtool_out_dir = f'{results_dir}/processing'
+        filtool_out_dir = f'{results_dir}/processing/FILTOOL'
         os.makedirs(filtool_out_dir, exist_ok=True)
 
         if self.processing_args['filtool_args']['save_filtool_fb']:
