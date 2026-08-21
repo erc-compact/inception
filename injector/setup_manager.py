@@ -17,6 +17,8 @@ from .binary_model import BinaryModel
 from .pulsar_model import PulsarModel
 from .observation import Observation
 
+from .. import __version__
+
 
 class SetupManager:
     def __init__(self, pulsar_data_path, filterbank_path, ephem_path='builtin', output_path=None, generate=False, override_length=0, gulp_size_GB=0.01, stats_samples=0):
@@ -368,7 +370,8 @@ class SetupManager:
     def create_injection_report(self):
         report_path = os.path.join(self.output_path, f'report_{self.inj_ID}_{self.seed}.json')
         report = {'injection_report': {'ID': self.inj_ID, 'global_seed': self.seed, 'datetime': str(datetime.now()), 'ephem': self.ephem,
-                                'fb': self.fb.path, 'obs_len': self.fb.obs_len, 'fb_mean': self.fb.fb_mean, 'fb_sigma': self.fb.fb_std, 'version': 0}, 
+                                'fb': self.fb.path, 'obs_len': self.fb.obs_len,  'obs_dt': self.fb.dt, 'obs_nchan': self.fb.nchans, 'obs_nsamples': self.fb.n_samples,
+                                'obs_f0': self.fb.center, 'fb_mean': self.fb.fb_mean, 'fb_sigma': self.fb.fb_std, 'version': __version__}, 
                   'pulsars': self.pulsars}
         with open(report_path, 'w') as report_file:
             json.dump(report, report_file, indent=4)
