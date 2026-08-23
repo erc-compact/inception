@@ -20,7 +20,6 @@
         "transfer_TMP": false,
 
         "channel_mask": "856.0:863.94,923.1:946.2",
-        "template": ".../meerkat_fold.template",
 
         "blocksize_plan": {
             "period_cutoff_s": [0.1, "inf"],

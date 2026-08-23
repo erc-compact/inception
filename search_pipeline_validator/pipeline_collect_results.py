@@ -57,11 +57,17 @@ class Collector:
             for segment in segments:
                 cand_file = glob.glob(f'{inj_dir}/inj_cands/PEASOUP/{segment}/*.cands')
                 matched_file = glob.glob(f'{inj_dir}/processing/PEASOUP/{segment}*.csv')
+                class_file = glob.glob(f'{inj_dir}/inj_cands/PEASOUP/{segment}/CLASSIFIED_*.csv')
                 if cand_file:
                     pulsarx_candfold = cand_tools.pulsarx_cand2csv(cand_file[0])
                     peasoup_df = pd.read_csv(matched_file[0], index_col=0)
                     pulsarx_candfold['segment'] = segment
                     pulsarx_candfold['PSR_ID'] = peasoup_df['PSR_ID'].values
+
+                    if (self.c_args['classifier']) and class_file:
+                        class_df = pd.read_csv(class_file[0], index_col=0)
+                        pulsarx_candfold[class_df.columns] = class_df.values
+
                     segment_cands.append(pulsarx_candfold)
 
         if segment_cands:
@@ -83,6 +89,12 @@ class Collector:
             return pd.concat(segment_cands)
         else:
             return []
+
+    def get_classifier_models(self):
+        c_args = self.processing_args.get('classifier_args', {})
+        models = glob.glob(f"{c_args.get('model_dir')}/*")
+        model_names = [Path(model).name for model in models]
+        return model_names
         
     def load_injection(self, psr, inj_number, max_AX, max_PX, max_FX):
         inj_results = [inj_number]
@@ -134,6 +146,7 @@ class Collector:
     
     def collect(self):
         max_AX, max_PX, max_FX, inj_directories = self.get_input_limits()
+        model_names = self.get_classifier_models()
 
         collected_results = []
         for i, inj_dir in enumerate(inj_directories):
@@ -145,7 +158,6 @@ class Collector:
             pulsarx_parfold = self.load_pulsarx_parfold(report, inj_dir)
             pulsarx_cands = self.load_pulsarx_candfolds(inj_dir)
             peasoup_matched = self.load_peasoup(inj_dir)
-
 
             for psr in report:
                 inj_keys, inj_results = self.load_injection(psr, inj_number, max_AX, max_PX, max_FX)
@@ -174,12 +186,18 @@ class Collector:
                     psr_cand_matched = pulsarx_cands[pulsarx_cands['PSR_ID'] == psr['ID']]
                     cand_keys = ['segment', 'F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width']
 
+                    if self.c_args['classifier']:
+                        cand_keys.extend(model_names)
+
                     if len(psr_cand_matched) == 0:
                         inj_results.extend(list(np.zeros(len(cand_keys))))
                     else:
                         psr_cand_matched = psr_cand_matched.sort_values(by='SNR', key=abs, ascending=False)
                         psr_cand = psr_cand_matched.iloc[0]
                         inj_results.extend([psr_cand['segment'], psr_cand['F0'], psr_cand['F0_err'], psr_cand['DM'], psr_cand['DM_err'], psr_cand['acc'],  psr_cand['acc_err'], psr_cand['SNR'],  psr_cand['width']])
+
+                        if self.c_args['classifier']:
+                            inj_results.extend([psr_cand[model] for model in model_names])
                     
                     inj_keys.extend([f'CAND_{key}' for key in cand_keys])
 

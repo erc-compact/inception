@@ -58,5 +58,5 @@ if __name__=='__main__':
 
     args = parser.parse_args()
 
-    AI_exec = Classifier(args.tag, args.processing_args, args.out_dir, args.work_dir, args.injection_number)
-    AI_exec.classify()
+    cl_exec = Classifier(args.tag, args.processing_args, args.out_dir, args.work_dir, args.injection_number)
+    cl_exec.classify()

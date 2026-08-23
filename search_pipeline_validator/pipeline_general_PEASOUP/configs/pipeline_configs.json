@@ -20,7 +20,6 @@
         "transfer_TMP": false,
 
         "channel_mask": "856.0:863.94,923.1:946.2",
-        "template": ".../meerkat_fold.template",
 
         "blocksize_plan": {
             "period_cutoff_s": [0.1, "inf"],
@@ -137,9 +136,7 @@
         "transfer_TMP": true,
 
         "channel_mask": "856.0:863.94,923.1:946.2",
-        "template": ".../meerkat_fold.template",
         
-
         "nsubint": 64,
         "cmd": {
             "nbin": 64,
@@ -166,7 +163,7 @@
     "classifier_args": {
         "tag": "PICS",
         "python": "python2",
-        "script": ".../scripts/PICS.py",
+        "script": ".../inception/search_pipeline_validator/scripts/PICS.py",
         "model_dir": ".../models",
         "file_type": "pulsarx"
     },
@@ -182,7 +179,7 @@
         "presto_candfold": false,
 
         "sifter": false,
-        "AI": false
+        "classifier": false
     },
 
     

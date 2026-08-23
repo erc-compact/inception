@@ -135,7 +135,7 @@ process classifier {
 
     script:
     """
-    python3 ${params.pipeline_code}/pipeline_candidate_classifier.py --tag=${segment} --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}
+    python3.6 ${params.pipeline_code}/pipeline_candidate_classifier.py --tag=${segment} --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}
 
     """
 }

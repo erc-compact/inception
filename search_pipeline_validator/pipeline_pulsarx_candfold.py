@@ -12,6 +12,7 @@ import os, sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from injector.io_tools import FilterbankReader, print_exe
 
+
 class PulsarxFoldCandProcess:
     def __init__(self, process_tag, processing_args, out_dir, work_dir, injection_number):
         self.process_tag = process_tag
@@ -103,7 +104,10 @@ class PulsarxFoldCandProcess:
         else:
             segment_cmd = f'--frac {start} {end}'
 
-        cmd = f"{fold_args['mode']} -t {ncpus} --output_width --cdm {self.cdm} {segment_cmd} --pepoch {pepoch} -o {self.work_dir}/ --tsubint {tsubint} -f {self.data} --template {fold_args['template']} --candfile {self.candfile} {self.zap_string}"
+        template = f'{self.work_dir}/TMP_template.template'
+        Path(template).touch()
+
+        cmd = f"{fold_args['mode']} -t {ncpus} --output_width --cdm {self.cdm} {segment_cmd} --pepoch {pepoch} -o {self.work_dir}/ --tsubint {tsubint} -f {self.data} --template {template} --candfile {self.candfile} {self.zap_string}"
     
         for flag in self.processing_args['pulsarx_candfold_args']['cmd_flags']:
             if flag in ['--output_width']:
@@ -118,6 +122,7 @@ class PulsarxFoldCandProcess:
         print(cmd)
         subprocess.run(cmd, shell=True)
 
+        Path(template).unlink(missing_ok=True)
 
     def transfer_products(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}/inj_cands/PEASOUP/{self.process_tag}'

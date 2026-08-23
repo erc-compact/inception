@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 
-import search_pipeline_validator.pipeline_tools as inj_tools
+import pipeline_tools as inj_tools
 
 
 class CandidateFilterProcess:
@@ -48,20 +48,21 @@ class CandidateFilterProcess:
         self.xml_dir = f'{str(Path(beam_path[0]).parent.parent)}/XML_FILES'
 
     def create_XML_list(self):
-        ddplan = inj_tools.create_DDplan(self.processing_args['peasoup_args']['ddplan'])
-        xml_file_names = [f'{dm_range.low_dm:.6f}_{dm_range.high_dm:.6f}.xml' for dm_range in ddplan]
+        ddplan = self.processing_args['peasoup_args']['ddplan']
+        xml_file_names = [f'{dm_range[0]:.6f}_{dm_range[1]:.6f}.xml' for _, dm_range in ddplan.items()]
+        tscrunch = self.processing_args['filtool_args']['tscrunch']
         file_id = f"{self.processing_args['injection_args']['id']}_{self.inj_id}"
 
         n_cbeams = self.processing_args['MMGPS_candidate_filter']['n_cbeams']
         n_ibeams = self.processing_args['MMGPS_candidate_filter']['n_ibeams']
         xml_file_paths = []
         for nbeam in range(n_cbeams):
-            for xml_name in xml_file_names:
+            for i, xml_name in enumerate(xml_file_names):
                 beam_i = f'cfbf{nbeam:05g}'
                 if beam_i == self.beam:
-                    xml_file = f"{self.out_dir}/inj_{self.injection_number:06}/processing/{file_id}_DM_{xml_name}"
-                    if glob.glob(xml_file):
-                        xml_file_paths.append(xml_file)
+                    xml_file = glob.glob(f"{self.out_dir}/inj_{self.injection_number:06}/processing/PEASOUP/*DDPLAN_{tscrunch[i]}_SEG_0_1.xml")
+                    if xml_file:
+                        xml_file_paths.append(xml_file[0])
                     else:
                         xml_file_paths.append(f'{self.xml_dir}/{beam_i}/overview_dm_{xml_name}')
                 else:
@@ -88,7 +89,8 @@ class CandidateFilterProcess:
         subprocess.run(cmd, shell=True)
 
     def transfer_products(self):
-        results_dir = f'{self.out_dir}/inj_{self.injection_number:06}/processing'
+        results_dir = f'{self.out_dir}/inj_{self.injection_number:06}/processing/SIFTER'
+        os.makedirs(results_dir, exist_ok=True)
 
         fold_candidates = pd.read_csv(f'{self.work_dir}/{self.inj_id}_good_cands_to_fold.csv')
         rfi_candidates = pd.read_csv(f'{self.work_dir}/known_rfi_cands.csv')
