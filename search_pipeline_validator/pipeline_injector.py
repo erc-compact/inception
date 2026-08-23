@@ -59,17 +59,23 @@ class InjectorProcess:
                 self.cdm = self.data.pop()
             else:
                 self.cdm = 0
-            fb_names = [Path(fb).stem for fb in self.data]
-
-            prefix = os.path.commonprefix(fb_names)
-            self.new_fb_path = f"{self.work_dir}/{prefix}_MERGED_{self.processing_args['injection_args']['id']}.fil"
-
-            for data_product in self.data:
-                inj_tools.rsync(data_product, self.work_dir)
             
-            new_data_paths = [f'{self.work_dir}/{Path(fb).name}' for fb in self.data]
-            new_data_paths.sort()
-            merge_filterbanks(new_data_paths, self.new_fb_path)
+            if len(self.data) == 1:
+                prefix = Path(self.data[0]).stem 
+                self.new_fb_path = f"{self.work_dir}/{prefix}_{self.processing_args['injection_args']['id']}.fil"
+
+                inj_tools.rsync(self.data[0], self.new_fb_path)
+            else:
+                fb_names = [Path(fb).stem for fb in self.data]
+                prefix = os.path.commonprefix(fb_names)
+                self.new_fb_path = f"{self.work_dir}/{prefix}_MERGED_{self.processing_args['injection_args']['id']}.fil"
+
+                for data_product in self.data:
+                    inj_tools.rsync(data_product, self.work_dir)
+                
+                new_data_paths = [f'{self.work_dir}/{Path(fb).name}' for fb in self.data]
+                new_data_paths.sort()
+                merge_filterbanks(new_data_paths, self.new_fb_path)
 
         else:
             prefix = Path(self.data).stem 

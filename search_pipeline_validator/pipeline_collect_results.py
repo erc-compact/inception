@@ -98,7 +98,7 @@ class Collector:
         
     def load_injection(self, psr, inj_dir, header, max_AX, max_PX, max_FX):
         inj_number = Path(inj_dir).stem
-        fb_path = f"{inj_dir}/{Path(header['fb']).name}"
+        fb_path = f"{inj_dir}/{Path(header['fb']).stem}_{header['ID']}.fil"
         fold_file = glob.glob(f"{inj_dir}/inj_pulsars/{psr['ID']}.*")
         if fold_file:
             fold_file = fold_file[0]
@@ -214,6 +214,7 @@ class Collector:
         results_df = pd.DataFrame(collected_results, columns=inj_keys)
 
         run = Path(self.out_dir).stem
+        results_df['INJ_filterbank'].drop_duplicates().sort_values().to_csv(f'{self.out_dir}/FILTERBANKS_{run}.txt', index=False, header=False)
         results_df.to_csv(f'{self.out_dir}/RESULTS_{run}.csv')
 
 
