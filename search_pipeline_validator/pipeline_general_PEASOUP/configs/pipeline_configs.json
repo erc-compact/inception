@@ -163,6 +163,14 @@
         "delete_inj_fb": false
     },
 
+    "classifier_args": {
+        "tag": "PICS",
+        "python": "python2",
+        "script": ".../scripts/PICS.py",
+        "model_dir": ".../models",
+        "file_type": "pulsarx"
+    },
+
 
     "collector_args": {
         "pulsarx_parfold": true,

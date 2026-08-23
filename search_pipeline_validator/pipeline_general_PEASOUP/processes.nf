@@ -121,6 +121,25 @@ process pulsarx_candfold {
     """
 }
 
+process classifier {
+    label "classifier"
+    container params.classifier_image
+
+    input:
+        tuple val(injection_number), val(segment)
+
+    output:
+        tuple val(injection_number), val(segment)
+
+    scratch params.tmp_dir
+
+    script:
+    """
+    python3 ${params.pipeline_code}/pipeline_candidate_classifier.py --tag=${segment} --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}
+
+    """
+}
+
 
 process match_candidates {
     label "match_candidates"

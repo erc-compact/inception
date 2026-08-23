@@ -8,6 +8,7 @@ include { peasoup_search } from './processes'
 include { peasoup_setup } from './processes'
 include { match_candidates } from './processes'
 include { pulsarx_candfold } from './processes'
+include { classifier } from './processes'
 include { collector } from './processes'
 
 
@@ -61,10 +62,13 @@ workflow INJECT {
 
         inj_tag_match = expand_plan(match_candidates(inj_peasoup))
 
-        inj_fold_cand = collapse_tag(pulsarx_candfold(inj_tag_match))
+        inj_fold_cand = pulsarx_candfold(inj_tag_match)
 
+        inj_classified = classifier(inj_fold_cand)
+
+        inj_output = collapse_tag(inj_classified)
     emit:
-        inj_fold_cand
+        inj_output
 
 }
 
