@@ -14,12 +14,11 @@ import candidate_tools as cand_tools
 def load_report(inj_dir):
     report_path = glob.glob(f'{inj_dir}/report*.json')[0]
 
-    with open(report_path, 'r') as file:
-        load_report = inj_tools.parse_JSON(file)
-        report = load_report['pulsars']
-        header = load_report['injection_report']
+    report = inj_tools.parse_JSON(report_path)
+    pulsars = report['pulsars']
+    header = report['injection_report']
 
-    return report, header
+    return pulsars, header
 
 
 class Collector:
@@ -54,15 +53,15 @@ class Collector:
         if self.c_args['pulsarx_candfold']:
             self.c_args['peasoup_search'] = True
 
-            segments = self.load_segments(self)
+            segments = self.load_segments()
             for segment in segments:
                 cand_file = glob.glob(f'{inj_dir}/inj_cands/PEASOUP/{segment}/*.cands')
                 matched_file = glob.glob(f'{inj_dir}/processing/PEASOUP/{segment}*.csv')
                 if cand_file:
                     pulsarx_candfold = cand_tools.pulsarx_cand2csv(cand_file[0])
-                    peasoup_df = pd.read_csv(matched_file, index_col=0)
+                    peasoup_df = pd.read_csv(matched_file[0], index_col=0)
                     pulsarx_candfold['segment'] = segment
-                    pulsarx_candfold['PSR_ID'] = peasoup_df['PSR_ID']
+                    pulsarx_candfold['PSR_ID'] = peasoup_df['PSR_ID'].values
                     segment_cands.append(pulsarx_candfold)
 
         if segment_cands:
@@ -73,11 +72,11 @@ class Collector:
     def load_peasoup(self, inj_dir):
         segment_cands = []
         if self.c_args['peasoup_search']:
-            segments = self.load_segments(self)
+            segments = self.load_segments()
             for segment in segments:
                 matched_file = glob.glob(f'{inj_dir}/processing/PEASOUP/{segment}*.csv')
                 if matched_file:
-                    peasoup_df = pd.read_csv(matched_file, index_col=0)
+                    peasoup_df = pd.read_csv(matched_file[0], index_col=0)
                     segment_cands.append(peasoup_df)
 
         if segment_cands:
@@ -85,28 +84,26 @@ class Collector:
         else:
             return []
         
-    def load_injection(self, psr, inj_number):
+    def load_injection(self, psr, inj_number, max_AX, max_PX, max_FX):
         inj_results = [inj_number]
-        inj_keys = ['INJ_number']
+        inj_keys = ['number']
 
         for key, value in psr.items():
-            if key == "duty_cycle" and isinstance(psr.get("profile"), dict):
-                continue
 
             if key == "PX":
-                for i, v in enumerate(value):
+                for i in range(max_PX):
                     inj_keys.append(f"P{i}")
-                    inj_results.append(v)
+                    inj_results.append(value[i] if i < len(value) else 0)
 
             elif key == "FX":
-                for i, v in enumerate(value):
+                for i in range(max_FX):
                     inj_keys.append(f"F{i}")
-                    inj_results.append(v)
+                    inj_results.append(value[i] if i < len(value) else 0)
 
             elif key == "AX":
-                for i, v in enumerate(value):
+                for i in range(max_AX):
                     inj_keys.append(f"A{i}")
-                    inj_results.append(v)
+                    inj_results.append(value[i] if i < len(value) else 0)
 
             elif key == "profile" and isinstance(value, dict):
                 n_components = len(value["duty_cycle"])
@@ -120,10 +117,23 @@ class Collector:
 
         inj_keys = [f'INJ_{key}' for key in inj_keys]
         return inj_keys, inj_results
-    
-    def collect(self):
+
+    def get_input_limits(self):
         inj_directories = glob.glob(f'{self.out_dir}/inj_*')
         inj_directories.sort()
+
+        AX, PX, FX = [], [], []
+        for i, inj_dir in enumerate(inj_directories):
+            report, _ = load_report(inj_dir)
+            for psr in report:
+                AX.append(len(psr['AX']))
+                PX.append(len(psr['PX']))
+                FX.append(len(psr['FX']))
+
+        return max(AX), max(PX), max(FX), inj_directories
+    
+    def collect(self):
+        max_AX, max_PX, max_FX, inj_directories = self.get_input_limits()
 
         collected_results = []
         for i, inj_dir in enumerate(inj_directories):
@@ -138,7 +148,7 @@ class Collector:
 
 
             for psr in report:
-                inj_keys, inj_results = self.load_injection(psr, inj_number)
+                inj_keys, inj_results = self.load_injection(psr, inj_number, max_AX, max_PX, max_FX)
                 
                 if self.c_args['pulsarx_parfold']:
                     psr_par = pulsarx_parfold[pulsarx_parfold['PSR_ID'] == psr['ID']].iloc[0]
@@ -162,14 +172,14 @@ class Collector:
 
                 if self.c_args['pulsarx_candfold']:
                     psr_cand_matched = pulsarx_cands[pulsarx_cands['PSR_ID'] == psr['ID']]
-                    cand_keys = ['F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width']
+                    cand_keys = ['segment', 'F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width']
 
                     if len(psr_cand_matched) == 0:
                         inj_results.extend(list(np.zeros(len(cand_keys))))
                     else:
-                        psr_cand_matched = psr_cand_matched.sort_values(by='snr', key=abs, ascending=False)
+                        psr_cand_matched = psr_cand_matched.sort_values(by='SNR', key=abs, ascending=False)
                         psr_cand = psr_cand_matched.iloc[0]
-                        inj_results.extend([psr_cand['F0'], psr_cand['F0_err'], psr_cand['DM'], psr_cand['DM_err'], psr_cand['acc'],  psr_cand['acc_err'], psr_cand['SNR'],  psr_cand['width']])
+                        inj_results.extend([psr_cand['segment'], psr_cand['F0'], psr_cand['F0_err'], psr_cand['DM'], psr_cand['DM_err'], psr_cand['acc'],  psr_cand['acc_err'], psr_cand['SNR'],  psr_cand['width']])
                     
                     inj_keys.extend([f'CAND_{key}' for key in cand_keys])
 

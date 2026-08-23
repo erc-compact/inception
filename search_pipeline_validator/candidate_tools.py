@@ -118,7 +118,7 @@ def create_PULSARX_candfile(cands, candfile_path):
 
 def pulsarx_par2csv(injection_report, results_dir):
     psr_candfiles = []
-    for psr in injection_report['pulsars']:
+    for psr in injection_report:
         cand_file = glob.glob(f"{results_dir}/{psr['ID']}*.cands")[0]
         cand_df = pd.read_csv(cand_file, skiprows=11, engine='python', sep=r'\s+').iloc[0]
         fold_pars = [psr['ID'], *cand_df[['f0_new', 'f0_err', 'dm_new', 'dm_err', 'acc_new', 'acc_err', 'S/N_new', 'boxcar_width']].values]
