@@ -96,9 +96,17 @@ class Collector:
         model_names = [Path(model).name for model in models]
         return model_names
         
-    def load_injection(self, psr, inj_number, max_AX, max_PX, max_FX):
-        inj_results = [inj_number]
-        inj_keys = ['number']
+    def load_injection(self, psr, inj_dir, header, max_AX, max_PX, max_FX):
+        inj_number = Path(inj_dir).stem
+        fb_path = f"{inj_dir}/{Path(header['fb']).name}"
+        fold_file = glob.glob(f"{inj_dir}/inj_pulsars/{psr['ID']}.*")
+        if fold_file:
+            fold_file = fold_file[0]
+        else:
+            fold_file = ''
+
+        inj_results = [inj_number, fb_path, fold_file]
+        inj_keys = ['number', 'filterbank', 'fold_file']
 
         for key, value in psr.items():
 
@@ -153,14 +161,14 @@ class Collector:
             inj_number = Path(inj_dir).stem
             inj_tools.print_exe(f'collecting {inj_number} ...')
 
-            report, _ = load_report(inj_dir)
+            report, header = load_report(inj_dir)
 
             pulsarx_parfold = self.load_pulsarx_parfold(report, inj_dir)
             pulsarx_cands = self.load_pulsarx_candfolds(inj_dir)
             peasoup_matched = self.load_peasoup(inj_dir)
 
             for psr in report:
-                inj_keys, inj_results = self.load_injection(psr, inj_number, max_AX, max_PX, max_FX)
+                inj_keys, inj_results = self.load_injection(psr, inj_dir, header, max_AX, max_PX, max_FX)
                 
                 if self.c_args['pulsarx_parfold']:
                     psr_par = pulsarx_parfold[pulsarx_parfold['PSR_ID'] == psr['ID']].iloc[0]
