@@ -108,7 +108,7 @@
 
         "cmd": {
             "nharmonics": "4",
-            "acc_tol": 1.11,
+            "acc_tol": 1.1,
             "limit": 1000
         },
 
@@ -163,6 +163,19 @@
         "delete_inj_fb": false
     },
 
+
+    "collector_args": {
+        "pulsarx_parfold": true,
+
+        "peasoup_search": true,
+        "pulsarx_candfold": true,
+       
+        "presto_search": false,
+        "presto_candfold": false,
+
+        "sifter": false,
+        "AI": false
+    },
 
     
     "data": [

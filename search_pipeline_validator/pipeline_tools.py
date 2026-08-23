@@ -3,7 +3,6 @@ import sys
 import json
 import hashlib
 import subprocess
-from collections import namedtuple
 
 
 

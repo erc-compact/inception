@@ -140,3 +140,20 @@ process match_candidates {
     
     """
 }
+
+
+process collector {
+    label "collector"
+    container params.python_image
+
+    input:
+        val results
+
+    scratch params.tmp_dir
+
+    script:
+    """
+    python3 ${params.pipeline_code}/pipeline_collect_results.py --processing_args=${params.config_params} --out_dir=${params.output_dir}
+    
+    """
+}

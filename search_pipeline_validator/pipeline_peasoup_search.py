@@ -155,7 +155,7 @@ class PeasoupProcess:
         
     def run_peasoup(self):
 
-        cmd = f"peasoup -i {self.data} --dm_file {self.DM_file} --cdm {self.cdm} --acc_start {self.seg_args['acc_start']} --acc_end {self.seg_args['acc_end']} -o {self.work_dir} {self.channel_mask} {self.birdie_list}" 
+        cmd = f"peasoup -i {self.data} --dm_file {self.DM_file} --cdm {self.cdm} --min_snr {self.seg_args['min_snr']} --acc_start {self.seg_args['acc_start']} --acc_end {self.seg_args['acc_end']} -o {self.work_dir} {self.channel_mask} {self.birdie_list}" 
 
         cmd_args = self.processing_args['peasoup_args']['cmd']
         cmd_args['fft_size'] = self.fft_size

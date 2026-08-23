@@ -116,27 +116,27 @@ def create_PULSARX_candfile(cands, candfile_path):
             file.write(f"{i} {cand['dm']} {cand['acc']} {1/cand['period']} 0 {cand['snr']}\n")
 
 
-def par_cand2csv(injection_report, work_dir, output): # add width
+def pulsarx_par2csv(injection_report, results_dir):
     psr_candfiles = []
     for psr in injection_report['pulsars']:
-        cand_file = glob.glob(f"{work_dir}/{psr['ID']}*.cands")[0]
+        cand_file = glob.glob(f"{results_dir}/{psr['ID']}*.cands")[0]
         cand_df = pd.read_csv(cand_file, skiprows=11, engine='python', sep=r'\s+').iloc[0]
-        fold_pars = [psr['ID'], *cand_df[['f0_new', 'dm_new', 'acc_new', 'S/N_new']].values]
+        fold_pars = [psr['ID'], *cand_df[['f0_new', 'f0_err', 'dm_new', 'dm_err', 'acc_new', 'acc_err', 'S/N_new', 'boxcar_width']].values]
         psr_candfiles.append(fold_pars)
     
-    df_cands = pd.DataFrame(psr_candfiles, columns=['ID', 'f0', 'dm', 'acc', 'SNR'])
-    df_cands.to_csv(output)
+    df_cands = pd.DataFrame(psr_candfiles, columns=['PSR_ID', 'F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width'])
+    return df_cands
 
 
-def fold_cand2csv(cand_file, output):
+def pulsarx_cand2csv(cand_file):
     candidates = []
     cand_df = pd.read_csv(cand_file, skiprows=11, engine='python', sep=r'\s+')
     for _, row in cand_df.iterrows():
-        fold_pars = row[['#id', 'f0_new', 'dm_new', 'acc_new', 'S/N_new']].values
+        fold_pars = row[['#id', 'f0_new', 'f0_err', 'dm_new', 'dm_err', 'acc_new', 'acc_err', 'S/N_new', 'boxcar_width']].values
         candidates.append(fold_pars)
     
-    df_cands = pd.DataFrame(candidates, columns=['ID', 'f0', 'dm', 'acc', 'SNR'])
-    df_cands.to_csv(output)
+    df_cands = pd.DataFrame(candidates, columns=['cand_ID', 'F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width'])
+    return df_cands
 
 
 def correct_fftsize_offset(period, acc, fftsize, nsamples, dt):

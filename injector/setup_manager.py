@@ -17,8 +17,8 @@ from .binary_model import BinaryModel
 from .pulsar_model import PulsarModel
 from .observation import Observation
 
-from .. import __version__
-
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from __init__ import __version__
 
 class SetupManager:
     def __init__(self, pulsar_data_path, filterbank_path, ephem_path='builtin', output_path=None, generate=False, override_length=0, gulp_size_GB=0.01, stats_samples=0):
@@ -124,8 +124,8 @@ class SetupManager:
 
         def resolver(value):
             units = value.get('units', 1)
-            if units == 'T_obs_hour':
-                units = self.fb.dt * self.fb.n_samples / 3600
+            if units == 'T_obs':
+                units = self.fb.obs_len / 3600
             elif units == 'dt':
                 units = self.fb.dt
 

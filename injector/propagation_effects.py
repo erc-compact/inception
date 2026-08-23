@@ -44,7 +44,7 @@ class PropagationEffects:
         B = 3.55e-5
         b = 3.1
 
-        sigma_T = 0.76 * self.pulsar_pars.get('scattering_sigma', 0)
+        sigma_T = 0.76 * self.pulsar_pars.get('scattering_model_sigma', 0)
 
         A = A_ms/1000
         Tau_s = A * self.DM ** a * (1 + B * self.DM ** b) * f_term
@@ -52,21 +52,21 @@ class PropagationEffects:
         return 10 ** (np.log10(Tau_s) + sigma_T)
 
     def ISM_scattering(self, intrinsic_pulse):
-        ref_scattering_time = self.pulsar_pars['scattering_time']
+        scattering_model = self.pulsar_pars['scattering_model']
+        scattering_time = self.pulsar_pars['scattering_time']
 
-        if (ref_scattering_time == '') or (ref_scattering_time == '0') or (ref_scattering_time == 0):
+        if (scattering_time == 0) and (not scattering_model):
             return intrinsic_pulse
         else:
-            if ref_scattering_time == 'TPA':
+            if scattering_model == 'TPA':
                 scattering_relation = self.scattering_relation_TPA
-            elif ref_scattering_time == 'CORDES':
+            elif scattering_model == 'CORDES':
                 scattering_relation = self.scattering_relation_CORDES
             else:
                 scattering_index = self.pulsar_pars['scattering_index']
-                ref_scattering_time = float(ref_scattering_time)
-            
+
                 def scattering_relation(freq):
-                    scattering_phase = ref_scattering_time * u.ms.to(u.s) 
+                    scattering_phase = scattering_time * u.ms.to(u.s) 
                     return scattering_phase * (freq/self.obs.f0) ** scattering_index 
                         
             def scattering_kernel(nchan):

@@ -50,14 +50,16 @@ class PulsarParParser:
         parser.add_argument('--spectrum', metavar='(FILE.npy/float)', required=False, default=0, help='1D pulsar sepctrum / Spectral index of pulsar')
         parser.add_argument('--duty_cycle', metavar='(phase)', required=False, default=0.1, type=float, help='Duty cycle of default gaussian pulse profile')
         parser.add_argument('--profile', metavar='(FILE.npy/dict)', required=False, default='default', help='NumPy .npy or EPN .txt file containing a custom pulsar pulse profile (1D or 2D), or multi-component dictionary')
-        parser.add_argument('--gain_map', metavar='FILE.npy', default='', required=False, help='1D/2D NumPy .npy gain map')
+        parser.add_argument('--gain_map', metavar='FILE.npy',required=False, help='1D/2D NumPy .npy gain map')
         parser.add_argument('--gain_axis', choices=['time', 'freq'], default='time', required=False, help='Axis for a 1D gain map: time or freq')
         parser.add_argument('--micro_structure', metavar='(microsec)', required=False, default=0, type=float, help='Mean timescale of pulse microstructure')
         
         parser.add_argument('--DM', metavar='(pc/cm^3)', required=False, default=0, type=float, help='Dispersion measure')
-        parser.add_argument('--scattering_time', metavar='(millisec)', required=False, default='', type=str, help='Scattering timescale due to ISM')
-        parser.add_argument('--scattering_sigma', metavar='(sigma)', required=False, default=0, type=int, help='standard devitations from DM-scattering law')
+        parser.add_argument('--scattering_time', metavar='(millisec)', required=False, default=0, type=float, help='Scattering timescale due to ISM')
         parser.add_argument('--scattering_index', metavar='(-)', required=False, default=-4, type=float, help='Scattering index to describe frequency evolution')
+        parser.add_argument('--scattering_model', metavar='(-)', required=False, type=str, help='DM-scattering law (TPA, CORDES)')
+        parser.add_argument('--scattering_model_sigma', metavar='(sigma)', required=False, default=0, type=float, help='standard devitations for CORDES DM-scattering law')
+        
         parser.add_argument('--cDM', metavar='(pc/cm^3)', required=False, default=0, type=float, help='coherent Dispersion measure')
         parser.add_argument('--DM_smear', metavar='(off, approx or exact)', required=False, default='off', choices=['off', 'approx', 'exact'], help='Smear the pulse profile due to intra-channel DM smearing')
         parser.add_argument('--DM_ref', metavar='(top or inf)', required=False, default='inf', choices=['top', 'inf'], help='reference frequency for DM dispersion')
@@ -78,7 +80,7 @@ class PulsarParParser:
         parser.add_argument('--fold_harmonic', metavar='(float)', required=False, type=float, help="Generate fold file with p0 * harmonic")
         parser.add_argument('--pint_N', metavar='(-)', required=False, default=12, type=int, help='Number of coefficients per timestep for polycos generation')
         parser.add_argument('--pint_T', metavar='(min)', required=False, default=5, type=float, help='Timestep for polycos generation')
-        parser.add_argument('--polycos', metavar='(file)', required=False, default='', type=str, help='.polycos: Pint will use this file, .par: Pint will make polycos from par file, (None) Pint will make from injection params.')
+        parser.add_argument('--polycos', metavar='(file)', required=False, type=str, help='.polycos: Pint will use this file, .par: Pint will make polycos from par file, (None) Pint will make from injection params.')
 
         self.parser = parser
     
