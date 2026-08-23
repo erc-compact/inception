@@ -47,7 +47,7 @@ class PulsarParParser:
         parser.add_argument('--presto_w', metavar='(w)', required=False, type=float, help='presto jerk')
         
         parser.add_argument('--SNR', metavar='(-)', required=True, type=float, help='Injected signal-to-noise')
-        parser.add_argument('--spectrum', metavar='(FILE.npy/float)', required=False, default=0, help='1D pulsar sepctrum / Spectral index of pulsar')
+        parser.add_argument('--spectrum', metavar='(FILE.npy/float)', required=False, default=0, help='1D pulsar spectrum / Spectral index of pulsar')
         parser.add_argument('--duty_cycle', metavar='(phase)', required=False, default=0.1, type=float, help='Duty cycle of default gaussian pulse profile')
         parser.add_argument('--profile', metavar='(FILE.npy/dict)', required=False, default='default', help='NumPy .npy or EPN .txt file containing a custom pulsar pulse profile (1D or 2D), or multi-component dictionary')
         parser.add_argument('--gain_map', metavar='FILE.npy',required=False, help='1D/2D NumPy .npy gain map')

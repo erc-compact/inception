@@ -104,8 +104,9 @@ class PulsarxFoldCandProcess:
         else:
             segment_cmd = f'--frac {start} {end}'
 
-        template = f'{self.work_dir}/TMP_template.template'
-        Path(template).touch()
+        # template = f'{self.work_dir}/TMP_template.template'
+        # Path(template).touch()
+        template = fold_args['template']
 
         cmd = f"{fold_args['mode']} -t {ncpus} --output_width --cdm {self.cdm} {segment_cmd} --pepoch {pepoch} -o {self.work_dir}/ --tsubint {tsubint} -f {self.data} --template {template} --candfile {self.candfile} {self.zap_string}"
     
@@ -122,7 +123,7 @@ class PulsarxFoldCandProcess:
         print(cmd)
         subprocess.run(cmd, shell=True)
 
-        Path(template).unlink(missing_ok=True)
+        # Path(template).unlink(missing_ok=True)
 
     def transfer_products(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}/inj_cands/PEASOUP/{self.process_tag}'

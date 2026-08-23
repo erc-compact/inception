@@ -100,8 +100,9 @@ class PulsarxFoldParProcess:
         tmp_cwd = f'{self.work_dir}/process_{psr_id}'
         os.makedirs(tmp_cwd, exist_ok=True)
 
-        template = f'{tmp_cwd}/TMP_template.template'
-        Path(template).touch()
+        # template = f'{tmp_cwd}/TMP_template.template'
+        # Path(template).touch()
+        template = fold_args['template']
 
         cmd = f"{fold_args['mode']} -o {tmp_cwd}/{psr_id} --cdm {self.cdm} -f {self.data} --tsubint {tsubint} --output_width  --template {template} {fold_file} --blocksize {block_size} --nbin {nbins} {self.zap_string} {save_fits}"
     
@@ -123,7 +124,7 @@ class PulsarxFoldParProcess:
         inj_tools.rsync(f'{tmp_cwd}/{psr_id}*.cands', self.work_dir)
         inj_tools.rsync(f'{tmp_cwd}/{psr_id}*.fits', self.work_dir)
 
-        Path(template).unlink(missing_ok=True)
+        # Path(template).unlink(missing_ok=True)
 
     def run_fold(self, ncpus):
         args = self.injection_report['pulsars']
