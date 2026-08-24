@@ -3,8 +3,8 @@ nextflow.enable.dsl=2
 
 include { injection } from './processes'
 include { pulsarx_parfold } from './processes'
-
-
+include { presto_parfold } from './processes'
+include { dspsr_parfold } from './processes'
 
 workflow INJECT {
     take:
@@ -12,7 +12,10 @@ workflow INJECT {
 
     main:
     inj_pulsars = injection(injection_number)
-    inj_fold_par = pulsarx_parfold(inj_pulsars)
+    inj_px = pulsarx_parfold(inj_pulsars)
+
+    // inj_presto = presto_parfold(inj_pulsars)
+    // inj_dspsr = dspsr_parfold(inj_pulsars)
 }   
 
 workflow {

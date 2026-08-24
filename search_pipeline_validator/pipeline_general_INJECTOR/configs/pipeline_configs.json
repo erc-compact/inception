@@ -100,9 +100,9 @@
                 "k": "meerkat"
             },
 
-            "cmd_flags": {
-
-            }
+            "cmd_flags": [
+                "-v"
+            ]
         },
 
         "pdmp": {
@@ -119,8 +119,6 @@
         
         "save_png": true,
         "save_ar": true,
-        "save_per": true,
-        "save_posn": false,
 
         "delete_inj_fb": false
     },
