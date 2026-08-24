@@ -49,13 +49,21 @@ class DSPSRFoldParProcess:
             if period <= float(period_max):
                 return nbins
     
+    def set_tsubints(self):
+        fold_args = self.processing_args['dspsr_parfold_args']
+        obs_len = self.injection_report['injection_report']['obs_len']
+        nsubint = fold_args.get('nsubint', 64)
+        tsubint = obs_len / nsubint
+        return tsubint
+    
     def run_DSPSR(self, psr, par_file, tmp_cwd):
         dspsr_args = self.processing_args['dspsr_parfold_args']['dspsr']
 
         nbins = self.set_nbins(psr)
+        tsubint = self.set_tsubints()
 
         psr_id = psr['ID']
-        cmd = f"dspsr -A -O {tmp_cwd}/{psr_id} -E {par_file} -b {nbins}"
+        cmd = f"dspsr -A -O {tmp_cwd}/{psr_id} -E {par_file} -b {nbins} -L {tsubint}"
     
         for flag in dspsr_args['cmd_flags']:
             if flag in ['-A']:
@@ -75,7 +83,7 @@ class DSPSRFoldParProcess:
         pdmp_args = self.processing_args['dspsr_parfold_args']['pdmp']
 
         psr_id = psr['ID']
-        cmd = f"dspsr -g {tmp_cwd}/{psr_id}.png/PNG"
+        cmd = f"pdmp -g {tmp_cwd}/{psr_id}.png/PNG"
     
         for flag in pdmp_args['cmd_flags']:
             if flag in []:
@@ -93,8 +101,7 @@ class DSPSRFoldParProcess:
 
         inj_tools.rsync(f'{tmp_cwd}/{psr_id}.ar', self.work_dir)
         inj_tools.rsync(f'{tmp_cwd}/{psr_id}.png', self.work_dir)
-
-        subprocess.run('ls', shell=True, cwd=tmp_cwd)
+        inj_tools.rsync(f'{tmp_cwd}/pdmp.best', f'{self.work_dir}/{psr_id}.best')
             
     def run_parfold(self, psr):
         psr_id = psr['ID']
@@ -105,9 +112,9 @@ class DSPSRFoldParProcess:
         tmp_cwd = f'{self.work_dir}/_{psr_id}'
         os.makedirs(tmp_cwd, exist_ok=True)
 
-        self.run_DSPSR(self, psr, par_file, tmp_cwd)
+        self.run_DSPSR(psr, par_file, tmp_cwd)
 
-        self.run_PDMP(self, psr, tmp_cwd)
+        self.run_PDMP(psr, tmp_cwd)
 
     def run_fold(self, ncpus):
         args = self.injection_report['pulsars']
@@ -133,6 +140,12 @@ class DSPSRFoldParProcess:
                     os.rename(ar[0], f"{Path(ar[0]).parent}/{pID}_{self.processing_args['injection_args']['id']}_{self.inj_id}_inj_{self.injection_number:06}_dspsr.ar")
             inj_tools.rsync(f'{self.work_dir}/*.ar', results_dir)
 
+        if self.processing_args['dspsr_parfold_args'].get('save_best', True):
+            for pID in psr_ids:
+                file = glob.glob(f'{self.work_dir}/{pID}.best')
+                if file:
+                    os.rename(file[0], f"{Path(file[0]).parent}/{pID}_{self.processing_args['injection_args']['id']}_{self.inj_id}_inj_{self.injection_number:06}_dspsr.best")
+            inj_tools.rsync(f'{self.work_dir}/*.best', results_dir)
 
         if self.processing_args['dspsr_parfold_args']['delete_inj_fb']:
             os.remove(f'{self.out_dir}/inj_{self.injection_number:06}/{Path(self.data).name}')

@@ -96,7 +96,6 @@
 
         "dspsr": {
             "cmd": {
-                "nsub": 64,
                 "k": "meerkat"
             },
 
@@ -111,14 +110,13 @@
             },
 
             "cmd_flags": [
-                "-v",
-                "-bf",
-                "-output-pdm-s/n"
+                "-bf"
             ]
         },
         
         "save_png": true,
         "save_ar": true,
+        "save_best": true,
 
         "delete_inj_fb": false
     },
