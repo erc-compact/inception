@@ -86,7 +86,7 @@ class DSPSRFoldParProcess:
         cmd = f"pdmp -g {tmp_cwd}/{psr_id}.png/PNG"
     
         for flag in pdmp_args['cmd_flags']:
-            if flag in []:
+            if flag in ["-v"]:
                 pass
             cmd += f" {flag}"
 
