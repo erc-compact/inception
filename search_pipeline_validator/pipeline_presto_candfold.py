@@ -43,7 +43,7 @@ class PrestoFoldProcess:
     def get_cands(self):
         f_args = self.processing_args['presto_fold_args']
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
-        presto_out_dir = f'{results_dir}/processing'
+        presto_out_dir = f'{results_dir}/processing/PRESTO'
 
         if f_args['mask'] == 'rfifind':
             self.mask = f'-mask {presto_out_dir}/{self.inj_id}_rfifind.mask'

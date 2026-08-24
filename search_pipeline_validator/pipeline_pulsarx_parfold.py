@@ -18,8 +18,6 @@ class PulsarxFoldParProcess:
         
         self.injection_number = injection_number
 
-        self.harmonic_log = {}
-
     def fold_setup(self):
         self.get_injection_report()
         self.transfer_data()
@@ -168,7 +166,7 @@ class PulsarxFoldParProcess:
             os.remove(f'{self.out_dir}/inj_{self.injection_number:06}/{Path(self.data).name}')
 
         if self.processing_args.get('pulsarx_candfold_args', {}).get('delete_inj_fb', False):
-            check_cands = glob.glob(f'{self.out_dir}/inj_{self.injection_number:06}/inj_cands/*.png')
+            check_cands = glob.glob(f'{self.out_dir}/inj_{self.injection_number:06}/inj_cands/PEASOUP/*/*.png')
             if check_cands:
                 os.remove(f'{self.out_dir}/inj_{self.injection_number:06}/{Path(self.data).name}')
 

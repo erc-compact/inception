@@ -21,9 +21,9 @@ process injection {
     """
 }
 
-process pulsarx_parfold {
-    label "pulsarx_parfold"
-    container params.pulsarx_image
+process presto_parfold {
+    label "presto_parfold"
+    container params.presto_image
 
     input:
         val injection_number
@@ -35,7 +35,7 @@ process pulsarx_parfold {
 
     script:
     """
-    python3 ${params.pipeline_code}/pipeline_pulsarx_parfold.py --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
+    python3 ${params.pipeline_code}/pipeline_presto_parfold.py --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
 
     """
 }
@@ -93,7 +93,7 @@ process presto_sift {
 
     script:
     """
-    python3 ${params.pipeline_code}/ACCEL_sift.py --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}
+    python3 ${params.pipeline_code}/scripts/ACCEL_sift.py --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}
 
     """
 }

@@ -173,6 +173,8 @@
 
     "collector_args": {
         "pulsarx_parfold": true,
+        "presto_parfold": false,
+        "dspsr_parfold": false,
 
         "peasoup_search": true,
         "pulsarx_candfold": true,

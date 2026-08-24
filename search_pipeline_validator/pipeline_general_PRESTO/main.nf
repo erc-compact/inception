@@ -2,7 +2,7 @@
 nextflow.enable.dsl=2
 
 include { injection } from './processes'
-include { pulsarx_parfold } from './processes'
+include { presto_parfold } from './processes'
 include { rfifind } from './processes'
 include { presto_search } from './processes'
 include { presto_sift } from './processes'
@@ -18,7 +18,7 @@ workflow INJECT {
 
     inj_rfifind = rfifind(inj_pulsars)
 
-    inj_fold_par = pulsarx_parfold(inj_pulsars)
+    inj_fold_par = presto_parfold(inj_pulsars)
 
     inj_presto = presto_search(inj_rfifind)
 

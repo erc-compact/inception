@@ -13,7 +13,37 @@
         "save_pars": true
     },
 
+    "presto_parfold_args": {
+        "transfer_TMP": true,
+
+        "mask": "",
+
+        "nbin_plan": {
+            "period_cutoff_s": [0.1, "inf"],
+            "nbins": [64, 128]
+        },
+
+        "cmd_flags": {
+            "npart": 64,
+            "nsub": 64
+        },
+
+        "cmd": {
+
+        },
+        
+        "save_png": true,
+        "save_pfd": true,
+        "save_bestprof": false,
+        "save_polycos": false,
+        "save_ps": false,
+
+        "delete_inj_fb": true
+    },
+
     "presto_rfi_args":  {
+        "transfer_TMP": true,
+
         "rfifind": {
             "time": 2
         },
@@ -27,24 +57,32 @@
     },
 
     "presto_search_args": {
-        "ddplan": " 0.000 103.800 0.03 1 3460 0.7544\r\n 103.800 167.300 0.05 2 1270 0.1384\r\n 167.300 318.500 0.10 4 1512 0.08242\r\n 318.500 500.100 0.20 8 908 0.02475",
-
+        "transfer_TMP": true,
+        "inj_DM": true,
         "bary": false,
-        "zmax": 200,
-        "wmax": 0,
-        "numharm": 8,
+
+        "ddplan" : {
+            "1": [40, 60, 0.1],
+            "2": [40, 60, 0.1],
+            "4": [40, 60, 0.1]
+        },
+
+        "segment_plan" : {
+            "1": {"zmax" :200, "wmax": 400, "sigma": 2.0, "numharm": 8},
+            "2": {"zmax" :400, "wmax": 800, "sigma": 2.0, "numharm": 8}
+        },
 
         "mask": "rfifind",
-        "birdies": "rfifind",
+        "birdies": "rfifind"
 
-        "inj_DM": true
     },
 
     "presto_sifter": {
         
     },
 
-    "presto_fold_args": {
+    "presto_candfold_args": {
+        "transfer_TMP": true,
 
         "bary": false,
         "mask": "rfifind",
@@ -56,9 +94,28 @@
     },
 
 
-    "PICS_scorer": {
-        "code_path": "./pipeline_validator_MMGPS/PICS_python2.py",
-        "models_dir": "./pipeline_validator_MMGPS/configs/pics_models"
+    "classifier_args": {
+        "tag": "PICS",
+        "python": "python2",
+        "script": ".../inception/search_pipeline_validator/scripts/PICS.py",
+        "model_dir": ".../models",
+        "file_type": "presto"
+    },
+
+
+    "collector_args": {
+        "pulsarx_parfold": false,
+        "presto_parfold": true,
+        "dspsr_parfold": false,
+
+        "peasoup_search": false,
+        "pulsarx_candfold": false,
+       
+        "presto_search": true,
+        "presto_candfold": true,
+
+        "sifter": false,
+        "classifier": true
     },
 
 

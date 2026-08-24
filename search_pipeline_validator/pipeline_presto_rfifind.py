@@ -38,7 +38,7 @@ class RFIPrestoProcess:
 
     def run(self, threads):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
-        presto_out_dir = f'{results_dir}/processing'
+        presto_out_dir = f'{results_dir}/processing/PRESTO'
         os.makedirs(presto_out_dir, exist_ok=True)
 
         rfi_args = self.processing_args['presto_rfi_args']
@@ -64,7 +64,7 @@ class RFIPrestoProcess:
 
     def transfer_products(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
-        presto_out_dir = f'{results_dir}/processing'
+        presto_out_dir = f'{results_dir}/processing/PRESTO'
         out_file=f"{self.work_dir}/{self.inj_id}_topo_DM0.00"
 
         inj_tools.rsync(f'{self.work_dir}/*.txt', presto_out_dir)
