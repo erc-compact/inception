@@ -23,22 +23,22 @@
             "nbins": [64, 128]
         },
 
-        "cmd_flags": {
+        "cmd": {
             "npart": 64,
             "nsub": 64
         },
 
-        "cmd": {
+        "cmd_flags": [
 
-        },
+        ],
         
         "save_png": true,
         "save_pfd": true,
-        "save_bestprof": false,
+        "save_bestprof": true,
         "save_polycos": false,
         "save_ps": false,
 
-        "delete_inj_fb": true
+        "delete_inj_fb": false
     },
 
     "presto_rfi_args":  {
@@ -90,7 +90,7 @@
         "save_png": true,
         "save_pfd": true,
         
-        "delete_inj_fb": true
+        "delete_inj_fb": false
     },
 
 

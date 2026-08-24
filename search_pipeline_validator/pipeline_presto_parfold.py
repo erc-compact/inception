@@ -50,7 +50,7 @@ class PrestoFoldParProcess:
                 return nbins
             
     def get_mask(self):
-        f_args = self.processing_args['presto_fold_args']
+        f_args = self.processing_args['presto_parfold_args']
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
         presto_out_dir = f'{results_dir}/processing/PRESTO'
         if f_args['mask'] == 'rfifind':
@@ -65,16 +65,15 @@ class PrestoFoldParProcess:
 
         psr_id = psr['ID']
         par_file =  f"{self.out_dir}/inj_{self.injection_number:06}/inj_pulsars/{psr['ID']}.par"
+        if not glob.glob(par_file):
+            return
         nbins = self.set_nbins(psr)
         mask = self.get_mask()
        
-        tmp_cwd = f'{self.work_dir}/process_{psr_id}'
+        tmp_cwd = f'{self.work_dir}/_{psr_id}'
         os.makedirs(tmp_cwd, exist_ok=True)
 
-        # template = f'{tmp_cwd}/TMP_template.template'
-        # Path(template).touch()
-
-        cmd = f"{fold_args['mode']} -noxwin -o {tmp_cwd}/{psr_id} -filterbank {self.data} -par {par_file} -n {nbins} {mask}"
+        cmd = f"prepfold -noxwin -o {tmp_cwd}/{psr_id} -filterbank {self.data} -par {par_file} -n {nbins} {mask}"
     
         for flag in self.processing_args['presto_parfold_args']['cmd_flags']:
             if flag in ['-noxwin']:
@@ -91,8 +90,6 @@ class PrestoFoldParProcess:
 
         inj_tools.rsync(f'{tmp_cwd}/{psr_id}*pfd*', self.work_dir)
 
-        # Path(template).unlink(missing_ok=True)
-
     def run_fold(self, ncpus):
         args = self.injection_report['pulsars']
 
@@ -107,7 +104,7 @@ class PrestoFoldParProcess:
             for pID in psr_ids:
                 png = glob.glob(f'{self.work_dir}/{pID}*.png')
                 if png:
-                    os.rename(png[0], f"{Path(png[0]).parent}/{pID}_{self.processing_args['injection_args']['id']}_{self.inj_id}_inj_{self.injection_number:06}.png")
+                    os.rename(png[0], f"{Path(png[0]).parent}/{pID}_{self.processing_args['injection_args']['id']}_{self.inj_id}_inj_{self.injection_number:06}_pfd.png")
             inj_tools.rsync(f'{self.work_dir}/*.png', results_dir)
 
         if self.processing_args['presto_parfold_args'].get('save_pfd', True):

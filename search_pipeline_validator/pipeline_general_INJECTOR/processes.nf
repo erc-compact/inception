@@ -41,3 +41,44 @@ process pulsarx_parfold {
     """
 }
 
+
+process presto_parfold {
+    label "presto_parfold"
+    container params.presto_image
+
+    input:
+        val injection_number
+
+    output:
+        val injection_number
+
+    scratch params.tmp_dir
+
+    script:
+    """
+    python3 ${params.pipeline_code}/pipeline_presto_parfold.py --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
+
+    """
+}
+
+
+process dspsr_parfold {
+    label "dspsr_parfold"
+    container params.dspsr_image
+
+    input:
+        val injection_number
+
+    output:
+        val injection_number
+
+    scratch params.tmp_dir
+
+    script:
+    """
+    python3 ${params.pipeline_code}/pipeline_dspsr_parfold.py --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
+
+    """
+}
+
+

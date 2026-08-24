@@ -6,7 +6,7 @@ include { presto_parfold } from './processes'
 include { rfifind } from './processes'
 include { presto_search } from './processes'
 include { presto_sift } from './processes'
-include { presto_fold } from './processes'
+include { presto_candfold } from './processes'
 
 
 workflow INJECT {
@@ -24,7 +24,7 @@ workflow INJECT {
 
     inj_sift = presto_sift(inj_presto)
     
-    inj_fold = presto_fold(inj_sift)
+    inj_fold = presto_candfold(inj_sift)
 }
 
 workflow {

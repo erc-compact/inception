@@ -54,6 +54,77 @@
 
     },
 
+
+    "presto_parfold_args": {
+        "transfer_TMP": true,
+
+        "mask": "",
+
+        "nbin_plan": {
+            "period_cutoff_s": [0.1, "inf"],
+            "nbins": [64, 128]
+        },
+
+        "cmd": {
+            "npart": 64,
+            "nsub": 64
+        },
+
+        "cmd_flags": [
+
+        ],
+        
+        "save_png": true,
+        "save_pfd": true,
+        "save_bestprof": true,
+        "save_polycos": false,
+        "save_ps": false,
+
+        "delete_inj_fb": false
+    },
+
+
+    "dspsr_parfold_args": {
+        "transfer_TMP": true,
+
+        "nbin_plan": {
+            "period_cutoff_s": [0.1, "inf"],
+            "nbins": [64, 128]
+        },
+
+        "nsubint": 64,
+
+        "dspsr": {
+            "cmd": {
+                "nsub": 64,
+                "k": "meerkat"
+            },
+
+            "cmd_flags": {
+
+            }
+        },
+
+        "pdmp": {
+            "cmd": {
+                "c": 2
+            },
+
+            "cmd_flags": [
+                "-v",
+                "-bf",
+                "-output-pdm-s/n"
+            ]
+        },
+        
+        "save_png": true,
+        "save_ar": true,
+        "save_per": true,
+        "save_posn": false,
+
+        "delete_inj_fb": false
+    },
+
     "data": [
         [".../obs1.fil", 56],
 

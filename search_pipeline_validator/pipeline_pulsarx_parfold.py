@@ -95,7 +95,7 @@ class PulsarxFoldParProcess:
 
         save_fits = '--saveimage' if fold_args.get('save_fits', False) else ''
 
-        tmp_cwd = f'{self.work_dir}/process_{psr_id}'
+        tmp_cwd = f'{self.work_dir}/_{psr_id}'
         os.makedirs(tmp_cwd, exist_ok=True)
 
         # template = f'{tmp_cwd}/TMP_template.template'

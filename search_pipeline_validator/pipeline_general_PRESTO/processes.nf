@@ -98,8 +98,8 @@ process presto_sift {
     """
 }
 
-process presto_fold {
-    label "presto_fold"
+process presto_candfold {
+    label "presto_candfold"
     container params.presto_image
 
     input:
