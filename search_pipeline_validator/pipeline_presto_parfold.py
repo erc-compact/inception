@@ -114,21 +114,21 @@ class PrestoFoldParProcess:
                     os.rename(pfd[0], f"{Path(pfd[0]).parent}/{pID}_{self.processing_args['injection_args']['id']}_{self.inj_id}_inj_{self.injection_number:06}.pfd")
             inj_tools.rsync(f'{self.work_dir}/*.pfd', results_dir)
 
-        if self.processing_args['presto_parfold_args'].get('save_bestprof', False):
+        if self.processing_args['presto_parfold_args'].get('save_bestprof', True):
             for pID in psr_ids:
                 bestprof = glob.glob(f'{self.work_dir}/{pID}*.bestprof')
                 if bestprof:
                     os.rename(bestprof[0], f"{Path(bestprof[0]).parent}/{pID}_{self.processing_args['injection_args']['id']}_{self.inj_id}_inj_{self.injection_number:06}.bestprof")
             inj_tools.rsync(f'{self.work_dir}/*.bestprof', results_dir)
 
-        if self.processing_args['presto_parfold_args'].get('save_polycos', True):
+        if self.processing_args['presto_parfold_args'].get('save_polycos', False):
             for pID in psr_ids:
                 polycos = glob.glob(f'{self.work_dir}/{pID}*.polycos')
                 if polycos:
                     os.rename(polycos[0], f"{Path(polycos[0]).parent}/{pID}_{self.processing_args['injection_args']['id']}_{self.inj_id}_inj_{self.injection_number:06}.polycos")
             inj_tools.rsync(f'{self.work_dir}/*.polycos', results_dir)
 
-        if self.processing_args['presto_parfold_args'].get('save_ps', True):
+        if self.processing_args['presto_parfold_args'].get('save_ps', False):
             for pID in psr_ids:
                 ps = glob.glob(f'{self.work_dir}/{pID}*.ps')
                 if ps:
