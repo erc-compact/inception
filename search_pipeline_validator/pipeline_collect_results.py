@@ -1,14 +1,18 @@
 import os
+import re
 import glob
 import argparse
 import numpy as np
 import pandas as pd
 from pathlib import Path
+import astropy.constants as const
 
 
 import pipeline_tools as inj_tools
 
 import candidate_tools as cand_tools
+
+
 
 
 def load_report(inj_dir):
@@ -47,7 +51,19 @@ class Collector:
             return cand_tools.pulsarx_par2csv(report, f'{inj_dir}/inj_pulsars')
         else:
             return []
-        
+
+    def load_presto_parfold(self, report, inj_dir):
+        if self.c_args['presto_parfold']:
+            return cand_tools.presto_bestprof2csv(report, f'{inj_dir}/inj_pulsars')
+        else:
+            return []
+
+    def load_dspsr_parfold(self, report, inj_dir):
+        if self.c_args['dspsr_parfold']:
+            return cand_tools.dspsr_best2csv(report, f'{inj_dir}/inj_pulsars')
+        else:
+            return []
+
     def load_pulsarx_candfolds(self, inj_dir):
         segment_cands = []
         if self.c_args['pulsarx_candfold']:
@@ -164,6 +180,9 @@ class Collector:
             report, header = load_report(inj_dir)
 
             pulsarx_parfold = self.load_pulsarx_parfold(report, inj_dir)
+            presto_parfold = self.load_presto_parfold(report, inj_dir)
+            dspsr_parfold = self.load_dspsr_parfold(report, inj_dir)
+
             pulsarx_cands = self.load_pulsarx_candfolds(inj_dir)
             peasoup_matched = self.load_peasoup(inj_dir)
 
@@ -176,6 +195,20 @@ class Collector:
                     inj_results.extend([psr_par['F0'], psr_par['F0_err'], psr_par['DM'], psr_par['DM_err'], psr_par['acc'],  psr_par['acc_err'], psr_par['SNR'],  psr_par['width']])
                     parfold_keys = ['F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width']
                     inj_keys.extend([f'PAR_{key}' for key in parfold_keys])
+
+                if self.c_args['presto_parfold']:
+                    psr_par = presto_parfold[presto_parfold['PSR_ID'] == psr['ID']].iloc[0]
+
+                    inj_results.extend([psr_par['F0'], psr_par['F0_err'], psr_par['DM'], psr_par['DM_err'], psr_par['acc'],  psr_par['acc_err'], psr_par['SNR'],  psr_par['width']])
+                    parfold_keys = ['F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width']
+                    inj_keys.extend([f'PRESTO_PAR_{key}' for key in parfold_keys])
+
+                if self.c_args['dspsr_parfold']:
+                    psr_par = dspsr_parfold[dspsr_parfold['PSR_ID'] == psr['ID']].iloc[0]
+
+                    inj_results.extend([psr_par['F0'], psr_par['F0_err'], psr_par['DM'], psr_par['DM_err'], psr_par['acc'],  psr_par['acc_err'], psr_par['SNR'],  psr_par['width']])
+                    parfold_keys = ['F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width']
+                    inj_keys.extend([f'DSPSR_PAR_{key}' for key in parfold_keys])
 
                 if self.c_args['peasoup_search']:
                     psr_pea_matched = peasoup_matched[peasoup_matched['PSR_ID'] == psr['ID']]

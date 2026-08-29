@@ -1,3 +1,4 @@
+import re
 import json
 import glob
 import numpy as np
@@ -142,3 +143,49 @@ def pulsarx_cand2csv(cand_file):
 def correct_fftsize_offset(period, acc, fftsize, nsamples, dt):
     pdot = acc * period / const.c.value
     return period - pdot * (fftsize - nsamples) * dt / 2
+
+
+def presto_bestprof2csv(injection_report, results_dir):
+    NUM = r'[+-]?\d*\.?\d+(?:[eE][+-]?\d+)?'
+    psr_folds = []
+    for psr in injection_report:
+        bestprof_file = glob.glob(f"{results_dir}/{psr['ID']}*.bestprof")[0]
+        with open(bestprof_file) as file:
+            text = file.read()
+
+        p_ms, p_err_ms = re.search(rf'P_topo \(ms\)\s*=\s*({NUM})\s*\+/-\s*({NUM})', text).groups()
+        pdot, pdot_err = re.search(rf"P'_topo \(s/s\)\s*=\s*({NUM})\s*\+/-\s*({NUM})", text).groups()
+        dm = re.search(rf'Best DM\s*=\s*({NUM})', text).group(1)
+        sigma = re.search(rf'\(~({NUM})\s*sigma\)', text)
+
+        P0 = float(p_ms) / 1000
+        P0_err = float(p_err_ms) / 1000
+
+        F0 = 1 / P0
+        F0_err = P0_err / P0**2
+        acc = const.c.value * float(pdot) / P0
+        acc_err = const.c.value * float(pdot_err) / P0
+        snr = float(sigma.group(1)) if sigma else 0.0
+
+        psr_folds.append([psr['ID'], F0, F0_err, float(dm), 0.0, acc, acc_err, snr, 0.0])
+
+    df_folds = pd.DataFrame(psr_folds, columns=['PSR_ID', 'F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width'])
+    return df_folds
+
+
+def dspsr_best2csv(injection_report, results_dir):
+    psr_folds = []
+    for psr in injection_report:
+        best_file = glob.glob(f"{results_dir}/{psr['ID']}*_dspsr.best")[0]
+        with open(best_file) as file:
+            rows = [line.split() for line in file if not line.startswith('#')]
+
+        # rows: 0=BC_prd, 1=TC_prd, 2=garbage (pdmp.C writes a stale value here), 3=DM_val, 4=BC_freq, 5=width S/N
+        DM, _, DM_err = (float(v) for v in rows[3])
+        F0, F0_err = (float(v) for v in rows[4])
+        width, snr = (float(v) for v in rows[5])
+
+        psr_folds.append([psr['ID'], F0, F0_err, DM, DM_err, 0.0, 0.0, snr, width])
+
+    df_folds = pd.DataFrame(psr_folds, columns=['PSR_ID', 'F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width'])
+    return df_folds
