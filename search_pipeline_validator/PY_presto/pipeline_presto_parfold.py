@@ -77,16 +77,10 @@ class PrestoFoldParProcess:
 
         cmd = f"prepfold -noxwin -o {tmp_cwd}/{psr_id} -filterbank {self.data} -par {par_file} -n {nbins} {mask}"
     
-        for flag in self.processing_args['presto_parfold_args']['cmd_flags']:
-            if flag in ['-noxwin']:
-                pass
-            cmd += f" {flag}"
+        cmd = inj_tools.add_cmd_args(cmd, self.processing_args['presto_parfold_args'],
+                                     skip_flags=['-noxwin'],
+                                     skip_keys=['n', 'o', 'filterbank', 'par', 'mask'])
 
-        for key, value in self.processing_args['presto_parfold_args']['cmd'].items():
-            if key in ['n']:
-                pass
-            cmd += f" -{key} {value}"
-        
         inj_tools.print_exe(cmd)
         subprocess.run(cmd, shell=True, cwd=tmp_cwd)
 

@@ -83,16 +83,16 @@ process presto_dedisperse {
     container params.presto_image
 
     input:
-        tuple val(injection_number), val(batch_tag)
+        tuple val(injection_number), val(segment)
 
     output:
-        tuple val(injection_number), val(batch_tag)
+        tuple val(injection_number), val(segment)
 
     scratch params.tmp_dir
 
     script:
     """
-    python3 ${params.pipeline_code}/PY_presto/pipeline_presto_dedisperse.py --tag=${batch_tag} --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
+    python3 ${params.pipeline_code}/PY_presto/pipeline_presto_dedisperse.py --tag=${segment} --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
 
     """
 }
@@ -102,16 +102,16 @@ process presto_fft {
     container params.presto_image
 
     input:
-        tuple val(injection_number), val(batch_tag)
+        tuple val(injection_number), val(segment)
 
     output:
-        tuple val(injection_number), val(batch_tag)
+        tuple val(injection_number), val(segment)
 
     scratch params.tmp_dir
 
     script:
     """
-    python3 ${params.pipeline_code}/PY_presto/pipeline_presto_fft.py --tag=${batch_tag} --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
+    python3 ${params.pipeline_code}/PY_presto/pipeline_presto_fft.py --tag=${segment} --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
 
     """
 }
@@ -121,16 +121,16 @@ process presto_accelsearch {
     container params.presto_image
 
     input:
-        tuple val(injection_number), val(batch_tag)
+        tuple val(injection_number), val(segment)
 
     output:
-        tuple val(injection_number), val(batch_tag)
+        tuple val(injection_number), val(segment)
 
     scratch params.tmp_dir
 
     script:
     """
-    python3 ${params.pipeline_code}/PY_presto/pipeline_presto_accelsearch.py --tag=${batch_tag} --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
+    python3 ${params.pipeline_code}/PY_presto/pipeline_presto_accelsearch.py --tag=${segment} --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
 
     """
 }

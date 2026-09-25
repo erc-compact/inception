@@ -52,27 +52,38 @@ def print_exe(output):
     execute("echo " + str(output))
 
 
-def build_dm_trials(ddplan, inj_DM, injection_report):
-    """Build the (DM, downsample) dedispersion job list. `ddplan` is keyed by
-    downsample factor (as a string, e.g. peasoup's ddplan convention), each value
-    a [low, high, step] DM sweep for that downsample - so each downsample gets
-    its own DM grid. If inj_DM is True, every downsample uses the exact injected
-    DM values instead of sweeping its [low, high, step] range."""
-    trials = []
-    for ds_str, dm_range in ddplan.items():
-        ds = int(ds_str)
-        if inj_DM:
-            DM_values = sorted(psr['DM'] for psr in injection_report['pulsars'])
-        else:
-            low, high, step = dm_range
-            n_trial = int(round((high - low) / step))
-            DM_values = np.linspace(low, high, n_trial, endpoint=False)
-        trials.extend((float(dm), ds) for dm in DM_values)
-    return trials
+def parse_process_tag(process_tag):
+    splits = process_tag.split('_')
+    return int(splits[3]), int(splits[5]), int(splits[6])
 
 
-def batch_trials(trials, batch_size):
-    """Split a flat trial list into fixed-size batches, deterministically (same
-    trials + batch_size always yields the same batches, so every pipeline stage
-    can independently recompute which trials a given batch tag covers)."""
-    return [trials[i:i + batch_size] for i in range(0, len(trials), batch_size)]
+def build_dm_list(ddplan, downsample, inj_DM, injection_report):
+    if inj_DM:
+        return sorted(psr['DM'] for psr in injection_report['pulsars'])
+
+    low, high, step = ddplan[str(downsample)]
+    n_trial = int(round((high - low) / step))
+    return list(np.linspace(low, high, n_trial, endpoint=False))
+
+
+def segment_samples(n_total, seg_i, seg_n, downsample):
+    start_sample = int(np.floor(seg_i * n_total / seg_n))
+    end_sample = int(np.floor((seg_i + 1) * n_total / seg_n))
+
+    start_frac = start_sample / n_total
+    numout = (end_sample - start_sample) // downsample
+    return start_frac, numout
+
+
+def add_cmd_args(cmd, args, skip_flags=(), skip_keys=()):
+    for flag in args.get('cmd_flags', []):
+        if flag in skip_flags:
+            continue
+        cmd += f' {flag}'
+
+    for key, value in args.get('cmd', {}).items():
+        if key in skip_keys:
+            continue
+        cmd += f' -{key} {value}'
+
+    return cmd

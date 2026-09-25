@@ -40,9 +40,9 @@ workflow PRESTO {
         rfifind_channel
 
     main:
-        batch_jobs = expand_plan(presto_setup(rfifind_channel))
+        segment_jobs = expand_plan(presto_setup(rfifind_channel))
 
-        dedisp_jobs = presto_dedisperse(batch_jobs)
+        dedisp_jobs = presto_dedisperse(segment_jobs)
         fft_jobs = presto_fft(dedisp_jobs)
         search_jobs = collapse_tag(presto_accelsearch(fft_jobs))
 

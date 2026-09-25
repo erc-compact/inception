@@ -32,10 +32,11 @@ class PrestoSetup:
     def generate_process_plan(self):
         s_args = self.processing_args['presto_search_args']
 
-        trials = inj_tools.build_dm_trials(s_args['ddplan'], s_args.get('inj_DM', True), self.injection_report)
-        batches = inj_tools.batch_trials(trials, s_args.get('batch_size', 10))
-
-        process_tags = [f'{self.inj_tag}_BATCH_{i}' for i in range(len(batches))]
+        process_tags = []
+        for d_plan in s_args['ddplan'].keys():
+            for s_plan in s_args['segment_plan'].keys():
+                for si in range(int(s_plan)):
+                    process_tags.append(f'{self.inj_tag}_DDPLAN_{d_plan}_SEG_{si}_{s_plan}')
 
         for loc in [self.work_dir, self.processing_dir]:
             with open(f'{loc}/{self.inj_tag}_PROCESS_PLAN.txt', 'w') as f:

@@ -2,19 +2,11 @@ import os
 import glob
 import argparse
 import subprocess
-import numpy as np
-from pathlib import Path
 from multiprocessing import Pool
 
 import os, sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'PY_general')))
 import pipeline_tools as inj_tools
-
-import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-from injector.io_tools import read_datfile, print_exe
-
-from presto.infodata import infodata
 
 
 class PrestoFFTProcess:
@@ -33,7 +25,8 @@ class PrestoFFTProcess:
     def setup(self):
         self.get_injection_report()
         self.parse_tag()
-        self.get_trials()
+        self.get_DM_list()
+        self.get_birdies()
 
     def get_injection_report(self):
         report_path = glob.glob(f'{self.results_dir}/report_*.json')[0]
@@ -41,113 +34,88 @@ class PrestoFFTProcess:
         self.inj_id = self.injection_report['injection_report']['ID']
 
     def parse_tag(self):
-        self.batch_index = int(self.process_tag.split('_BATCH_')[-1])
+        self.downsample, self.seg_i, self.seg_n = inj_tools.parse_process_tag(self.process_tag)
 
-    def get_trials(self):
+    def get_DM_list(self):
         s_args = self.processing_args['presto_search_args']
-        trials = inj_tools.build_dm_trials(s_args['ddplan'], s_args.get('inj_DM', True), self.injection_report)
-        batches = inj_tools.batch_trials(trials, s_args.get('batch_size', 10))
-        self.trials = batches[self.batch_index]
+        self.DM_list = inj_tools.build_dm_list(s_args['ddplan'], self.downsample,
+                                               s_args.get('inj_DM', True), self.injection_report)
 
     def get_birdies(self):
         s_args = self.processing_args['presto_search_args']
         presto_out_dir = f'{self.results_dir}/processing/PRESTO'
         if s_args['birdies'] == 'rfifind':
             path = f'{presto_out_dir}/{self.inj_id}_birdies.txt'
-            return f'-zapfile {path}' if os.path.exists(path) else ''
+            self.birdies = f'-zapfile {path}' if os.path.exists(path) else ''
         elif s_args['birdies']:
-            return f"-zapfile {s_args['birdies']}"
+            self.birdies = f"-zapfile {s_args['birdies']}"
         else:
-            return ''
+            self.birdies = ''
 
-    def process_trial(self, trial):
-        dm, ds = trial
+    def segment_root(self, dm):
+        return f'{self.inj_id}_SEG_{self.seg_i}_{self.seg_n}_DS{self.downsample}_DM{dm:.2f}'
+
+    def process_trial(self, dm):
         s_args = self.processing_args['presto_search_args']
         dat_dir = f'{self.results_dir}/processing/PRESTO/DAT'
+        root = self.segment_root(dm)
 
-        full_root = f'{self.inj_id}_DS{ds}_DM{dm:.2f}'
-        full_dat = glob.glob(f'{dat_dir}/{full_root}.dat')
-        full_inf = glob.glob(f'{dat_dir}/{full_root}.inf')
-        if not (full_dat and full_inf):
-            print_exe(f'Missing dedispersed data for DM={dm:.2f} DS={ds}, skipping.')
+        seg_dat = glob.glob(f'{dat_dir}/{root}.dat')
+        seg_inf = glob.glob(f'{dat_dir}/{root}.inf')
+        if not (seg_dat and seg_inf):
+            inj_tools.print_exe(f'Missing dedispersed data for {root}, skipping.')
             return
 
-        cwd = f'{self.work_dir}/DS{ds}_DM{dm:.2f}'
+        cwd = f'{self.work_dir}/DM{dm:.2f}'
         os.makedirs(cwd, exist_ok=True)
-        inj_tools.rsync(full_dat[0], cwd)
-        inj_tools.rsync(full_inf[0], cwd)
+        inj_tools.rsync(seg_dat[0], cwd)
+        inj_tools.rsync(seg_inf[0], cwd)
 
-        base_info = infodata(f'{cwd}/{full_root}.inf')
-        full_data = read_datfile(f'{cwd}/{full_root}.dat', nbits=32)
-        n_total = len(full_data)
+        cmd = f"realfft {cwd}/{root}.dat"
+        cmd = inj_tools.add_cmd_args(cmd, s_args.get('realfft', {}))
+        inj_tools.print_exe(cmd)
+        subprocess.run(cmd, shell=True, cwd=cwd)
 
-        fold_mode = self.processing_args['presto_candfold_args'].get('fold_mode', 'filterbank')
-        birdies = self.get_birdies()
+        if self.birdies:
+            cmd = f"zapbirds -zap {self.birdies} {cwd}/{root}.fft"
+            cmd = inj_tools.add_cmd_args(cmd, s_args.get('zapbirds', {}),
+                                         skip_flags=['-zap'], skip_keys=['zapfile'])
+            inj_tools.print_exe(cmd)
+            subprocess.run(cmd, shell=True, cwd=cwd)
 
-        for s_plan in s_args['segment_plan'].keys():
-            n_seg = int(s_plan)
-            for seg_i in range(n_seg):
-                start = int(np.floor(seg_i * n_total / n_seg))
-                end = int(np.floor((seg_i + 1) * n_total / n_seg))
-                seg_data = full_data[start:end]
-
-                seg_root = f'{self.inj_id}_SEG_{seg_i}_{n_seg}_DS{ds}_DM{dm:.2f}'
-                seg_dat = f'{cwd}/{seg_root}.dat'
-                seg_inf = f'{cwd}/{seg_root}.inf'
-
-                seg_data.astype(np.float32).tofile(seg_dat)
-
-                seg_info = infodata(f'{cwd}/{full_root}.inf')
-                seg_info.N = len(seg_data)
-                seg_info.epoch = base_info.epoch + (start * base_info.dt) / 86400.0
-                seg_info.basenm = seg_root
-                seg_info.to_file(seg_inf)
-
-                cmd = f"realfft {seg_dat}"
-                inj_tools.print_exe(cmd)
-                subprocess.run(cmd, shell=True, cwd=cwd)
-
-                if birdies:
-                    cmd = f"zapbirds -zap {birdies} {cwd}/{seg_root}.fft"
-                    inj_tools.print_exe(cmd)
-                    subprocess.run(cmd, shell=True, cwd=cwd)
-
-                if fold_mode != 'dat':
-                    os.remove(seg_dat)
-
-        os.remove(f'{cwd}/{full_root}.dat')
+        if self.processing_args['presto_candfold_args'].get('fold_mode', 'filterbank') != 'dat':
+            os.remove(f'{cwd}/{root}.dat')
 
     def run_fft(self, ncpus):
         with Pool(ncpus) as p:
-            p.map(self.process_trial, self.trials)
+            p.map(self.process_trial, self.DM_list)
 
     def transfer_products(self):
         fft_dir = f'{self.results_dir}/processing/PRESTO/FFT'
         os.makedirs(fft_dir, exist_ok=True)
         inj_tools.rsync(f'{self.work_dir}/*/*.fft', fft_dir)
-        inj_tools.rsync(f'{self.work_dir}/*/*_SEG_*.inf', fft_dir)
+        inj_tools.rsync(f'{self.work_dir}/*/*.inf', fft_dir)
 
         if self.processing_args['presto_candfold_args'].get('fold_mode', 'filterbank') == 'dat':
             fold_dat_dir = f'{self.results_dir}/processing/PRESTO/FOLD_DAT'
             os.makedirs(fold_dat_dir, exist_ok=True)
-            inj_tools.rsync(f'{self.work_dir}/*/*_SEG_*.dat', fold_dat_dir)
+            inj_tools.rsync(f'{self.work_dir}/*/*.dat', fold_dat_dir)
+            inj_tools.rsync(f'{self.work_dir}/*/*.inf', fold_dat_dir)
 
-        # the transient, un-segmented per-trial .dat/.inf have now been consumed
         dat_dir = f'{self.results_dir}/processing/PRESTO/DAT'
-        for dm, ds in self.trials:
-            full_root = f'{self.inj_id}_DS{ds}_DM{dm:.2f}'
+        for dm in self.DM_list:
             for ext in ('.dat', '.inf'):
-                f = f'{dat_dir}/{full_root}{ext}'
+                f = f'{dat_dir}/{self.segment_root(dm)}{ext}'
                 if os.path.exists(f):
                     os.remove(f)
 
 
 if __name__=='__main__':
-    parser = argparse.ArgumentParser(prog='Presto segmenter/FFT (stage 2/3) for search pipeline validator',
+    parser = argparse.ArgumentParser(prog='Presto FFT (stage 2/3) for search pipeline validator',
                                      epilog='Feel free to contact me if you have questions - rsenzel@mpifr-bonn.mpg.de')
     parser.add_argument('--injection_number', metavar='int', required=True, type=int, help='injection process number')
     parser.add_argument('--processing_args', metavar='file', required=True, help='JSON file with search parameters')
-    parser.add_argument('--tag', metavar='str', required=True, type=str, help='batch process tag')
+    parser.add_argument('--tag', metavar='str', required=True, type=str, help='search process tag')
 
     parser.add_argument('--out_dir', metavar='dir', required=False, default='cwd', help='output directory')
     parser.add_argument('--work_dir', metavar='dir', required=False, default='cwd', help='work directory')

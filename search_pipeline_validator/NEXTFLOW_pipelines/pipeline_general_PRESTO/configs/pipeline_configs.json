@@ -45,11 +45,27 @@
         "transfer_TMP": true,
 
         "rfifind": {
-            "time": 2
+            "time": 2,
+
+            "cmd": {},
+            "cmd_flags": []
+        },
+
+        "prepdata": {
+            "cmd": {},
+            "cmd_flags": []
+        },
+
+        "realfft": {
+            "cmd": {},
+            "cmd_flags": []
         },
 
         "birdies": {
-            "numharm": 4
+            "numharm": 4,
+
+            "cmd": {},
+            "cmd_flags": []
         },
 
         "save_dat": false,
@@ -68,18 +84,34 @@
         },
 
         "segment_plan" : {
-            "1": {"zmax": 200, "wmax": 0, "numharm": 8},
-            "2": {"zmax": 400, "wmax": 0, "numharm": 8}
+            "1": {"zmax": 200, "wmax": 0, "sigma": 2.0, "numharm": 8},
+            "2": {"zmax": 400, "wmax": 0, "sigma": 2.0, "numharm": 8}
         },
 
         "mask": "rfifind",
         "birdies": "rfifind",
 
-        "batch_size": 10,
+        "prepdata": {
+            "cmd": {},
+            "cmd_flags": []
+        },
 
-        "save_fft": false,
+        "realfft": {
+            "cmd": {},
+            "cmd_flags": []
+        },
 
-        "delete_inj_fb": false
+        "zapbirds": {
+            "cmd": {},
+            "cmd_flags": []
+        },
+
+        "accelsearch": {
+            "cmd": {},
+            "cmd_flags": []
+        },
+
+        "save_fft": false
     },
 
     "candidate_matcher_args": {
@@ -97,6 +129,13 @@
         "mask": "rfifind",
 
         "fold_mode": "filterbank",
+
+        "cmd": {
+            "npart": 64,
+            "nsub": 64
+        },
+
+        "cmd_flags": [],
 
         "save_png": true,
         "save_pfd": true,
