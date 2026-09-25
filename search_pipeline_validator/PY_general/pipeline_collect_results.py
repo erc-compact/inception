@@ -154,6 +154,19 @@ class Collector:
         else:
             return []
 
+    @staticmethod
+    def parfold_row(parfold, psr_id, keys):
+        """Values for one pulsar's par-fold, or zeros when that pulsar has no fold
+        (no .par file, or the fold failed) - a missing product must not abort the
+        whole collection."""
+        if len(parfold):
+            matched = parfold[parfold['PSR_ID'] == psr_id]
+            if len(matched):
+                row = matched.iloc[0]
+                return [row[key] for key in keys]
+
+        return list(np.zeros(len(keys)))
+
     def get_classifier_models(self):
         c_args = self.processing_args.get('classifier_args', {})
         models = glob.glob(f"{c_args.get('model_dir')}/*")
@@ -240,25 +253,18 @@ class Collector:
             for psr in report:
                 inj_keys, inj_results = self.load_injection(psr, inj_dir, header, max_AX, max_PX, max_FX)
                 
-                if self.c_args['pulsarx_parfold']:
-                    psr_par = pulsarx_parfold[pulsarx_parfold['PSR_ID'] == psr['ID']].iloc[0]
+                parfold_keys = ['F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width']
 
-                    inj_results.extend([psr_par['F0'], psr_par['F0_err'], psr_par['DM'], psr_par['DM_err'], psr_par['acc'],  psr_par['acc_err'], psr_par['SNR'],  psr_par['width']])
-                    parfold_keys = ['F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width']
+                if self.c_args['pulsarx_parfold']:
+                    inj_results.extend(self.parfold_row(pulsarx_parfold, psr['ID'], parfold_keys))
                     inj_keys.extend([f'PAR_{key}' for key in parfold_keys])
 
                 if self.c_args['presto_parfold']:
-                    psr_par = presto_parfold[presto_parfold['PSR_ID'] == psr['ID']].iloc[0]
-
-                    inj_results.extend([psr_par['F0'], psr_par['F0_err'], psr_par['DM'], psr_par['DM_err'], psr_par['acc'],  psr_par['acc_err'], psr_par['SNR'],  psr_par['width']])
-                    parfold_keys = ['F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width']
+                    inj_results.extend(self.parfold_row(presto_parfold, psr['ID'], parfold_keys))
                     inj_keys.extend([f'PRESTO_PAR_{key}' for key in parfold_keys])
 
                 if self.c_args['dspsr_parfold']:
-                    psr_par = dspsr_parfold[dspsr_parfold['PSR_ID'] == psr['ID']].iloc[0]
-
-                    inj_results.extend([psr_par['F0'], psr_par['F0_err'], psr_par['DM'], psr_par['DM_err'], psr_par['acc'],  psr_par['acc_err'], psr_par['SNR'],  psr_par['width']])
-                    parfold_keys = ['F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width']
+                    inj_results.extend(self.parfold_row(dspsr_parfold, psr['ID'], parfold_keys))
                     inj_keys.extend([f'DSPSR_PAR_{key}' for key in parfold_keys])
 
                 if self.c_args['peasoup_search']:

@@ -120,8 +120,10 @@ def create_PULSARX_candfile(cands, candfile_path):
 def pulsarx_par2csv(injection_report, results_dir):
     psr_candfiles = []
     for psr in injection_report:
-        cand_file = glob.glob(f"{results_dir}/{psr['ID']}*.cands")[0]
-        cand_df = pd.read_csv(cand_file, skiprows=11, engine='python', sep=r'\s+').iloc[0]
+        cand_file = glob.glob(f"{results_dir}/{glob.escape(psr['ID'])}*.cands")
+        if not cand_file:
+            continue
+        cand_df = pd.read_csv(cand_file[0], skiprows=11, engine='python', sep=r'\s+').iloc[0]
         fold_pars = [psr['ID'], *cand_df[['f0_new', 'f0_err', 'dm_new', 'dm_err', 'acc_new', 'acc_err', 'S/N_new', 'boxcar_width']].values]
         psr_candfiles.append(fold_pars)
     
@@ -145,26 +147,51 @@ def correct_fftsize_offset(period, acc, fftsize, nsamples, dt):
     return period - pdot * (fftsize - nsamples) * dt / 2
 
 
+def get_freq_deriv(r, z, w, time_length):
+    """Convert PRESTO's Fourier-domain candidate parameters (r, z, w) into the spin
+    frequency and its derivatives at the START of the observation, i.e. the
+    f/fd/fdd that prepfold expects.
+
+    accelsearch reports r and z time-AVERAGED over the observation. Writing the
+    phase model as f(t) = f0 + f1*t + f2*t^2/2 with r0 = f0*T, z0 = f1*T^2,
+    w = f2*T^3 and tau = t/T:
+
+        <r> = r0 + z0/2 + w/6        <z> = z0 + w/2
+
+    so the averaged values must be inverted before folding. Skipping this leaves
+    f0 wrong by ~z/2 bins, which is tens of Fourier bins for an accelerated
+    candidate and destroys the fold.
+    """
+    z0 = z - w / 2
+    r0 = r - z0 / 2 - w / 6
+
+    f0 = r0 / time_length
+    f1 = z0 / time_length ** 2
+    f2 = w / time_length ** 3
+
+    return f0, f1, f2
+
+
 def presto_sift2csv(sift_csv_path):
     """Load ACCEL_sift.py's sifted candidate CSV and derive the physical spin parameters
     (T, F0, F1, F2) from PRESTO's bin-based accelsearch outputs (r, z, w), plus the
     segment/downsample bookkeeping encoded in each candidate's source filename
     (rootname convention: '..._SEG_{seg_i}_{seg_n}_DS{downsample}_DM{dm}...').
 
-    F1 (fdot) = z/T^2 and F2 (fddot) = w/T^3 follow PRESTO's standard accelsearch
-    convention (Ransom, Eikenberry & Middleditch 2002), where T = r*period is the
-    coherent integration time of that specific search (recovered here from the
-    already-sifted r/P(ms) columns, so no external T bookkeeping is needed).
+    T is the coherent integration time of that specific search, recovered as
+    r * P(ms) (sifting defines f = r/T, so P = T/r) - no external bookkeeping needed.
+    F0/F1/F2 are referenced to the start of the segment, matching prepfold.
     """
     df = pd.read_csv(sift_csv_path)
     if 'w' not in df.columns:
         df['w'] = 0.0
 
-    df['period'] = df['P(ms)'] / 1000.0
-    df['T'] = df['r'] * df['period']
-    df['F0'] = 1.0 / df['period']
-    df['F1'] = df['z'] / df['T']**2
-    df['F2'] = df['w'] / df['T']**3
+    df['T'] = df['r'] * df['P(ms)'] / 1000.0
+    df['F0'], df['F1'], df['F2'] = get_freq_deriv(df['r'], df['z'], df['w'], df['T'])
+
+    # keep 'period' consistent with the folding convention rather than with
+    # accelsearch's time-averaged P(ms), which the raw column still carries
+    df['period'] = 1.0 / df['F0']
 
     parsed = df['file'].str.extract(r'_SEG_(?P<seg_i>\d+)_(?P<seg_n>\d+)_DS(?P<downsample>\d+)_DM[\d.]+')
     df['seg_i'] = parsed['seg_i'].astype(int)
@@ -202,8 +229,12 @@ def _parse_bestprof(bestprof_file):
 def presto_bestprof2csv(injection_report, results_dir):
     psr_folds = []
     for psr in injection_report:
-        bestprof_file = glob.glob(f"{results_dir}/{psr['ID']}*.bestprof")[0]
-        p = _parse_bestprof(bestprof_file)
+        # a pulsar with no .par (or a failed fold) simply has no product - skip it
+        # rather than crashing the whole collection
+        bestprof_file = glob.glob(f"{results_dir}/{glob.escape(psr['ID'])}*.bestprof")
+        if not bestprof_file:
+            continue
+        p = _parse_bestprof(bestprof_file[0])
         psr_folds.append([psr['ID'], p['F0'], p['F0_err'], p['DM'], p['DM_err'], p['acc'], p['acc_err'], p['SNR'], p['width']])
 
     df_folds = pd.DataFrame(psr_folds, columns=['PSR_ID', 'F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width'])
@@ -216,7 +247,7 @@ def presto_cand_bestprof2csv(psr_ids, results_dir):
     picks the highest-|SNR| fold per PSR_ID."""
     psr_folds = []
     for psr_id in psr_ids:
-        bestprof_files = glob.glob(f"{results_dir}/{psr_id}_*.bestprof")
+        bestprof_files = glob.glob(f"{results_dir}/{glob.escape(str(psr_id))}_CAND*.bestprof")
         if not bestprof_files:
             continue
 
@@ -231,7 +262,10 @@ def presto_cand_bestprof2csv(psr_ids, results_dir):
 def dspsr_best2csv(injection_report, results_dir):
     psr_folds = []
     for psr in injection_report:
-        best_file = glob.glob(f"{results_dir}/{psr['ID']}*_dspsr.best")[0]
+        best_file = glob.glob(f"{results_dir}/{glob.escape(psr['ID'])}*_dspsr.best")
+        if not best_file:
+            continue
+        best_file = best_file[0]
         with open(best_file) as file:
             rows = [line.split() for line in file if not line.startswith('#')]
 

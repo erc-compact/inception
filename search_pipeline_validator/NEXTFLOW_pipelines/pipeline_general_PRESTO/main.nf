@@ -42,12 +42,9 @@ workflow PRESTO {
         rfifind_channel
 
     main:
-        // dedisperse once per downsample - the full .dat is shared by all of that
-        // downsample's segments, so this must finish before any segment is cut
         ddplan_jobs = expand_plan(presto_ddplan_setup(rfifind_channel))
         dedisp_done = collapse_tag(presto_dedisperse(ddplan_jobs))
 
-        // then one job per (downsample, segment)
         segment_jobs = expand_plan(presto_search_setup(dedisp_done))
 
         fft_jobs = presto_fft(segment_jobs)

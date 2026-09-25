@@ -1,6 +1,7 @@
 import os
 import sys
 import glob
+import shutil
 import argparse
 import subprocess
 import numpy as np
@@ -144,17 +145,39 @@ class PrestoFoldCandProcess:
         with Pool(ncpus) as p:
             p.map(self.fold_candidate, cands)
 
+    # prepfold appends its own '_<period>ms_Cand' suffix to -o, so every product is
+    # renamed to a deterministic '{PSR_ID}_CAND{index}_...' name the collector can
+    # glob for. Longest suffix first: '.pfd.bestprof' must win over '.pfd'.
+    CAND_PRODUCTS = [('.pfd.bestprof', 'save_bestprof', '.bestprof'),
+                     ('.pfd.ps',       'save_ps',       '.ps'),
+                     ('.pfd',          'save_pfd',      '.pfd'),
+                     ('.png',          'save_png',      '.png')]
+
     def transfer_products(self):
         results_dir = f'{self.results_dir}/inj_cands/PRESTO/{self.process_tag}'
         os.makedirs(results_dir, exist_ok=True)
 
-        if self.processing_args['presto_candfold_args'].get('save_png', True):
-            inj_tools.rsync(f'{self.work_dir}/*/*.png', results_dir)
+        f_args = self.processing_args['presto_candfold_args']
+        tag = f"{self.processing_args['injection_args']['id']}_{self.inj_id}_inj_{self.injection_number:06}"
 
-        if self.processing_args['presto_candfold_args'].get('save_pfd', True):
-            inj_tools.rsync(f'{self.work_dir}/*/*.pfd', results_dir)
+        for idx, cand in self.candidates.iterrows():
+            psr_id = cand['PSR_ID']
+            cwd = f'{self.work_dir}/_{psr_id}'
+            if not os.path.isdir(cwd):
+                continue
 
-        inj_tools.rsync(f'{self.work_dir}/*/*.bestprof', results_dir)
+            prefix = f'{psr_id}_{idx}_'
+            for filename in os.listdir(cwd):
+                if not filename.startswith(prefix):
+                    continue
+
+                for suffix, save_flag, out_ext in self.CAND_PRODUCTS:
+                    if not filename.endswith(suffix):
+                        continue
+                    if f_args.get(save_flag, True):
+                        shutil.move(f'{cwd}/{filename}',
+                                    f'{results_dir}/{psr_id}_CAND{idx}_{tag}{out_ext}')
+                    break
 
 
 if __name__=='__main__':
