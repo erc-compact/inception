@@ -4,10 +4,12 @@ nextflow.enable.dsl=2
 include { injection } from './processes'
 include { presto_parfold } from './processes'
 include { rfifind } from './processes'
-include { presto_setup } from './processes'
+include { presto_ddplan_setup } from './processes'
+include { presto_search_setup } from './processes'
 include { presto_dedisperse } from './processes'
 include { presto_fft } from './processes'
 include { presto_accelsearch } from './processes'
+include { presto_cleanup } from './processes'
 include { presto_sift } from './processes'
 include { match_candidates } from './processes'
 include { presto_candfold } from './processes'
@@ -40,11 +42,16 @@ workflow PRESTO {
         rfifind_channel
 
     main:
-        segment_jobs = expand_plan(presto_setup(rfifind_channel))
+        // dedisperse once per downsample - the full .dat is shared by all of that
+        // downsample's segments, so this must finish before any segment is cut
+        ddplan_jobs = expand_plan(presto_ddplan_setup(rfifind_channel))
+        dedisp_done = collapse_tag(presto_dedisperse(ddplan_jobs))
 
-        dedisp_jobs = presto_dedisperse(segment_jobs)
-        fft_jobs = presto_fft(dedisp_jobs)
-        search_jobs = collapse_tag(presto_accelsearch(fft_jobs))
+        // then one job per (downsample, segment)
+        segment_jobs = expand_plan(presto_search_setup(dedisp_done))
+
+        fft_jobs = presto_fft(segment_jobs)
+        search_jobs = presto_cleanup(collapse_tag(presto_accelsearch(fft_jobs)))
 
     emit:
         search_jobs

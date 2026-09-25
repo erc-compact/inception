@@ -53,8 +53,15 @@ def print_exe(output):
 
 
 def parse_process_tag(process_tag):
+    """Unpack a PRESTO tag. Dedispersion is keyed on downsample only
+    ('inj_{n}_DDPLAN_{ds}'); the FFT/search stages add the segment
+    ('inj_{n}_DDPLAN_{ds}_SEG_{seg_i}_{seg_n}')."""
     splits = process_tag.split('_')
-    return int(splits[3]), int(splits[5]), int(splits[6])
+    downsample = int(splits[3])
+
+    if 'SEG' in splits:
+        return downsample, int(splits[5]), int(splits[6])
+    return downsample, None, None
 
 
 def build_dm_list(ddplan, downsample, inj_DM, injection_report):
@@ -66,13 +73,17 @@ def build_dm_list(ddplan, downsample, inj_DM, injection_report):
     return list(np.linspace(low, high, n_trial, endpoint=False))
 
 
-def segment_samples(n_total, seg_i, seg_n, downsample):
+def segment_samples(n_total, seg_i, seg_n):
+    """Sample bounds of one segment within an already-dedispersed (and already
+    downsampled) time series: (first sample, number of samples).
+
+    NOTE: segments are cut out of the full .dat here rather than by prepdata's
+    -start/-numout. Offsetting inside prepdata shifts the .inf epoch before it
+    validates the rfifind mask's start MJD, so -start and -mask together always
+    abort with 'maskfile has different number of channels or start MJD'."""
     start_sample = int(np.floor(seg_i * n_total / seg_n))
     end_sample = int(np.floor((seg_i + 1) * n_total / seg_n))
-
-    start_frac = start_sample / n_total
-    numout = (end_sample - start_sample) // downsample
-    return start_frac, numout
+    return start_sample, end_sample - start_sample
 
 
 def add_cmd_args(cmd, args, skip_flags=(), skip_keys=()):

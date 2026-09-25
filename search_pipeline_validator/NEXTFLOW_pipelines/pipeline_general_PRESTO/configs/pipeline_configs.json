@@ -73,9 +73,9 @@
     },
 
     "presto_search_args": {
-        "transfer_TMP": true,
+        "transfer_TMP": false,
         "inj_DM": true,
-        "bary": false,
+        "bary": true,
 
         "ddplan" : {
             "1": [40, 60, 0.1],
@@ -111,6 +111,7 @@
             "cmd_flags": []
         },
 
+        "save_dat": false,
         "save_fft": false
     },
 

@@ -9,9 +9,6 @@ import os, sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'PY_general')))
 import pipeline_tools as inj_tools
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-from injector.io_tools import FilterbankReader
-
 
 class PrestoDedisperseProcess:
     def __init__(self, process_tag, processing_args, out_dir, work_dir, injection_number):
@@ -32,7 +29,6 @@ class PrestoDedisperseProcess:
         self.get_DM_list()
         self.transfer_data()
         self.get_mask()
-        self.get_segment()
 
     def get_injection_report(self):
         report_path = glob.glob(f'{self.results_dir}/report_*.json')[0]
@@ -40,7 +36,7 @@ class PrestoDedisperseProcess:
         self.inj_id = self.injection_report['injection_report']['ID']
 
     def parse_tag(self):
-        self.downsample, self.seg_i, self.seg_n = inj_tools.parse_process_tag(self.process_tag)
+        self.downsample, _, _ = inj_tools.parse_process_tag(self.process_tag)
 
     def get_DM_list(self):
         s_args = self.processing_args['presto_search_args']
@@ -49,7 +45,9 @@ class PrestoDedisperseProcess:
 
     def transfer_data(self):
         data = glob.glob(f"{self.results_dir}/*_{self.inj_id}.fil")[0]
-        if self.processing_args['presto_search_args'].get('transfer_TMP', True):
+        # prepdata streams the filterbank sequentially, so a node-local copy buys
+        # nothing and every concurrent job would stage its own full copy
+        if self.processing_args['presto_search_args'].get('transfer_TMP', False):
             inj_tools.rsync(data, self.work_dir)
             self.data = f'{self.work_dir}/{Path(data).name}'
         else:
@@ -65,27 +63,34 @@ class PrestoDedisperseProcess:
         else:
             self.mask = ''
 
-    def get_segment(self):
-        fb_reader = FilterbankReader(self.data, stats_samples=0)
-        self.start_frac, self.numout = inj_tools.segment_samples(fb_reader.n_samples, self.seg_i,
-                                                                 self.seg_n, self.downsample)
+    def full_root(self, dm):
+        return f'{self.inj_id}_DS{self.downsample}_DM{dm:.2f}'
 
     def run_trial(self, dm):
-        s_args = self.processing_args['presto_search_args']['prepdata']
-        bary = '' if self.processing_args['presto_search_args'].get('bary', False) else '-nobary'
+        s_args = self.processing_args['presto_search_args']
+        bary = '' if s_args.get('bary', False) else '-nobary'
 
         cwd = f'{self.work_dir}/DM{dm:.2f}'
         os.makedirs(cwd, exist_ok=True)
-        out_file = f'{cwd}/{self.inj_id}_SEG_{self.seg_i}_{self.seg_n}_DS{self.downsample}_DM{dm:.2f}'
+        out_file = f'{cwd}/{self.full_root(dm)}'
 
-        cmd = (f"prepdata {bary} -o {out_file} -dm {dm:.2f} -downsamp {self.downsample} "
-               f"-start {self.start_frac} -numout {self.numout} {self.mask} {self.data}")
+        # The whole observation is dedispersed here; segments are cut out of the
+        # resulting .dat later. prepdata's own -start/-numout cannot be used
+        # alongside -mask: offsetting shifts the .inf epoch before prepdata
+        # validates the mask's start MJD, so it aborts after writing the .inf.
+        cmd = (f"prepdata {bary} -o {out_file} -dm {dm:.2f} "
+               f"-downsamp {self.downsample} {self.mask} {self.data}")
 
-        cmd = inj_tools.add_cmd_args(cmd, s_args, skip_flags=['-nobary'],
+        cmd = inj_tools.add_cmd_args(cmd, s_args.get('prepdata', {}), skip_flags=['-nobary'],
                                      skip_keys=['o', 'dm', 'downsamp', 'start', 'numout', 'mask'])
 
         inj_tools.print_exe(cmd)
         subprocess.run(cmd, shell=True, cwd=cwd)
+
+        dat_file = f'{out_file}.dat'
+        if (not os.path.exists(dat_file)) or os.path.getsize(dat_file) == 0:
+            raise RuntimeError(f'prepdata produced no data for {self.full_root(dm)} - '
+                               f'check the mask matches the filterbank and that there is free space.')
 
     def run_dedisperse(self, ncpus):
         with Pool(ncpus) as p:
@@ -104,7 +109,7 @@ if __name__=='__main__':
                                      epilog='Feel free to contact me if you have questions - rsenzel@mpifr-bonn.mpg.de')
     parser.add_argument('--injection_number', metavar='int', required=True, type=int, help='injection process number')
     parser.add_argument('--processing_args', metavar='file', required=True, help='JSON file with search parameters')
-    parser.add_argument('--tag', metavar='str', required=True, type=str, help='search process tag')
+    parser.add_argument('--tag', metavar='str', required=True, type=str, help='dedispersion process tag')
 
     parser.add_argument('--out_dir', metavar='dir', required=False, default='cwd', help='output directory')
     parser.add_argument('--work_dir', metavar='dir', required=False, default='cwd', help='work directory')

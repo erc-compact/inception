@@ -1,7 +1,9 @@
 import os
 import glob
+import shutil
 import argparse
 import subprocess
+from pathlib import Path
 from multiprocessing import Pool
 
 import os, sys
@@ -21,12 +23,13 @@ class PrestoAccelsearchProcess:
 
         self.injection_number = injection_number
         self.results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
+        self.fft_dir = f'{self.results_dir}/processing/PRESTO/FFT'
 
     def setup(self):
         self.get_injection_report()
         self.parse_tag()
         self.get_DM_list()
-        self.transfer_data()
+        self.get_jobs()
 
     def get_injection_report(self):
         report_path = glob.glob(f'{self.results_dir}/report_*.json')[0]
@@ -45,36 +48,32 @@ class PrestoAccelsearchProcess:
     def segment_root(self, dm):
         return f'{self.inj_id}_SEG_{self.seg_i}_{self.seg_n}_DS{self.downsample}_DM{dm:.2f}'
 
-    def transfer_data(self):
-        fft_dir = f'{self.results_dir}/processing/PRESTO/FFT'
-
+    def get_jobs(self):
+        # accelsearch reads the .fft and writes its ACCEL products alongside it,
+        # so it runs against FFT/ directly rather than staging a copy of every
+        # .fft (which is the same size as the time series it came from)
         self.jobs = []
         for dm in self.DM_list:
             root = self.segment_root(dm)
-            fft_file = glob.glob(f'{fft_dir}/{root}.fft')
-            inf_file = glob.glob(f'{fft_dir}/{root}.inf')
-            if fft_file and inf_file:
-                cwd = f'{self.work_dir}/DM{dm:.2f}'
-                os.makedirs(cwd, exist_ok=True)
-                inj_tools.rsync(fft_file[0], cwd)
-                inj_tools.rsync(inf_file[0], cwd)
-                self.jobs.append((cwd, root))
+            if os.path.exists(f'{self.fft_dir}/{root}.fft') and os.path.exists(f'{self.fft_dir}/{root}.inf'):
+                self.jobs.append(root)
+            else:
+                inj_tools.print_exe(f'No FFT found for {root}, skipping.')
 
-    def run_accelsearch(self, job):
-        cwd, root = job
+    def run_accelsearch(self, root):
         s_args = self.processing_args['presto_search_args']
 
         wmax = f"-wmax {self.seg_args['wmax']}" if self.seg_args.get('wmax', 0) else ''
         sigma = f"-sigma {self.seg_args['sigma']}" if self.seg_args.get('sigma', None) else ''
 
         cmd = (f"accelsearch -numharm {self.seg_args['numharm']} -zmax {self.seg_args['zmax']} "
-               f"{wmax} {sigma} {cwd}/{root}.fft")
+               f"{wmax} {sigma} {self.fft_dir}/{root}.fft")
 
         cmd = inj_tools.add_cmd_args(cmd, s_args.get('accelsearch', {}),
                                      skip_keys=['numharm', 'zmax', 'wmax', 'sigma'])
 
         inj_tools.print_exe(cmd)
-        subprocess.run(cmd, shell=True, cwd=cwd)
+        subprocess.run(cmd, shell=True, cwd=self.work_dir)
 
     def run_search(self, ncpus):
         with Pool(ncpus) as p:
@@ -84,14 +83,21 @@ class PrestoAccelsearchProcess:
         accel_dir = f'{self.results_dir}/processing/PRESTO/ACCEL'
         os.makedirs(accel_dir, exist_ok=True)
 
-        inj_tools.rsync(f'{self.work_dir}/*/*.inf', accel_dir)
-        inj_tools.rsync(f'{self.work_dir}/*/*ACCEL_*0', accel_dir)
+        save_fft = self.processing_args['presto_search_args'].get('save_fft', False)
 
-        fft_dir = f'{self.results_dir}/processing/PRESTO/FFT'
-        if not self.processing_args['presto_search_args'].get('save_fft', False):
-            for cwd, root in self.jobs:
+        for root in self.jobs:
+            # ACCEL products land next to the .fft; move only this job's files so
+            # concurrent segments never touch each other's outputs
+            for product in glob.glob(f'{self.fft_dir}/{root}_ACCEL_*'):
+                shutil.move(product, f'{accel_dir}/{Path(product).name}')
+
+            inf = f'{self.fft_dir}/{root}.inf'
+            if os.path.exists(inf):
+                shutil.copy(inf, f'{accel_dir}/{root}.inf')
+
+            if not save_fft:
                 for ext in ('.fft', '.inf'):
-                    f = f'{fft_dir}/{root}{ext}'
+                    f = f'{self.fft_dir}/{root}{ext}'
                     if os.path.exists(f):
                         os.remove(f)
 

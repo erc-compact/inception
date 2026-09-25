@@ -59,7 +59,26 @@ process rfifind {
     """
 }
 
-process presto_setup {
+process presto_ddplan_setup {
+    label "presto_setup"
+    container params.python_image
+
+    input:
+        val injection_number
+
+    output:
+        tuple val(injection_number), path("*_DDPLAN_PLAN.txt")
+
+    scratch params.tmp_dir
+
+    script:
+    """
+    python3 ${params.pipeline_code}/PY_presto/pipeline_presto_setup.py --mode=ddplan --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}
+
+    """
+}
+
+process presto_search_setup {
     label "presto_setup"
     container params.python_image
 
@@ -73,7 +92,7 @@ process presto_setup {
 
     script:
     """
-    python3 ${params.pipeline_code}/PY_presto/pipeline_presto_setup.py --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}
+    python3 ${params.pipeline_code}/PY_presto/pipeline_presto_setup.py --mode=search --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}
 
     """
 }
@@ -83,16 +102,16 @@ process presto_dedisperse {
     container params.presto_image
 
     input:
-        tuple val(injection_number), val(segment)
+        tuple val(injection_number), val(ddplan)
 
     output:
-        tuple val(injection_number), val(segment)
+        tuple val(injection_number), val(ddplan)
 
     scratch params.tmp_dir
 
     script:
     """
-    python3 ${params.pipeline_code}/PY_presto/pipeline_presto_dedisperse.py --tag=${segment} --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
+    python3 ${params.pipeline_code}/PY_presto/pipeline_presto_dedisperse.py --tag=${ddplan} --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number} --ncpus=${task.cpus}
 
     """
 }
@@ -135,6 +154,25 @@ process presto_accelsearch {
     """
 }
 
+
+process presto_cleanup {
+    label "presto_cleanup"
+    container params.python_image
+
+    input:
+        val injection_number
+
+    output:
+        val injection_number
+
+    scratch params.tmp_dir
+
+    script:
+    """
+    python3 ${params.pipeline_code}/PY_presto/pipeline_presto_cleanup.py --processing_args=${params.config_params} --out_dir=${params.output_dir}  --injection_number=${injection_number}
+
+    """
+}
 
 process presto_sift {
     label "presto_sift"
