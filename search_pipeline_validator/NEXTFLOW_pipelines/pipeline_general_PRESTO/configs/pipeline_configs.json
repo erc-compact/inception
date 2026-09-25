@@ -126,7 +126,7 @@
     "presto_candfold_args": {
         "transfer_TMP": true,
 
-        "bary": false,
+        "bary": true,
         "mask": "rfifind",
 
         "fold_mode": "filterbank",

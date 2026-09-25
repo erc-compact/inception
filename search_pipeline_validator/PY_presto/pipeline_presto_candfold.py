@@ -88,9 +88,17 @@ class PrestoFoldCandProcess:
         end = min(end_sample / n_samples, 1)
         return start, end
 
+    def bary_flag(self):
+        """prepfold has no -nobary (that is prepdata's spelling); it opts out of
+        barycentring with -topo. Defaults to whatever the search used, since the
+        candidate's F0/F1/F2 are in the frame the time series was dedispersed in."""
+        f_args = self.processing_args['presto_candfold_args']
+        search_bary = self.processing_args['presto_search_args'].get('bary', False)
+        return '' if f_args.get('bary', search_bary) else '-topo'
+
     def fold_candidate_fb(self, cand):
         f_args = self.processing_args['presto_candfold_args']
-        bary = '' if f_args.get('bary', False) else '-nobary'
+        bary = self.bary_flag()
         mask = self.get_mask()
 
         start, end = self.get_segment_bounds(int(cand['seg_i']), int(cand['seg_n']))
@@ -102,7 +110,7 @@ class PrestoFoldCandProcess:
         cmd = (f"prepfold {bary} -noxwin -o {out_file} -f {cand['F0']} -fd {cand['F1']} {self.fdd_flag(cand)} "
                f"-dm {cand['dm']} -start {start} -end {end} {mask} {self.data}")
 
-        cmd = inj_tools.add_cmd_args(cmd, f_args, skip_flags=['-noxwin', '-nobary'],
+        cmd = inj_tools.add_cmd_args(cmd, f_args, skip_flags=['-noxwin', '-topo'],
                                      skip_keys=['o', 'f', 'fd', 'fdd', 'dm', 'start', 'end', 'mask'])
 
         inj_tools.print_exe(cmd)
@@ -124,11 +132,13 @@ class PrestoFoldCandProcess:
         inj_tools.rsync(inf_file[0], cwd)
 
         out_file = f"{cwd}/{cand['PSR_ID']}_{cand.name}"
+        # no bary flag here: the .dat was already barycentred (or not) by prepdata
+        # and its .inf records which, so prepfold must not be told to re-decide
         cmd = (f"prepfold -noxwin -o {out_file} -f {cand['F0']} -fd {cand['F1']} {self.fdd_flag(cand)} "
                f"-dm {cand['dm']} {cwd}/{root}.dat")
 
         cmd = inj_tools.add_cmd_args(cmd, self.processing_args['presto_candfold_args'],
-                                     skip_flags=['-noxwin', '-nobary'],
+                                     skip_flags=['-noxwin', '-topo'],
                                      skip_keys=['o', 'f', 'fd', 'fdd', 'dm', 'start', 'end', 'mask'])
 
         inj_tools.print_exe(cmd)
