@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from builtins import map
 import os
 import re
+import sys
 import glob
 import csv
 import argparse
@@ -63,30 +64,38 @@ if __name__=='__main__':
     # them should be there.  (if no candidates are found by accelsearch
     # we get no ACCEL files...
     path = f"{args.out_dir}/inj_{args.injection_number:06}/processing/PRESTO/ACCEL"
-    inffiles = glob.glob(globinf, root_dir=path) 
-    candfiles = glob.glob(globaccel, root_dir=path) 
-    # Check to see if this is from a short search
-    if len(re.findall("_[0-9][0-9][0-9]M_" , inffiles[0])):
-        dmstrs = [x.split("DM")[-1].split("_")[0] for x in candfiles]
-    else:
-        dmstrs = [x.split("DM")[-1].split(".inf")[0] for x in inffiles]
-    dms = list(map(float, dmstrs))
-    dms.sort()
+    inffiles = glob.glob(globinf, root_dir=path)
+    # accelsearch writes 'root_ACCEL_<zmax>' (the text list we want) alongside
+    # 'root_ACCEL_<zmax>.cand'/'.txtcand'; select by excluding those extensions
+    # rather than assuming zmax ends in a '0'.
+    candfiles = [f for f in glob.glob(globaccel, root_dir=path)
+                 if not f.endswith(('.cand', '.txtcand', '.inf'))]
+
+    if not (inffiles and candfiles):
+        sys.exit('No PRESTO candidates to sift.')
+
+    # DMs are no longer unique across the search: a segmented, multi-downsample
+    # run produces the same DM once per (segment, downsample). Dedupe so a DM is
+    # counted once by remove_DM_problems.
+    dms = sorted(set(float(x.split("DM")[-1].split(".inf")[0]) for x in inffiles))
     dmstrs = ["%.2f"%x for x in dms]
 
-    # Read in all the candidates
-    candfiles_new = [path+"/"+candf for candf in candfiles] # edit RS
+    # sifting reads the observation length out of the .inf appended to each ACCEL
+    # file, so every ACCEL file needs its OWN .inf. Pair them on the full rootname
+    # (which carries segment + downsample), never on the DM string alone.
+    accel_re = re.compile(r'_ACCEL_\d+(?:_JERK_\d+)?$')
 
-    # file names
-    for dm in dmstrs:
-        source_file = glob.glob(f"{path}/*DM{dm}.inf")
-        destination_file = glob.glob(f"{path}/*DM{dm}_ACCEL_*0")
-        if source_file and destination_file:
-
-            with open(source_file[0], "r") as src, open(destination_file[0], "a") as dest:
+    candfiles_new = []
+    for candf in candfiles:
+        source_file = f"{path}/{accel_re.sub('', candf)}.inf"
+        destination_file = f"{path}/{candf}"
+        if os.path.exists(source_file):
+            with open(source_file, "r") as src, open(destination_file, "a") as dest:
                 for line in src:
                     dest.write(line)
-
+            candfiles_new.append(destination_file)
+        else:
+            print(f"No .inf found for {candf}, skipping.")
 
     cands = sifting.read_candidates(candfiles_new) # edit RS
 
