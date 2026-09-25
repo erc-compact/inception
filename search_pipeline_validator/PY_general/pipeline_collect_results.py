@@ -99,7 +99,9 @@ class Collector:
         if segment_cands:
             return pd.concat(segment_cands)
         else:
-            return []
+            # an empty frame rather than [], so a run where nothing was found still
+            # filters by PSR_ID and falls through to the zero-fill path
+            return pd.DataFrame(columns=['PSR_ID'])
     
     def load_peasoup(self, inj_dir):
         segment_cands = []
@@ -114,7 +116,9 @@ class Collector:
         if segment_cands:
             return pd.concat(segment_cands)
         else:
-            return []
+            # an empty frame rather than [], so a run where nothing was found still
+            # filters by PSR_ID and falls through to the zero-fill path
+            return pd.DataFrame(columns=['PSR_ID'])
 
     def load_presto_search(self, inj_dir):
         segment_cands = []
@@ -129,7 +133,9 @@ class Collector:
         if segment_cands:
             return pd.concat(segment_cands)
         else:
-            return []
+            # an empty frame rather than [], so a run where nothing was found still
+            # filters by PSR_ID and falls through to the zero-fill path
+            return pd.DataFrame(columns=['PSR_ID'])
 
     def load_presto_candfolds(self, inj_dir):
         segment_cands = []
@@ -152,7 +158,9 @@ class Collector:
         if segment_cands:
             return pd.concat(segment_cands)
         else:
-            return []
+            # an empty frame rather than [], so a run where nothing was found still
+            # filters by PSR_ID and falls through to the zero-fill path
+            return pd.DataFrame(columns=['PSR_ID'])
 
     @staticmethod
     def parfold_row(parfold, psr_id, keys):
