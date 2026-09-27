@@ -82,7 +82,6 @@ class Collector:
             segments = self.load_segments()
             for segment in segments:
                 cand_file = glob.glob(f'{inj_dir}/inj_cands/PEASOUP/{segment}/*.cands')
-                # '{tag}_{pepoch}.csv' - the '_' stops MATCHED_SEG_0_1 matching MATCHED_SEG_0_10
                 matched_file = glob.glob(f'{inj_dir}/processing/PEASOUP/{segment}_*.csv')
                 class_file = glob.glob(f'{inj_dir}/inj_cands/PEASOUP/{segment}/CLASSIFIED_*.csv')
                 if cand_file:
@@ -90,10 +89,6 @@ class Collector:
                     peasoup_df = pd.read_csv(matched_file[0], index_col=0)
                     pulsarx_candfold['segment'] = segment
 
-                    # PulsarX ignores the candfile's own id column: the '#id' it writes
-                    # (and the number ending its fold file names) is the candidate's
-                    # position in the candfile, from 1. The candfile was written from
-                    # this fold csv row by row, so '#id' k+1 is row k here.
                     fold_row = pulsarx_candfold['cand_ID'].astype(int).values - 1
                     if len(fold_row) and (fold_row.min() < 0 or fold_row.max() >= len(peasoup_df)):
                         raise ValueError(f'{cand_file[0]} does not match {matched_file[0]}: '
@@ -102,11 +97,6 @@ class Collector:
                     cand_number = peasoup_df.index.values[fold_row]
 
                     if (self.c_args['classifier']) and class_file:
-                        # PICS writes one row per fold file, sorted by the number at the
-                        # end of the file name as a string - not in .cands row order.
-                        # pulsarx_candfold renames the folds to the global candidate
-                        # number, so join on that (a candidate matched to two pulsars
-                        # has one fold file, whose scores go on both rows).
                         class_df = pd.read_csv(class_file[0], index_col=0)
                         class_df.index = [int(Path(f).stem.split('_')[-1]) for f in class_df.index]
                         scores = class_df.reindex(cand_number)
@@ -117,21 +107,14 @@ class Collector:
         if segment_cands:
             return pd.concat(segment_cands)
         else:
-            # an empty frame rather than [], so a run where nothing was found still
-            # filters by PSR_ID and falls through to the zero-fill path
             return pd.DataFrame(columns=['PSR_ID'])
     
     @staticmethod
     def load_matches(inj_dir, mode):
-        """Every match the candidate matcher made, across all segments. The
-        per-segment fold files can't be used for this: they only hold what was
-        folded (max_folds per pulsar, or unmatched candidates under fold_all)."""
         matches_file = f'{inj_dir}/processing/{mode}/{Path(inj_dir).name}_{mode}_matches.csv'
         if os.path.exists(matches_file):
             return pd.read_csv(matches_file, index_col=0)
 
-        # an empty frame rather than [], so a run where nothing was found still
-        # filters by PSR_ID and falls through to the zero-fill path
         return pd.DataFrame(columns=['PSR_ID'])
 
     def load_peasoup(self, inj_dir):
@@ -151,7 +134,6 @@ class Collector:
 
             segments = self.load_presto_segments()
             for segment in segments:
-                # exact name: a trailing '*' would let MATCHED_SEG_0_1 pick up MATCHED_SEG_0_10
                 matched_file = glob.glob(f'{inj_dir}/processing/PRESTO/{segment}.csv')
                 fold_dir = f'{inj_dir}/inj_cands/PRESTO/{segment}'
                 if matched_file and os.path.isdir(fold_dir):
@@ -164,8 +146,6 @@ class Collector:
 
                         class_file = glob.glob(f'{fold_dir}/CLASSIFIED_*.csv')
                         if (self.c_args['classifier']) and class_file:
-                            # PICS scores each .pfd; the chosen fold's .bestprof has the
-                            # same stem ('{PSR_ID}_CAND{cand}_...'), so join on that
                             class_df = pd.read_csv(class_file[0], index_col=0)
                             class_df.index = [Path(f).stem for f in class_df.index]
                             scores = class_df.reindex(presto_candfold['fold'])
@@ -176,15 +156,10 @@ class Collector:
         if segment_cands:
             return pd.concat(segment_cands)
         else:
-            # an empty frame rather than [], so a run where nothing was found still
-            # filters by PSR_ID and falls through to the zero-fill path
             return pd.DataFrame(columns=['PSR_ID'])
 
     @staticmethod
     def parfold_row(parfold, psr_id, keys):
-        """Values for one pulsar's par-fold, or zeros when that pulsar has no fold
-        (no .par file, or the fold failed) - a missing product must not abort the
-        whole collection."""
         if len(parfold):
             matched = parfold[parfold['PSR_ID'] == psr_id]
             if len(matched):
@@ -334,8 +309,6 @@ class Collector:
                         inj_results.extend([psr_cand['segment'], psr_cand['F0'], psr_cand['F0_err'], psr_cand['DM'], psr_cand['DM_err'], psr_cand['acc'],  psr_cand['acc_err'], psr_cand['SNR'],  psr_cand['width']])
 
                         if self.c_args['classifier']:
-                            # NaN where a segment has no scores (the classifier step is
-                            # allowed to fail without stopping the run)
                             inj_results.extend([psr_cand.get(model, np.nan) for model in model_names])
                     
                     inj_keys.extend([f'CAND_{key}' for key in cand_keys])

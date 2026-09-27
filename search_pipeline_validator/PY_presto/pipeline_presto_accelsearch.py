@@ -83,8 +83,6 @@ class PrestoAccelsearchProcess:
         save_fft = self.processing_args['presto_search_args'].get('save_fft', False)
 
         for root in self.jobs:
-            # ACCEL products land next to the .fft; move only this job's files so
-            # concurrent segments never touch each other's outputs
             for product in glob.glob(f'{self.fft_dir}/{root}_ACCEL_*'):
                 shutil.move(product, f'{accel_dir}/{Path(product).name}')
 

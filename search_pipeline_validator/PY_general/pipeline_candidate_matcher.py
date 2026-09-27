@@ -94,14 +94,13 @@ class CandidateMatcher:
             else:
                 self.correct_freq(csv_cands, fftsize, dt)
             csv_cands['n_samples'] = fftsize
-            # dt is the tsamp of the file peasoup actually searched, i.e. already
-            # tscrunched - the original filterbank's dt would understate T
             csv_cands['T'] = fftsize * dt
             csv_cands['XML'] = Path(xml).name
             s0, s1, tscrunch = self.parse_peasoup_tag(Path(xml).stem)
             csv_cands['tscrunch'] = tscrunch
             csv_cands['downsample'] = int(tscrunch)
             csv_cands['segment'] = f'{s0}_{s1}'
+            csv_cands['F_match'] = 1 / csv_cands['period']
             cands_list.append(csv_cands)
 
         candidates = pd.concat(cands_list, ignore_index=True) if cands_list else pd.DataFrame()
@@ -178,9 +177,6 @@ class CandidateMatcher:
         if loader is None:
             sys.exit(f"Unknown candidate_matcher_args mode '{mode}'.")
 
-        # candidates keep the loader's index throughout: it is the row in
-        # *_candidates.csv, becomes the fold-csv index, and so ends up as the
-        # candidate number in the fold file names
         self.candidates = loader()
         self.dm_windows = {}
 
@@ -204,13 +200,7 @@ class CandidateMatcher:
         return rv, topo_sec, bary_sec
 
     def match_candidates(self, candidates, harmonics):
-        """Every (candidate, injected pulsar) pair that matches in frequency and DM.
 
-        Not truncated - select_folds() decides what gets folded. A candidate can
-        appear once per pulsar it matches, so the index may repeat. Adds PSR_ID,
-        the matched harmonic (detected / pulsar frequency), and the offsets dF0_bins
-        (from the expected frequency in that segment) and dDM (from the true DM).
-        """
         matched_pulsar_cands = []
         matcher_args = self.processing_args['candidate_matcher_args']
         dm_level = matcher_args.get('dm_level', 0.3)
@@ -220,8 +210,6 @@ class CandidateMatcher:
         obs_rv, topo_sec, bary_sec = self.get_obs_params()
         bin_tol = 2
 
-        # the part of the observation each candidate's search covered, so the
-        # band the pulsar sweeps is taken over that segment only
         seg = candidates['segment'].str.split('_', expand=True).astype(int)
         seg_groups = candidates.groupby([seg[0], seg[1]]).indices
         obs_frac = topo_sec / topo_sec[-1]
@@ -229,17 +217,11 @@ class CandidateMatcher:
         print_exe(f'Matching {self.get_mode()} candidates from a {data_frame}centric time series ...')
 
         fft_bin = 1 / candidates['T'].values
-        F0_cands = 1 / candidates['period'].values
+        F0_cands = candidates['F_match'].values
 
         for pm in self.setup_manager.pulsar_models:
             print_exe(f'Matching PSR {pm.ID} ...')
 
-            # Earth's velocity is the only difference between the two frames, and
-            # it goes into the RV curve (nowhere else, or it is counted twice):
-            # a barycentric model seen in topocentric data picks it up, a
-            # topocentric model seen in barycentred data has it taken out, and
-            # matching frames need nothing. Per-pulsar arrays, so nothing leaks
-            # into the pulsars handled after this one.
             frame = pm.pulsar_pars['frame']
             time = bary_sec if frame == 'bary' else topo_sec
             if frame == data_frame:
@@ -249,7 +231,7 @@ class CandidateMatcher:
             else:
                 psr_rv = -obs_rv
 
-            rv_PSR = cand_tools.add_PSR_rv_curve(pm, time, psr_rv, pm.pulsar_pars['ACCEPOCH']) # acc dependent, low freq psr 0 accel test
+            rv_PSR = cand_tools.add_PSR_rv_curve(pm, time, psr_rv, pm.pulsar_pars['ACCEPOCH']) 
 
             F_min = np.empty(len(candidates))
             F_max = np.empty(len(candidates))
@@ -257,8 +239,6 @@ class CandidateMatcher:
                 window = (obs_frac >= seg_i / seg_n) & (obs_frac <= (seg_i + 1) / seg_n)
                 F_min[idx], F_max[idx] = cand_tools.get_freq_bounds(rv_PSR[window], pm)
 
-            # each candidate frequency times each harmonic, tested against the band;
-            # where several harmonics fit, keep the one closest to the band centre
             scaled = np.outer(F0_cands, h_arr)
             in_band = ((scaled >= (F_min - bin_tol * fft_bin)[:, None]) &
                        (scaled <= (F_max + bin_tol * fft_bin)[:, None]))
@@ -268,8 +248,6 @@ class CandidateMatcher:
             best_h = np.argmin(np.where(in_band, np.abs(scaled - centre[:, None]), np.inf), axis=1)
             dF0_bins = (scaled[np.arange(n_cands), best_h] - centre) * candidates['T'].values
 
-            # bounds are asymmetric for scattered pulsars, so the offset is
-            # signed here rather than abs()
             width_low, width_high = cand_tools.dm_match_bounds(pm, dm_level)
             self.dm_windows[pm.ID] = (-width_low, width_high)
             dm_offset = candidates['dm'].values - pm.prop_effect.DM
@@ -287,14 +265,6 @@ class CandidateMatcher:
         return pd.concat(matched_pulsar_cands)
 
     def select_folds(self, candidates, matches):
-        """Rows to write to the fold files.
-
-        Default: each pulsar's `max_folds` highest-S/N matches.
-        fold_all: the `max_folds` highest-S/N candidates in each segment whether
-        they matched or not. Matched ones carry their PSR_ID (a row per pulsar
-        matched, as in the default mode); the rest are labelled UNMATCHED so the
-        fold file names and the collector's PSR_ID lookup still work unchanged.
-        """
         matcher_args = self.processing_args['candidate_matcher_args']
         max_folds = matcher_args['max_folds']
         by_snr = dict(by='snr', key=abs, ascending=False)
@@ -324,17 +294,12 @@ class CandidateMatcher:
         generator()
 
     def write_matches(self):
-        """Every (candidate, pulsar) match, not just the folded ones - the fold
-        files are capped by max_folds (and hold unmatched candidates under
-        fold_all), so detection statistics are read from here instead."""
         mode = self.get_mode()
         processing_dir = f'{self.results_dir}/processing/{mode}'
         os.makedirs(processing_dir, exist_ok=True)
         self.matches.to_csv(f'{processing_dir}/inj_{self.injection_number:06}_{mode}_matches.csv')
 
     def get_segments(self):
-        """Every segment searched, as 'i_n', from the search's segment_plan - so a
-        segment that found nothing still shows up with 0 hits."""
         plan_section = {'PEASOUP': 'peasoup_args', 'PRESTO': 'presto_search_args'}.get(self.get_mode())
         plan = self.processing_args.get(plan_section, {}).get('segment_plan', {})
 
@@ -344,8 +309,6 @@ class CandidateMatcher:
         return segments
 
     def write_match_summary(self):
-        """Per injected pulsar: its best detection, offsets from the true values,
-        hits per segment, and which folded candidates are that pulsar."""
         mode = self.get_mode()
         matcher_args = self.processing_args['candidate_matcher_args']
         inj_tag = f'inj_{self.injection_number:06}'

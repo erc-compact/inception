@@ -61,7 +61,6 @@ class PulsarxFoldCandProcess:
     
     def get_candidates(self):
         processing_dir = f'{self.results_dir}/processing/PEASOUP'
-        # '{tag}_{pepoch}.candfile' - the '_' stops MATCHED_SEG_0_1 matching MATCHED_SEG_0_10
         cands = glob.glob(f"{processing_dir}/{self.process_tag}_*.candfile")
         if cands:
             self.candfile = cands[0]
@@ -69,16 +68,10 @@ class PulsarxFoldCandProcess:
             print_exe('No candidate file found.')
             sys.exit(0)
 
-        # PulsarX skips the '#id' column and numbers its folds by position among the
-        # candfile's data lines (those starting with a digit), from 1. The matcher
-        # wrote the global candidate number into that column, so read it back in
-        # the same order to translate fold k+1 -> candidate number.
         with open(self.candfile) as f:
             self.cand_ids = [line.split()[0] for line in map(str.strip, f) if line and line[0].isdigit()]
 
     def global_name(self, path):
-        """Fold product renamed from PulsarX's running number to the global candidate
-        number, so it matches the candidates/matches csvs and the matches json."""
         running = int(Path(path).stem.split('_')[-1])
         tag = f"{self.processing_args['injection_args']['id']}_{self.inj_id}_inj_{self.injection_number:06}"
         return f"{Path(path).parent}/{tag}_{self.cand_ids[running - 1]}{Path(path).suffix}"
@@ -148,8 +141,6 @@ class PulsarxFoldCandProcess:
             os.remove(results_dir)
         os.makedirs(results_dir, exist_ok=True)
 
-        # a candidate matched to two pulsars is folded twice under one candidate
-        # number; the folds are identical, so the second rename simply replaces the first
         if self.processing_args['pulsarx_candfold_args'].get('save_png', True):
             pngs = glob.glob(f'{self.work_dir}/*.png')
             for png in pngs:

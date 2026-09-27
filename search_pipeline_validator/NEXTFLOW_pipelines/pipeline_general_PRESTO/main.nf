@@ -88,7 +88,5 @@ workflow {
 
     inj_results = INJECT(injection_batch)
 
-    // toList, not collect: collect emits nothing when no injection produced a
-    // fold, so the collector would never run; toList emits an empty list instead
     collector(inj_results.toList())
 }

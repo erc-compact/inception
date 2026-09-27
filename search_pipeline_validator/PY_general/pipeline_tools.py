@@ -41,9 +41,6 @@ def next_fast_len(n, primes=[2, 3, 5]):
     return m
 
 def glob_psr(directory, psr_id, suffix):
-    """One pulsar's files in `directory`: '{psr_id}{suffix}' or '{psr_id}_*{suffix}'.
-    A bare '{psr_id}*' lets a replicated pulsar like PSR_R1 also pick up PSR_R10,
-    PSR_R11, ... (replicas are named '{prefix}_R{j}')."""
     psr_id = glob.escape(str(psr_id))
     return sorted(glob.glob(f'{directory}/{psr_id}{suffix}') +
                   glob.glob(f'{directory}/{psr_id}_*{suffix}'))
@@ -62,9 +59,6 @@ def print_exe(output):
 
 
 def parse_process_tag(process_tag):
-    """Unpack a PRESTO tag. Dedispersion is keyed on downsample only
-    ('inj_{n}_DDPLAN_{ds}'); the FFT/search stages add the segment
-    ('inj_{n}_DDPLAN_{ds}_SEG_{seg_i}_{seg_n}')."""
     splits = process_tag.split('_')
     downsample = int(splits[3])
 
@@ -83,13 +77,6 @@ def build_dm_list(ddplan, downsample, inj_DM, injection_report):
 
 
 def segment_samples(n_total, seg_i, seg_n):
-    """Sample bounds of one segment within an already-dedispersed (and already
-    downsampled) time series: (first sample, number of samples).
-
-    NOTE: segments are cut out of the full .dat here rather than by prepdata's
-    -start/-numout. Offsetting inside prepdata shifts the .inf epoch before it
-    validates the rfifind mask's start MJD, so -start and -mask together always
-    abort with 'maskfile has different number of channels or start MJD'."""
     start_sample = int(np.floor(seg_i * n_total / seg_n))
     end_sample = int(np.floor((seg_i + 1) * n_total / seg_n))
     return start_sample, end_sample - start_sample

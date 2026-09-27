@@ -45,8 +45,6 @@ class PrestoDedisperseProcess:
 
     def transfer_data(self):
         data = glob.glob(f"{self.results_dir}/*_{self.inj_id}.fil")[0]
-        # prepdata streams the filterbank sequentially, so a node-local copy buys
-        # nothing and every concurrent job would stage its own full copy
         if self.processing_args['presto_search_args'].get('transfer_TMP', False):
             inj_tools.rsync(data, self.work_dir)
             self.data = f'{self.work_dir}/{Path(data).name}'
