@@ -23,7 +23,8 @@ class PrestoAccelsearchProcess:
 
         self.injection_number = injection_number
         self.results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
-        self.fft_dir = f'{self.results_dir}/processing/PRESTO/FFT'
+        self.files_dir = f'{self.results_dir}/processing/PRESTO/FILES'
+        self.search_dir = f'{self.results_dir}/processing/PRESTO/SEARCH'
 
     def setup(self):
         self.get_injection_report()
@@ -52,7 +53,7 @@ class PrestoAccelsearchProcess:
         self.jobs = []
         for dm in self.DM_list:
             root = self.segment_root(dm)
-            if os.path.exists(f'{self.fft_dir}/{root}.fft') and os.path.exists(f'{self.fft_dir}/{root}.inf'):
+            if os.path.exists(f'{self.files_dir}/{root}.fft') and os.path.exists(f'{self.files_dir}/{root}.inf'):
                 self.jobs.append(root)
             else:
                 inj_tools.print_exe(f'No FFT found for {root}, skipping.')
@@ -63,8 +64,13 @@ class PrestoAccelsearchProcess:
         wmax = f"-wmax {self.seg_args['wmax']}" if self.seg_args.get('wmax', 0) else ''
         sigma = f"-sigma {self.seg_args['sigma']}" if self.seg_args.get('sigma', None) else ''
 
+        for ext in ('.fft', '.inf'):
+            link = f'{self.work_dir}/{root}{ext}'
+            if not os.path.lexists(link):
+                os.symlink(f'{self.files_dir}/{root}{ext}', link)
+
         cmd = (f"accelsearch -numharm {self.seg_args['numharm']} -zmax {self.seg_args['zmax']} "
-               f"{wmax} {sigma} {self.fft_dir}/{root}.fft")
+               f"{wmax} {sigma} {self.work_dir}/{root}.fft")
 
         cmd = inj_tools.add_cmd_args(cmd, s_args.get('accelsearch', {}),
                                      skip_keys=['numharm', 'zmax', 'wmax', 'sigma'])
@@ -77,24 +83,25 @@ class PrestoAccelsearchProcess:
             p.map(self.run_accelsearch, self.jobs)
 
     def transfer_products(self):
-        accel_dir = f'{self.results_dir}/processing/PRESTO/ACCEL'
-        os.makedirs(accel_dir, exist_ok=True)
+        os.makedirs(self.search_dir, exist_ok=True)
 
         save_fft = self.processing_args['presto_search_args'].get('save_fft', False)
+        fold_dat = self.processing_args['presto_candfold_args'].get('fold_mode', 'filterbank') == 'dat'
 
         for root in self.jobs:
-            for product in glob.glob(f'{self.fft_dir}/{root}_ACCEL_*'):
-                shutil.move(product, f'{accel_dir}/{Path(product).name}')
+            for product in glob.glob(f'{self.work_dir}/{root}_ACCEL_*'):
+                shutil.move(product, f'{self.search_dir}/{Path(product).name}')
 
-            inf = f'{self.fft_dir}/{root}.inf'
+            inf = f'{self.files_dir}/{root}.inf'
             if os.path.exists(inf):
-                shutil.copy(inf, f'{accel_dir}/{root}.inf')
+                shutil.copy(inf, f'{self.search_dir}/{root}.inf')
 
             if not save_fft:
-                for ext in ('.fft', '.inf'):
-                    f = f'{self.fft_dir}/{root}{ext}'
-                    if os.path.exists(f):
-                        os.remove(f)
+                fft = f'{self.files_dir}/{root}.fft'
+                if os.path.exists(fft):
+                    os.remove(fft)
+                if os.path.exists(inf) and not fold_dat:
+                    os.remove(inf)
 
 
 if __name__=='__main__':

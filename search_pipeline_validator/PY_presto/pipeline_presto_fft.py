@@ -24,7 +24,7 @@ class PrestoFFTProcess:
 
         self.injection_number = injection_number
         self.results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
-        self.dat_dir = f'{self.results_dir}/processing/PRESTO/DAT'
+        self.files_dir = f'{self.results_dir}/processing/PRESTO/FILES'
 
     def setup(self):
         self.get_injection_report()
@@ -64,8 +64,8 @@ class PrestoFFTProcess:
 
     def cut_segment(self, dm, cwd):
         full_root = self.full_root(dm)
-        full_dat = f'{self.dat_dir}/{full_root}.dat'
-        full_inf = f'{self.dat_dir}/{full_root}.inf'
+        full_dat = f'{self.files_dir}/{full_root}.dat'
+        full_inf = f'{self.files_dir}/{full_root}.inf'
 
         if not (os.path.exists(full_dat) and os.path.exists(full_inf)):
             inj_tools.print_exe(f'Missing dedispersed data for {full_root}, skipping.')
@@ -131,16 +131,12 @@ class PrestoFFTProcess:
             p.map(self.process_trial, self.DM_list)
 
     def transfer_products(self):
-        fft_dir = f'{self.results_dir}/processing/PRESTO/FFT'
-        os.makedirs(fft_dir, exist_ok=True)
-        inj_tools.rsync(f'{self.work_dir}/*/*.fft', fft_dir)
-        inj_tools.rsync(f'{self.work_dir}/*/*.inf', fft_dir)
+        os.makedirs(self.files_dir, exist_ok=True)
+        inj_tools.rsync(f'{self.work_dir}/*/*.fft', self.files_dir)
+        inj_tools.rsync(f'{self.work_dir}/*/*.inf', self.files_dir)
 
         if self.processing_args['presto_candfold_args'].get('fold_mode', 'filterbank') == 'dat':
-            fold_dat_dir = f'{self.results_dir}/processing/PRESTO/FOLD_DAT'
-            os.makedirs(fold_dat_dir, exist_ok=True)
-            inj_tools.rsync(f'{self.work_dir}/*/*.dat', fold_dat_dir)
-            inj_tools.rsync(f'{self.work_dir}/*/*.inf', fold_dat_dir)
+            inj_tools.rsync(f'{self.work_dir}/*/*.dat', self.files_dir)
 
 
 if __name__=='__main__':

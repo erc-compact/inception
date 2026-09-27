@@ -1,7 +1,7 @@
 import os
 import glob
-import shutil
 import argparse
+from pathlib import Path
 
 import os, sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'PY_general')))
@@ -23,17 +23,17 @@ class PrestoCleanup:
         s_args = self.processing_args['presto_search_args']
         presto_dir = f'{self.results_dir}/processing/PRESTO'
 
-        if not s_args.get('save_dat', False):
-            dat_dir = f'{presto_dir}/DAT'
-            if os.path.isdir(dat_dir):
-                freed = sum(os.path.getsize(f) for f in glob.glob(f'{dat_dir}/*'))
-                shutil.rmtree(dat_dir)
-                inj_tools.print_exe(f'Removed dedispersed time series ({freed/1e9:.2f} GB).')
+        files_dir = f'{presto_dir}/FILES'
 
-        if not s_args.get('save_fft', False):
-            fft_dir = f'{presto_dir}/FFT'
-            if os.path.isdir(fft_dir) and not os.listdir(fft_dir):
-                os.rmdir(fft_dir)
+        if not s_args.get('save_dat', False):
+            full_obs = [f for f in glob.glob(f'{files_dir}/*') if '_SEG_' not in Path(f).name]
+            freed = sum(os.path.getsize(f) for f in full_obs)
+            for f in full_obs:
+                os.remove(f)
+            inj_tools.print_exe(f'Removed dedispersed time series: {freed/1e9:.2f} GB.')
+
+        if os.path.isdir(files_dir) and not os.listdir(files_dir):
+            os.rmdir(files_dir)
 
 
 if __name__=='__main__':

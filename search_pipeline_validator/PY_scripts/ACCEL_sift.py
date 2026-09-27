@@ -127,7 +127,7 @@ if __name__=='__main__':
     # Try to read the .inf files first, as _if_ they are present, all of
     # them should be there.  (if no candidates are found by accelsearch
     # we get no ACCEL files...
-    path = f"{args.out_dir}/inj_{args.injection_number:06}/processing/PRESTO/ACCEL"
+    path = f"{args.out_dir}/inj_{args.injection_number:06}/processing/PRESTO/SEARCH"
     out_csv = f"{args.out_dir}/inj_{args.injection_number:06}/processing/PRESTO/PRESTO_candidates.csv"
     inffiles = glob.glob(globinf, root_dir=path)
     candfiles = [f for f in glob.glob(globaccel, root_dir=path)

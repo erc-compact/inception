@@ -94,11 +94,11 @@ class PrestoDedisperseProcess:
             p.map(self.run_trial, self.DM_list)
 
     def transfer_products(self):
-        dat_dir = f'{self.results_dir}/processing/PRESTO/DAT'
-        os.makedirs(dat_dir, exist_ok=True)
+        files_dir = f'{self.results_dir}/processing/PRESTO/FILES'
+        os.makedirs(files_dir, exist_ok=True)
 
-        inj_tools.rsync(f'{self.work_dir}/*/*.dat', dat_dir)
-        inj_tools.rsync(f'{self.work_dir}/*/*.inf', dat_dir)
+        inj_tools.rsync(f'{self.work_dir}/*/*.dat', files_dir)
+        inj_tools.rsync(f'{self.work_dir}/*/*.inf', files_dir)
 
 
 if __name__=='__main__':

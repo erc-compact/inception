@@ -117,7 +117,7 @@ class PrestoFoldCandProcess:
         subprocess.run(cmd, shell=True, cwd=cwd)
 
     def fold_candidate_dat(self, cand):
-        dat_dir = f'{self.results_dir}/processing/PRESTO/FOLD_DAT'
+        dat_dir = f'{self.results_dir}/processing/PRESTO/FILES'
         root = f"{self.inj_id}_SEG_{int(cand['seg_i'])}_{int(cand['seg_n'])}_DS{int(cand['downsample'])}_DM{cand['dm']:.2f}"
 
         dat_file = glob.glob(f'{dat_dir}/{root}.dat')
