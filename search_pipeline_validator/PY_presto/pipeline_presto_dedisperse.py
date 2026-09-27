@@ -74,10 +74,6 @@ class PrestoDedisperseProcess:
         os.makedirs(cwd, exist_ok=True)
         out_file = f'{cwd}/{self.full_root(dm)}'
 
-        # The whole observation is dedispersed here; segments are cut out of the
-        # resulting .dat later. prepdata's own -start/-numout cannot be used
-        # alongside -mask: offsetting shifts the .inf epoch before prepdata
-        # validates the mask's start MJD, so it aborts after writing the .inf.
         cmd = (f"prepdata {bary} -o {out_file} -dm {dm:.2f} "
                f"-downsamp {self.downsample} {self.mask} {self.data}")
 

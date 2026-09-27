@@ -1,5 +1,6 @@
 import os
 import sys
+import glob
 import json
 import hashlib
 import subprocess
@@ -38,6 +39,14 @@ def next_fast_len(n, primes=[2, 3, 5]):
         m += 1
 
     return m
+
+def glob_psr(directory, psr_id, suffix):
+    """One pulsar's files in `directory`: '{psr_id}{suffix}' or '{psr_id}_*{suffix}'.
+    A bare '{psr_id}*' lets a replicated pulsar like PSR_R1 also pick up PSR_R10,
+    PSR_R11, ... (replicas are named '{prefix}_R{j}')."""
+    psr_id = glob.escape(str(psr_id))
+    return sorted(glob.glob(f'{directory}/{psr_id}{suffix}') +
+                  glob.glob(f'{directory}/{psr_id}_*{suffix}'))
 
 def string2seed(s):
     hash_object = hashlib.sha256(s.encode())

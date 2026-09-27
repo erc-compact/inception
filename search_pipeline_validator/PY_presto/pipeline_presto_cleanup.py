@@ -23,8 +23,6 @@ class PrestoCleanup:
         s_args = self.processing_args['presto_search_args']
         presto_dir = f'{self.results_dir}/processing/PRESTO'
 
-        # the full-length .dat files are shared by every segment of a downsample,
-        # so they can only be removed once all searches for this injection are done
         if not s_args.get('save_dat', False):
             dat_dir = f'{presto_dir}/DAT'
             if os.path.isdir(dat_dir):

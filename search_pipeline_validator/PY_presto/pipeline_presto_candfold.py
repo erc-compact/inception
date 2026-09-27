@@ -89,9 +89,6 @@ class PrestoFoldCandProcess:
         return start, end
 
     def bary_flag(self):
-        """prepfold has no -nobary (that is prepdata's spelling); it opts out of
-        barycentring with -topo. Defaults to whatever the search used, since the
-        candidate's F0/F1/F2 are in the frame the time series was dedispersed in."""
         f_args = self.processing_args['presto_candfold_args']
         search_bary = self.processing_args['presto_search_args'].get('bary', False)
         return '' if f_args.get('bary', search_bary) else '-topo'
@@ -132,8 +129,7 @@ class PrestoFoldCandProcess:
         inj_tools.rsync(inf_file[0], cwd)
 
         out_file = f"{cwd}/{cand['PSR_ID']}_{cand.name}"
-        # no bary flag here: the .dat was already barycentred (or not) by prepdata
-        # and its .inf records which, so prepfold must not be told to re-decide
+
         cmd = (f"prepfold -noxwin -o {out_file} -f {cand['F0']} -fd {cand['F1']} {self.fdd_flag(cand)} "
                f"-dm {cand['dm']} {cwd}/{root}.dat")
 
@@ -155,9 +151,6 @@ class PrestoFoldCandProcess:
         with Pool(ncpus) as p:
             p.map(self.fold_candidate, cands)
 
-    # prepfold appends its own '_<period>ms_Cand' suffix to -o, so every product is
-    # renamed to a deterministic '{PSR_ID}_CAND{index}_...' name the collector can
-    # glob for. Longest suffix first: '.pfd.bestprof' must win over '.pfd'.
     CAND_PRODUCTS = [('.pfd.bestprof', 'save_bestprof', '.bestprof'),
                      ('.pfd.ps',       'save_ps',       '.ps'),
                      ('.pfd',          'save_pfd',      '.pfd'),

@@ -63,8 +63,6 @@ class PrestoFFTProcess:
         return f'{self.inj_id}_SEG_{self.seg_i}_{self.seg_n}_DS{self.downsample}_DM{dm:.2f}'
 
     def cut_segment(self, dm, cwd):
-        """Read only this segment's slice out of the full .dat (the file is shared
-        with every other segment of this downsample, so it is never copied)."""
         full_root = self.full_root(dm)
         full_dat = f'{self.dat_dir}/{full_root}.dat'
         full_inf = f'{self.dat_dir}/{full_root}.inf'

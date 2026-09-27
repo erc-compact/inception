@@ -35,9 +35,6 @@ class PrestoSetup:
 
         process_tags = []
         if self.mode == 'ddplan':
-            # dedispersion only depends on (DM, downsample), never on the segment,
-            # so each downsample is dedispersed exactly once and every segment of
-            # that downsample re-uses the same full-length .dat
             for d_plan in s_args['ddplan'].keys():
                 process_tags.append(f'{self.inj_tag}_DDPLAN_{d_plan}')
             plan_name = f'{self.inj_tag}_DDPLAN_PLAN.txt'

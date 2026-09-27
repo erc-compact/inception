@@ -67,12 +67,12 @@ class DSPSRFoldParProcess:
     
         for flag in dspsr_args['cmd_flags']:
             if flag in ['-A']:
-                pass
+                continue
             cmd += f" {flag}"
 
         for key, value in dspsr_args['cmd'].items():
             if key in ['b', 'L']:
-                pass
+                continue
             cmd += f" -{key} {value}"
         
         cmd += f' {self.data}'
@@ -87,12 +87,12 @@ class DSPSRFoldParProcess:
     
         for flag in pdmp_args['cmd_flags']:
             if flag in ["-v"]:
-                pass
+                continue
             cmd += f" {flag}"
 
         for key, value in pdmp_args['cmd'].items():
             if key in []:
-                pass
+                continue
             cmd += f" -{key} {value}"
         
         cmd += f' {tmp_cwd}/{psr_id}.ar'
@@ -128,14 +128,14 @@ class DSPSRFoldParProcess:
 
         if self.processing_args['dspsr_parfold_args'].get('save_png', True):
             for pID in psr_ids:
-                png = glob.glob(f'{self.work_dir}/{pID}*.png')
+                png = inj_tools.glob_psr(self.work_dir, pID, '.png')
                 if png:
                     os.rename(png[0], f"{Path(png[0]).parent}/{pID}_{self.processing_args['injection_args']['id']}_{self.inj_id}_inj_{self.injection_number:06}_dspsr.png")
             inj_tools.rsync(f'{self.work_dir}/*.png', results_dir)
 
         if self.processing_args['dspsr_parfold_args'].get('save_ar', True):
             for pID in psr_ids:
-                ar = glob.glob(f'{self.work_dir}/{pID}*.ar')
+                ar = inj_tools.glob_psr(self.work_dir, pID, '.ar')
                 if ar:
                     os.rename(ar[0], f"{Path(ar[0]).parent}/{pID}_{self.processing_args['injection_args']['id']}_{self.inj_id}_inj_{self.injection_number:06}_dspsr.ar")
             inj_tools.rsync(f'{self.work_dir}/*.ar', results_dir)

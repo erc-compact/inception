@@ -34,9 +34,11 @@ class RFIPrestoProcess:
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
 
         data = glob.glob(f"{results_dir}/*_{self.inj_id}.fil")[0]
-        inj_tools.rsync(data, self.work_dir)
-
-        self.data = f'{self.work_dir}/{Path(data).name}'
+        if self.processing_args['presto_rfi_args'].get('transfer_TMP', True):
+            inj_tools.rsync(data, self.work_dir)
+            self.data = f'{self.work_dir}/{Path(data).name}'
+        else:
+            self.data = data
 
     def run(self, threads):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
@@ -67,8 +69,6 @@ class RFIPrestoProcess:
         inj_tools.print_exe(cmd)
         subprocess.run(cmd, shell=True)
 
-        subprocess.run("ls", shell=True)
-
     def make_birdies(self):
         pass
 
@@ -87,7 +87,7 @@ class RFIPrestoProcess:
             inj_tools.rsync(f'{out_file}.dat', presto_out_dir)
 
         if self.processing_args['presto_rfi_args']['save_fft']:
-            inj_tools.rsync(f'{out_file}.dat', presto_out_dir)
+            inj_tools.rsync(f'{out_file}.fft', presto_out_dir)
             
 
 if __name__=='__main__':

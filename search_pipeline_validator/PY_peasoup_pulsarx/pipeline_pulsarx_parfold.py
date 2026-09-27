@@ -108,12 +108,12 @@ class PulsarxFoldParProcess:
     
         for flag in self.processing_args['pulsarx_parfold_args']['cmd_flags']:
             if flag in ['--output_width', '--saveimage']:
-                pass
+                continue
             cmd += f" {flag}"
 
         for key, value in self.processing_args['pulsarx_parfold_args']['cmd'].items():
             if key in ['nbin', 'blocksize', 'tsubint']:
-                pass
+                continue
             cmd += f" --{key} {value}"
         
         inj_tools.print_exe(cmd)
@@ -138,28 +138,28 @@ class PulsarxFoldParProcess:
 
         if self.processing_args['pulsarx_parfold_args'].get('save_png', True):
             for pID in psr_ids:
-                png = glob.glob(f'{self.work_dir}/{pID}*.png')
+                png = inj_tools.glob_psr(self.work_dir, pID, '.png')
                 if png:
                     os.rename(png[0], f"{Path(png[0]).parent}/{pID}_{self.processing_args['injection_args']['id']}_{self.inj_id}_inj_{self.injection_number:06}.png")
             inj_tools.rsync(f'{self.work_dir}/*.png', results_dir)
 
         if self.processing_args['pulsarx_parfold_args'].get('save_ar', True):
             for pID in psr_ids:
-                arc = glob.glob(f'{self.work_dir}/{pID}*.ar')
+                arc = inj_tools.glob_psr(self.work_dir, pID, '.ar')
                 if arc:
                     os.rename(arc[0], f"{Path(arc[0]).parent}/{pID}_{self.processing_args['injection_args']['id']}_{self.inj_id}_inj_{self.injection_number:06}.ar")
             inj_tools.rsync(f'{self.work_dir}/*.ar', results_dir)
 
         if self.processing_args['pulsarx_parfold_args'].get('save_fits', False):
             for pID in psr_ids:
-                fits = glob.glob(f'{self.work_dir}/{pID}*.fits')
+                fits = inj_tools.glob_psr(self.work_dir, pID, '.fits')
                 if fits:
                     os.rename(fits[0], f"{Path(fits[0]).parent}/{pID}_{self.processing_args['injection_args']['id']}_{self.inj_id}_inj_{self.injection_number:06}.fits")
             inj_tools.rsync(f'{self.work_dir}/*.fits', results_dir)
 
         if self.processing_args['pulsarx_parfold_args'].get('save_cand', True):
             for pID in psr_ids:
-                cands = glob.glob(f'{self.work_dir}/{pID}*.cands')
+                cands = inj_tools.glob_psr(self.work_dir, pID, '.cands')
                 if cands:
                     os.rename(cands[0], f"{Path(cands[0]).parent}/{pID}_{self.processing_args['injection_args']['id']}_{self.inj_id}_inj_{self.injection_number:06}.cands")
             inj_tools.rsync(f'{self.work_dir}/*.cands', results_dir)

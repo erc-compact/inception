@@ -13,6 +13,7 @@ include { presto_cleanup } from './processes'
 include { presto_sift } from './processes'
 include { match_candidates } from './processes'
 include { presto_candfold } from './processes'
+include { classifier } from './processes'
 include { collector } from './processes'
 
 
@@ -74,7 +75,9 @@ workflow INJECT {
 
         inj_fold_cand = presto_candfold(inj_tag_match)
 
-        inj_output = collapse_tag(inj_fold_cand)
+        inj_classified = classifier(inj_fold_cand)
+
+        inj_output = collapse_tag(inj_classified)
     emit:
         inj_output
 
@@ -85,5 +88,7 @@ workflow {
 
     inj_results = INJECT(injection_batch)
 
-    collector(inj_results.collect())
+    // toList, not collect: collect emits nothing when no injection produced a
+    // fold, so the collector would never run; toList emits an empty list instead
+    collector(inj_results.toList())
 }

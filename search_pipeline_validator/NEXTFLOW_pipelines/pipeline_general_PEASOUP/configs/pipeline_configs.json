@@ -127,8 +127,10 @@
     "candidate_matcher_args": {
 
         "mode": "PEASOUP",
+        "fold_all": false,
         "max_folds": 5,
-        "harmonics": [0.5, 1, 2]
+        "harmonics": [0.5, 1, 2],
+        "dm_level": 0.3
 
     },
 

@@ -76,7 +76,11 @@ class PeasoupProcess:
 
         seg_fftsize = self.seg_args.get('fftsize', [2, 3, 5])
         if type(seg_fftsize) == list:
-            n_sample = fb_reader.n_samples // (self.tscrunch * self.seg_size)
+            # self.data is what peasoup actually reads (already tscrunched by filtool,
+            # or the native filterbank), so its n_samples is already at the search
+            # resolution - dividing by tscrunch again would search only 1/tscrunch
+            # of each segment
+            n_sample = fb_reader.n_samples // self.seg_size
             self.fft_size = inj_tools.next_fast_len(n_sample, seg_fftsize)
         else:
             self.fft_size = seg_fftsize
@@ -169,7 +173,7 @@ class PeasoupProcess:
 
         for key, value in cmd_args.items():
             if key in ['end_sample']:
-                pass
+                continue
             cmd += f" --{key} {value}"
               
         subprocess.run(cmd, shell=True)

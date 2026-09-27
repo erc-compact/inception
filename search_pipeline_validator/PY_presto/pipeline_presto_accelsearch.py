@@ -49,9 +49,6 @@ class PrestoAccelsearchProcess:
         return f'{self.inj_id}_SEG_{self.seg_i}_{self.seg_n}_DS{self.downsample}_DM{dm:.2f}'
 
     def get_jobs(self):
-        # accelsearch reads the .fft and writes its ACCEL products alongside it,
-        # so it runs against FFT/ directly rather than staging a copy of every
-        # .fft (which is the same size as the time series it came from)
         self.jobs = []
         for dm in self.DM_list:
             root = self.segment_root(dm)
