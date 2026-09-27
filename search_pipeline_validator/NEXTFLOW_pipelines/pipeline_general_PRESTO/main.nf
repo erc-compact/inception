@@ -4,6 +4,7 @@ nextflow.enable.dsl=2
 include { injection } from './processes'
 include { presto_parfold } from './processes'
 include { rfifind } from './processes'
+include { filtool } from './processes'
 include { presto_ddplan_setup } from './processes'
 include { presto_search_setup } from './processes'
 include { presto_dedisperse } from './processes'
@@ -16,6 +17,35 @@ include { presto_candfold } from './processes'
 include { classifier } from './processes'
 include { collector } from './processes'
 
+
+
+def presto_rfi_cleaner() {
+    def config = new groovy.json.JsonSlurper().parseText(file(params.config_params).text)
+    def search = config.presto_search_args ?: [:]
+    def cleaner = search.rfi_cleaner ?: 'rfifind'
+
+    if (!(cleaner in ['rfifind', 'filtool'])) {
+        error "presto_search_args.rfi_cleaner must be 'rfifind' or 'filtool', not '${cleaner}'"
+    }
+
+    if (cleaner == 'filtool') {
+        def conflicts = []
+        if (search.mask) conflicts << 'presto_search_args.mask'
+        if (config.presto_candfold_args?.mask) conflicts << 'presto_candfold_args.mask'
+        if (search.birdies == 'rfifind') conflicts << 'presto_search_args.birdies'
+        if (config.presto_parfold_args?.mask == 'rfifind') conflicts << 'presto_parfold_args.mask'
+        if (conflicts) {
+            error "rfi_cleaner is 'filtool', so ${conflicts.join(', ')} must not use rfifind or a mask - only one RFI cleaner can be used"
+        }
+
+        def f_args = config.filtool_args
+        if (!f_args) error "rfi_cleaner is 'filtool' but the config has no filtool_args"
+        if (!(1 in f_args.tscrunch)) error "filtool_args.tscrunch must include 1: PRESTO dedisperses the full-resolution filtool output"
+        if (!f_args.save_filtool_fb) error "rfi_cleaner is 'filtool', so filtool_args.save_filtool_fb must be true"
+    }
+
+    return cleaner
+}
 
 
 def expand_plan(channel) {
@@ -40,10 +70,10 @@ def collapse_tag(channel) {
 
 workflow PRESTO {
     take:
-        rfifind_channel
+        cleaned_channel
 
     main:
-        ddplan_jobs = expand_plan(presto_ddplan_setup(rfifind_channel))
+        ddplan_jobs = expand_plan(presto_ddplan_setup(cleaned_channel))
         dedisp_done = collapse_tag(presto_dedisperse(ddplan_jobs))
 
         segment_jobs = expand_plan(presto_search_setup(dedisp_done))
@@ -63,11 +93,15 @@ workflow INJECT {
     main:
         inj_pulsars = injection(injection_number)
 
-        inj_rfifind = rfifind(inj_pulsars)
+        if (presto_rfi_cleaner() == 'filtool') {
+            inj_cleaned = filtool(inj_pulsars)
+        } else {
+            inj_cleaned = rfifind(inj_pulsars)
+        }
 
         inj_fold_par = presto_parfold(inj_pulsars)
 
-        inj_search = PRESTO(inj_rfifind)
+        inj_search = PRESTO(inj_cleaned)
 
         inj_sift = presto_sift(inj_search)
 

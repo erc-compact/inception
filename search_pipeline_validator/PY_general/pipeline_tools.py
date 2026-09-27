@@ -58,6 +58,37 @@ def print_exe(output):
     execute("echo " + str(output))
 
 
+def presto_rfi_cleaner(processing_args):
+    s_args = processing_args['presto_search_args']
+    cleaner = s_args.get('rfi_cleaner', 'rfifind')
+    if cleaner not in ('rfifind', 'filtool'):
+        sys.exit(f"presto_search_args.rfi_cleaner must be 'rfifind' or 'filtool', not '{cleaner}'.")
+
+    if cleaner == 'filtool':
+        conflicts = []
+        if s_args.get('mask'):
+            conflicts.append('presto_search_args.mask')
+        if processing_args.get('presto_candfold_args', {}).get('mask'):
+            conflicts.append('presto_candfold_args.mask')
+        if s_args.get('birdies') == 'rfifind':
+            conflicts.append('presto_search_args.birdies')
+        if processing_args.get('presto_parfold_args', {}).get('mask') == 'rfifind':
+            conflicts.append('presto_parfold_args.mask')
+        if conflicts:
+            sys.exit(f"rfi_cleaner is 'filtool', so {', '.join(conflicts)} must not use rfifind or a mask "
+                     f"- only one RFI cleaner can be used.")
+    return cleaner
+
+def filtool_filterbank(results_dir, inj_id, processing_args):
+    tscrunch = processing_args['filtool_args']['tscrunch']
+    if 1 not in tscrunch:
+        sys.exit('filtool_args.tscrunch must include 1: PRESTO dedisperses the full-resolution filtool output.')
+
+    data = glob.glob(f"{results_dir}/processing/FILTOOL/*_{inj_id}_FILTOOL_0{tscrunch.index(1) + 1}.fil")
+    if not data:
+        sys.exit('No filtool-cleaned filterbank found - filtool_args.save_filtool_fb must be true.')
+    return data[0]
+
 def parse_process_tag(process_tag):
     splits = process_tag.split('_')
     downsample = int(splits[3])

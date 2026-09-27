@@ -44,7 +44,10 @@ class PrestoDedisperseProcess:
                                                s_args.get('inj_DM', True), self.injection_report)
 
     def transfer_data(self):
-        data = glob.glob(f"{self.results_dir}/*_{self.inj_id}.fil")[0]
+        if inj_tools.presto_rfi_cleaner(self.processing_args) == 'filtool':
+            data = inj_tools.filtool_filterbank(self.results_dir, self.inj_id, self.processing_args)
+        else:
+            data = glob.glob(f"{self.results_dir}/*_{self.inj_id}.fil")[0]
         if self.processing_args['presto_search_args'].get('transfer_TMP', False):
             inj_tools.rsync(data, self.work_dir)
             self.data = f'{self.work_dir}/{Path(data).name}'
@@ -53,9 +56,9 @@ class PrestoDedisperseProcess:
 
     def get_mask(self):
         s_args = self.processing_args['presto_search_args']
-        presto_out_dir = f'{self.results_dir}/processing/PRESTO'
+        rfi_dir = f'{self.results_dir}/processing/PRESTO/RFIFIND'
         if s_args['mask'] == 'rfifind':
-            self.mask = f'-mask {presto_out_dir}/{self.inj_id}_rfifind.mask'
+            self.mask = f'-mask {rfi_dir}/{self.inj_id}_rfifind.mask'
         elif s_args['mask']:
             self.mask = f"-mask {s_args['mask']}"
         else:

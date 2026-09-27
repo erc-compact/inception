@@ -42,18 +42,18 @@ class RFIPrestoProcess:
 
     def run(self, threads):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
-        presto_out_dir = f'{results_dir}/processing/PRESTO'
-        os.makedirs(presto_out_dir, exist_ok=True)
+        rfi_dir = f'{results_dir}/processing/PRESTO/RFIFIND'
+        os.makedirs(rfi_dir, exist_ok=True)
 
         rfi_args = self.processing_args['presto_rfi_args']
 
-        cmd = f"rfifind -ncpus {threads} -time {rfi_args['rfifind']['time']} -o {presto_out_dir}/{self.inj_id} {self.data}"
+        cmd = f"rfifind -ncpus {threads} -time {rfi_args['rfifind']['time']} -o {rfi_dir}/{self.inj_id} {self.data}"
         cmd = inj_tools.add_cmd_args(cmd, rfi_args['rfifind'], skip_keys=['ncpus', 'time', 'o'])
         inj_tools.print_exe(cmd)
         subprocess.run(cmd, shell=True)
 
         out_file=f"{self.work_dir}/{self.inj_id}_topo_DM0.00"
-        cmd=f"prepdata -ncpus {threads} -nobary -o {out_file} -dm 0.0 -mask {presto_out_dir}/{self.inj_id}_rfifind.mask {self.data}"
+        cmd=f"prepdata -ncpus {threads} -nobary -o {out_file} -dm 0.0 -mask {rfi_dir}/{self.inj_id}_rfifind.mask {self.data}"
         cmd = inj_tools.add_cmd_args(cmd, rfi_args.get('prepdata', {}), skip_flags=['-nobary'],
                                      skip_keys=['ncpus', 'o', 'dm', 'mask'])
         inj_tools.print_exe(cmd)
@@ -75,19 +75,19 @@ class RFIPrestoProcess:
 
     def transfer_products(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
-        presto_out_dir = f'{results_dir}/processing/PRESTO'
+        rfi_dir = f'{results_dir}/processing/PRESTO/RFIFIND'
         out_file=f"{self.work_dir}/{self.inj_id}_topo_DM0.00"
 
-        inj_tools.rsync(f'{self.work_dir}/*.txt', presto_out_dir)
-        inj_tools.rsync(f'{self.work_dir}/*.inf', presto_out_dir)
-        inj_tools.rsync(f'{self.work_dir}/*.cand', presto_out_dir)
-        inj_tools.rsync(f'{self.work_dir}/*ACCEL_0*', presto_out_dir)
+        inj_tools.rsync(f'{self.work_dir}/*.txt', rfi_dir)
+        inj_tools.rsync(f'{self.work_dir}/*.inf', rfi_dir)
+        inj_tools.rsync(f'{self.work_dir}/*.cand', rfi_dir)
+        inj_tools.rsync(f'{self.work_dir}/*ACCEL_0*', rfi_dir)
 
         if self.processing_args['presto_rfi_args']['save_dat']:
-            inj_tools.rsync(f'{out_file}.dat', presto_out_dir)
+            inj_tools.rsync(f'{out_file}.dat', rfi_dir)
 
         if self.processing_args['presto_rfi_args']['save_fft']:
-            inj_tools.rsync(f'{out_file}.fft', presto_out_dir)
+            inj_tools.rsync(f'{out_file}.fft', rfi_dir)
             
 
 if __name__=='__main__':

@@ -47,9 +47,9 @@ class PrestoFFTProcess:
 
     def get_birdies(self):
         s_args = self.processing_args['presto_search_args']
-        presto_out_dir = f'{self.results_dir}/processing/PRESTO'
+        rfi_dir = f'{self.results_dir}/processing/PRESTO/RFIFIND'
         if s_args['birdies'] == 'rfifind':
-            path = f'{presto_out_dir}/{self.inj_id}_birdies.txt'
+            path = f'{rfi_dir}/{self.inj_id}_birdies.txt'
             self.birdies = f'-zapfile {path}' if os.path.exists(path) else ''
         elif s_args['birdies']:
             self.birdies = f"-zapfile {s_args['birdies']}"

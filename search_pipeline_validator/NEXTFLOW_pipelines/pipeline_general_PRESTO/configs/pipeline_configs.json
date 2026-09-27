@@ -72,6 +72,37 @@
         "save_fft": false
     },
 
+    "filtool_args":  {
+        "transfer_TMP": true,
+
+        "filplan": {
+            "frequency_downsample": 1,
+            "nbits": 8,
+            "outmean": 128.0,
+            "outstd": 6.0,
+            "baseline_width": 0
+        },
+
+        "cmd": {
+            "rfi": "kadaneF 8 4 zdot",
+            "zapthre": 4,
+            "seglen": 2,
+            "baseline": "0 0",
+            "fillPatch": "rand"
+        },
+
+        "cmd_flags": [
+            "-v"
+        ],
+
+        "tscrunch": [1],
+
+        "save_filtool_fb": true,
+        "save_filplan": false,
+
+        "delete_inj_fb": false
+    },
+
     "presto_search_args": {
         "transfer_TMP": false,
         "inj_DM": true,
@@ -88,6 +119,7 @@
             "2": {"zmax": 400, "wmax": 0, "sigma": 2.0, "numharm": 8}
         },
 
+        "rfi_cleaner": "rfifind",
         "mask": "rfifind",
         "birdies": "rfifind",
 

@@ -52,7 +52,10 @@ class PrestoFoldCandProcess:
             sys.exit(0)
 
     def transfer_filterbank(self):
-        data = glob.glob(f"{self.results_dir}/*_{self.inj_id}.fil")
+        if inj_tools.presto_rfi_cleaner(self.processing_args) == 'filtool':
+            data = [inj_tools.filtool_filterbank(self.results_dir, self.inj_id, self.processing_args)]
+        else:
+            data = glob.glob(f"{self.results_dir}/*_{self.inj_id}.fil")
         if not data:
             print_exe('No injected filterbank found.')
             sys.exit(0)
@@ -65,9 +68,9 @@ class PrestoFoldCandProcess:
 
     def get_mask(self):
         f_args = self.processing_args['presto_candfold_args']
-        presto_out_dir = f'{self.results_dir}/processing/PRESTO'
+        rfi_dir = f'{self.results_dir}/processing/PRESTO/RFIFIND'
         if f_args['mask'] == 'rfifind':
-            return f'-mask {presto_out_dir}/{self.inj_id}_rfifind.mask'
+            return f'-mask {rfi_dir}/{self.inj_id}_rfifind.mask'
         elif f_args['mask']:
             return f"-mask {f_args['mask']}"
         else:
