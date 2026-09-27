@@ -1,3 +1,4 @@
+import re
 import glob
 import json
 import argparse
@@ -100,6 +101,9 @@ class CandidateMatcher:
             csv_cands['tscrunch'] = tscrunch
             csv_cands['downsample'] = int(tscrunch)
             csv_cands['segment'] = f'{s0}_{s1}'
+            # how PulsarX's folds of these are named: the candidate id in this XML,
+            # plus its DDPLAN, since one MATCHED_SEG folder holds every downsample
+            csv_cands['fold_id'] = f'DDPLAN_{tscrunch}_' + csv_cands['xml_id'].astype(str)
             csv_cands['F_match'] = 1 / csv_cands['period']
             cands_list.append(csv_cands)
 
@@ -140,6 +144,9 @@ class CandidateMatcher:
         if len(candidates) == 0:
             print_exe('PRESTO found no candidates.')
             return pd.DataFrame()
+
+        # presto_candfold names its folds by the row in the candidates csv
+        candidates['fold_id'] = 'CAND' + candidates.index.astype(str)
 
         ref_obs = self.setup_manager.pulsar_models[0].obs
         mid_time_sec = (candidates['seg_i'] + 0.5) / candidates['seg_n'] * ref_obs.obs_len
@@ -313,14 +320,17 @@ class CandidateMatcher:
         matcher_args = self.processing_args['candidate_matcher_args']
         inj_tag = f'inj_{self.injection_number:06}'
         seg_key = lambda s: f'SEG_{s}'
-        fold_names = {'PRESTO': '<PSR_ID>_CAND<cand>_...', 'PEASOUP': '..._<cand>.png / .ar'}
+        natural = lambda s: [int(t) if t.isdigit() else t for t in re.split(r'(\d+)', s)]
+        fold_names = {'PRESTO': '<PSR_ID>_<fold_id>_... (<fold_id> = CAND<cand>)',
+                      'PEASOUP': '..._<fold_id>.png / .ar (<fold_id> = DDPLAN_<ds>_<id>, <id> being the '
+                                 'candidate id in that segment\'s XML ..._DDPLAN_<ds>_SEG_<i>_<n>.xml)'}
 
         pulsars = []
         for pm in self.setup_manager.pulsar_models:
             psr_matches = self.matches[self.matches['PSR_ID'] == pm.ID]
             psr_folds = self.fold_cands[self.fold_cands['PSR_ID'] == pm.ID] if len(self.fold_cands) else psr_matches[:0]
 
-            folds = {seg_key(s): sorted(int(i) for i in psr_folds.index[psr_folds['segment'] == s])
+            folds = {seg_key(s): sorted(set(psr_folds.loc[psr_folds['segment'] == s, 'fold_id']), key=natural)
                      for s in self.get_segments() if (psr_folds['segment'] == s).any()}
 
             best = None
@@ -328,6 +338,7 @@ class CandidateMatcher:
                 b_id, b = next(psr_matches.sort_values(by='snr', key=abs, ascending=False).iterrows())
                 best = {
                     'cand': int(b_id),
+                    'fold_id': b['fold_id'],
                     'segment': seg_key(b['segment']),
                     'snr': round(float(b['snr']), 2),
                     'P0': round(float(b['period']), 9),
@@ -358,9 +369,9 @@ class CandidateMatcher:
             'fold_all': bool(matcher_args.get('fold_all', False)),
             'max_folds': matcher_args['max_folds'],
             'legend': {
-                'cand': f'row in processing/{mode}/{inj_tag}_{mode}_candidates.csv; '
-                        f'also the candidate number in the fold file names '
-                        f'({fold_names.get(mode, "")})',
+                'cand': f'row in processing/{mode}/{inj_tag}_{mode}_candidates.csv',
+                'fold_id': f'how the fold appears in the fold file names: {fold_names.get(mode, "")}; '
+                           f'folds lists these',
                 'segment': f'SEG_<i>_<n> = segment i (from 0) of n equal parts of the observation; '
                            f'its folds are in inj_cands/{mode}/MATCHED_SEG_<i>_<n>/',
                 'harmonic': 'detected frequency / pulsar frequency (2 = found at the 2nd harmonic)',

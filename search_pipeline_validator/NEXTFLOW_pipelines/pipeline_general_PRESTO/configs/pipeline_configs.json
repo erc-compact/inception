@@ -184,7 +184,7 @@
         "presto_candfold": true,
 
         "sifter": false,
-        "classifier": false
+        "classifier": true
     },
 
 

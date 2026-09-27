@@ -50,14 +50,15 @@ def xml2csv(xml_file):
     candidates = candidates_dict.get('candidate')
     
     if candidates is None:
-        csv_cands = pd.DataFrame(columns=['period', 'dm', 'acc', 'snr'])
+        csv_cands = pd.DataFrame(columns=['period', 'dm', 'acc', 'snr', '@id'])
     elif not isinstance(candidates, list):
         candidates = [candidates]
         csv_cands = pd.DataFrame(candidates)
-        csv_cands = csv_cands.astype(np.float64)[['period', 'dm', 'acc', 'snr']]
+        csv_cands = csv_cands.astype(np.float64)[['period', 'dm', 'acc', 'snr', '@id']]
     else:
         csv_cands = pd.DataFrame(candidates)
-        csv_cands = csv_cands.astype(np.float64)[['period', 'dm', 'acc', 'snr']]
+        csv_cands = csv_cands.astype(np.float64)[['period', 'dm', 'acc', 'snr', '@id']]
+    csv_cands = csv_cands.rename(columns={'@id': 'xml_id'}).astype({'xml_id': int})
 
     pepoch = float(xml_dict['peasoup_search'].get('segment_parameters', {'segment_pepoch': None})['segment_pepoch'])
     fftsize = float(xml_dict['peasoup_search']['search_parameters']['size'])

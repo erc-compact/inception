@@ -109,7 +109,7 @@ class PulsarxFoldParProcess:
         for flag in self.processing_args['pulsarx_parfold_args']['cmd_flags']:
             if flag in ['--output_width', '--saveimage']:
                 continue
-            cmd += f" {flag}"
+            cmd += f" {flag}"   
 
         for key, value in self.processing_args['pulsarx_parfold_args']['cmd'].items():
             if key in ['nbin', 'blocksize', 'tsubint']:

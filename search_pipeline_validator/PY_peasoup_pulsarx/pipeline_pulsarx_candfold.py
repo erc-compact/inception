@@ -1,5 +1,6 @@
 import os
 import sys
+import csv
 import glob
 import argparse
 import subprocess
@@ -68,13 +69,13 @@ class PulsarxFoldCandProcess:
             print_exe('No candidate file found.')
             sys.exit(0)
 
-        with open(self.candfile) as f:
-            self.cand_ids = [line.split()[0] for line in map(str.strip, f) if line and line[0].isdigit()]
+        with open(Path(self.candfile).with_suffix('.csv')) as f:
+            self.fold_ids = [row['fold_id'] for row in csv.DictReader(f)]
 
     def global_name(self, path):
         running = int(Path(path).stem.split('_')[-1])
         tag = f"{self.processing_args['injection_args']['id']}_{self.inj_id}_inj_{self.injection_number:06}"
-        return f"{Path(path).parent}/{tag}_{self.cand_ids[running - 1]}{Path(path).suffix}"
+        return f"{Path(path).parent}/{tag}_{self.fold_ids[running - 1]}{Path(path).suffix}"
 
     def set_tsubints(self):
         fold_args = self.processing_args['pulsarx_candfold_args']

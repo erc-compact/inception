@@ -57,26 +57,26 @@ class Collector:
         return segments
     
     def load_pulsarx_parfold(self, report, inj_dir):
-        if self.c_args['pulsarx_parfold']:
+        if self.c_args.get('pulsarx_parfold', False):
             return cand_tools.pulsarx_par2csv(report, f'{inj_dir}/inj_pulsars')
         else:
             return []
 
     def load_presto_parfold(self, report, inj_dir):
-        if self.c_args['presto_parfold']:
+        if self.c_args.get('presto_parfold', False):
             return cand_tools.presto_bestprof2csv(report, f'{inj_dir}/inj_pulsars')
         else:
             return []
 
     def load_dspsr_parfold(self, report, inj_dir):
-        if self.c_args['dspsr_parfold']:
+        if self.c_args.get('dspsr_parfold', False):
             return cand_tools.dspsr_best2csv(report, f'{inj_dir}/inj_pulsars')
         else:
             return []
 
     def load_pulsarx_candfolds(self, inj_dir):
         segment_cands = []
-        if self.c_args['pulsarx_candfold']:
+        if self.c_args.get('pulsarx_candfold', False):
             self.c_args['peasoup_search'] = True
 
             segments = self.load_segments()
@@ -94,12 +94,12 @@ class Collector:
                         raise ValueError(f'{cand_file[0]} does not match {matched_file[0]}: '
                                          f'{len(pulsarx_candfold)} folds for {len(peasoup_df)} candidates.')
                     pulsarx_candfold['PSR_ID'] = peasoup_df['PSR_ID'].values[fold_row]
-                    cand_number = peasoup_df.index.values[fold_row]
+                    fold_id = peasoup_df['fold_id'].values[fold_row]
 
                     if (self.c_args['classifier']) and class_file:
                         class_df = pd.read_csv(class_file[0], index_col=0)
-                        class_df.index = [int(Path(f).stem.split('_')[-1]) for f in class_df.index]
-                        scores = class_df.reindex(cand_number)
+                        class_df.index = ['DDPLAN_' + Path(f).stem.rsplit('_DDPLAN_', 1)[-1] for f in class_df.index]
+                        scores = class_df.reindex(fold_id)
                         pulsarx_candfold[class_df.columns] = scores.values
 
                     segment_cands.append(pulsarx_candfold)
@@ -118,18 +118,18 @@ class Collector:
         return pd.DataFrame(columns=['PSR_ID'])
 
     def load_peasoup(self, inj_dir):
-        if self.c_args['peasoup_search']:
+        if self.c_args.get('peasoup_search', False):
             return self.load_matches(inj_dir, 'PEASOUP')
         return pd.DataFrame(columns=['PSR_ID'])
 
     def load_presto_search(self, inj_dir):
-        if self.c_args['presto_search']:
+        if self.c_args.get('presto_search', False):
             return self.load_matches(inj_dir, 'PRESTO')
         return pd.DataFrame(columns=['PSR_ID'])
 
     def load_presto_candfolds(self, inj_dir):
         segment_cands = []
-        if self.c_args['presto_candfold']:
+        if self.c_args.get('presto_candfold', False):
             self.c_args['presto_search'] = True
 
             segments = self.load_presto_segments()
@@ -256,19 +256,19 @@ class Collector:
                 
                 parfold_keys = ['F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width']
 
-                if self.c_args['pulsarx_parfold']:
+                if self.c_args.get('pulsarx_parfold', False):
                     inj_results.extend(self.parfold_row(pulsarx_parfold, psr['ID'], parfold_keys))
                     inj_keys.extend([f'PAR_{key}' for key in parfold_keys])
 
-                if self.c_args['presto_parfold']:
+                if self.c_args.get('presto_parfold', False):
                     inj_results.extend(self.parfold_row(presto_parfold, psr['ID'], parfold_keys))
                     inj_keys.extend([f'PRESTO_PAR_{key}' for key in parfold_keys])
 
-                if self.c_args['dspsr_parfold']:
+                if self.c_args.get('dspsr_parfold', False):
                     inj_results.extend(self.parfold_row(dspsr_parfold, psr['ID'], parfold_keys))
                     inj_keys.extend([f'DSPSR_PAR_{key}' for key in parfold_keys])
 
-                if self.c_args['peasoup_search']:
+                if self.c_args.get('peasoup_search', False):
                     psr_pea_matched = peasoup_matched[peasoup_matched['PSR_ID'] == psr['ID']]
                     peasoup_keys = ['N_matched', 'P0', 'DM', 'acc', 'SNR', 'pepoch', 'n_samples', 'tscrunch', 'segment']
 
@@ -281,7 +281,7 @@ class Collector:
                     
                     inj_keys.extend([f'PEA_{key}' for key in peasoup_keys])
 
-                if self.c_args['presto_search']:
+                if self.c_args.get('presto_search', False):
                     psr_presto_matched = presto_matched[presto_matched['PSR_ID'] == psr['ID']]
                     presto_keys = ['N_matched', 'P0', 'DM', 'F1', 'F2', 'SNR', 'pepoch', 'downsample', 'segment']
 
@@ -294,7 +294,7 @@ class Collector:
 
                     inj_keys.extend([f'PRESTO_{key}' for key in presto_keys])
 
-                if self.c_args['pulsarx_candfold']:
+                if self.c_args.get('pulsarx_candfold', False):
                     psr_cand_matched = pulsarx_cands[pulsarx_cands['PSR_ID'] == psr['ID']]
                     cand_keys = ['segment', 'F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width']
 
@@ -313,7 +313,7 @@ class Collector:
                     
                     inj_keys.extend([f'CAND_{key}' for key in cand_keys])
 
-                if self.c_args['presto_candfold']:
+                if self.c_args.get('presto_candfold', False):
                     psr_cand_matched = presto_cands[presto_cands['PSR_ID'] == psr['ID']]
                     cand_keys = ['segment', 'F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width']
 
