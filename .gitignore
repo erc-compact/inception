@@ -12,4 +12,10 @@
 
 /search_pipeline_validator/__pycache__
 
+/search_pipeline_validator/PY_general/__pycache__
 
+/search_pipeline_validator/PY_peasoup_pulsarx/__pycache__
+
+/search_pipeline_validator/PY_presto/__pycache__
+
+/__pycache__
