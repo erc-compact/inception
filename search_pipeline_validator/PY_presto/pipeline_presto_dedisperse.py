@@ -58,7 +58,7 @@ class PrestoDedisperseProcess:
         s_args = self.processing_args['presto_search_args']
         rfi_dir = f'{self.results_dir}/processing/PRESTO/RFIFIND'
         if s_args['mask'] == 'rfifind':
-            self.mask = f'-mask {rfi_dir}/{self.inj_id}_rfifind.mask'
+            self.mask = '' if inj_tools.presto_rfi_cleaner(self.processing_args) == 'none' else f'-mask {rfi_dir}/{self.inj_id}_rfifind.mask'
         elif s_args['mask']:
             self.mask = f"-mask {s_args['mask']}"
         else:

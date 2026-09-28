@@ -50,7 +50,7 @@ class PrestoFFTProcess:
         rfi_dir = f'{self.results_dir}/processing/PRESTO/RFIFIND'
         if s_args['birdies'] == 'rfifind':
             path = f'{rfi_dir}/{self.inj_id}_birdies.txt'
-            self.birdies = f'-zapfile {path}' if os.path.exists(path) else ''
+            self.birdies = f'-zapfile {path}' if os.path.exists(path) and inj_tools.presto_rfi_cleaner(self.processing_args) != 'none' else ''
         elif s_args['birdies']:
             self.birdies = f"-zapfile {s_args['birdies']}"
         else:

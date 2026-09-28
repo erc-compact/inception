@@ -64,7 +64,7 @@ def presto_rfi_cleaner(processing_args):
     if cleaner not in ('rfifind', 'filtool', 'none'):
         sys.exit(f"presto_search_args.rfi_cleaner must be 'rfifind', 'filtool' or 'none', not '{cleaner}'.")
 
-    if cleaner != 'rfifind':
+    if cleaner == 'filtool':
         conflicts = []
         if s_args.get('mask'):
             conflicts.append('presto_search_args.mask')

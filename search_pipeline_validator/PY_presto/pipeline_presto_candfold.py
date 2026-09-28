@@ -70,7 +70,7 @@ class PrestoFoldCandProcess:
         f_args = self.processing_args['presto_candfold_args']
         rfi_dir = f'{self.results_dir}/processing/PRESTO/RFIFIND'
         if f_args['mask'] == 'rfifind':
-            return f'-mask {rfi_dir}/{self.inj_id}_rfifind.mask'
+            return '' if inj_tools.presto_rfi_cleaner(self.processing_args) == 'none' else f'-mask {rfi_dir}/{self.inj_id}_rfifind.mask'
         elif f_args['mask']:
             return f"-mask {f_args['mask']}"
         else:

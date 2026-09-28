@@ -57,7 +57,7 @@ class PrestoFoldParProcess:
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
         rfi_dir = f'{results_dir}/processing/PRESTO/RFIFIND'
         if f_args['mask'] == 'rfifind':
-            return f'-mask {rfi_dir}/{self.inj_id}_rfifind.mask'
+            return '' if inj_tools.presto_rfi_cleaner(self.processing_args) == 'none' else f'-mask {rfi_dir}/{self.inj_id}_rfifind.mask'
         elif f_args['mask']:
             return f"-mask {f_args['mask']}"
         else:
