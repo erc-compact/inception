@@ -174,7 +174,7 @@ class FilterbankReader:
 
 
 class FilterbankWriter: 
-    def __init__(self, read_filterbank, write_filterbank_name, gulp_size_GB=0.01, stats_samples=0, load_fb_stats=[]):
+    def __init__(self, read_filterbank, write_filterbank_name, gulp_size_GB=0.01, stats_samples=0, load_fb_stats=[], sample_offset=None):
         self.fb_reader = FilterbankReader(read_filterbank, gulp_size_GB, stats_samples, load_fb_stats) if type(read_filterbank) == str else read_filterbank
 
         self.nbits = self.fb_reader.nbits
@@ -182,7 +182,10 @@ class FilterbankWriter:
         self.write_header_pos = 0 
         self.write_data_pos = 0
 
-        self.create_filterbank(write_filterbank_name)
+        if sample_offset is None:
+            self.create_filterbank(write_filterbank_name)
+        else:
+            self.open_filterbank(write_filterbank_name, sample_offset)
     
     def create_filterbank(self, filename):
         def write_string(file, string):
@@ -208,6 +211,13 @@ class FilterbankWriter:
                 raise Exception(f"Cannot understand filterbank header for writing, key '{key}' not understood")
         write_string(self.write_file,"HEADER_END")
         self.write_data_pos=self.write_file.tell()
+
+    def open_filterbank(self, filename, sample_offset):
+        existing = FilterbankReader(filename, stats_samples=0)
+        existing.read_file.close()
+        self.write_data_pos = existing.read_data_pos
+        self.write_file = open(filename, 'r+b')
+        self.write_file.seek(self.write_data_pos + sample_offset * self.fb_reader.nchans * self.nbits // 8)
 
     def write_block(self, block):
         block = np.clip(block, 0, 2**self.nbits-1)

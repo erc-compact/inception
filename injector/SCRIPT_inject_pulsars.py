@@ -27,7 +27,7 @@ if __name__=='__main__':
    
     injector = InjectSignal(setup, args.ncpu, args.gulp_size_GB)
     injector.parallel_inject()
-    injector.combine_files()
+    injector.finalise_output()
     
 
     

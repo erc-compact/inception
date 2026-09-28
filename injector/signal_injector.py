@@ -24,6 +24,8 @@ class InjectSignal:
         self.n_samples = setup_manager.fb.n_samples
         self.nchans = setup_manager.fb.nchans
         self.nbits = setup_manager.fb.nbits
+        if (self.nchans * self.nbits) % 8:
+            sys.exit(f'nchans x nbits ({self.nchans} x {self.nbits}) must be a multiple of 8.')
         self.signal_floor = 0.1 / (self.n_samples * self.nchans)
         self.compute_plan = self.create_parallel_plan()
 
@@ -34,6 +36,7 @@ class InjectSignal:
         self.pulsars = setup_manager.pulsars
         self.parfile_paths = setup_manager.parfile_paths
         self.injected_path = self.out_path + '/' + Path(self.fb_path).stem + '_' + setup_manager.inj_ID
+        self.part_path = self.injected_path + '.fil.part'
 
     def create_parallel_plan(self):
         block_size = int(self.gulp_size_GB/(self.nchans * self.nbits * 1.25e-10 * 2))
@@ -63,12 +66,18 @@ class InjectSignal:
 
         return cpu_start
             
-    def open_tmp_fb(self, cpu):        
-        filterbank_reader = FilterbankReader(self.fb_path, load_fb_stats=self.load_fb_stats) 
-        filterbank_reader.read_file.seek(filterbank_reader.read_data_pos + self.get_file_start(cpu)*filterbank_reader.nchans*filterbank_reader.nbits//8)
+    def create_output(self):
+        writer = FilterbankWriter(self.fb_path, self.part_path)
+        data_bytes = os.path.getsize(self.fb_path) - writer.fb_reader.read_data_pos
+        writer.write_file.truncate(writer.write_data_pos + data_bytes)
+        writer.write_file.close()
+        writer.fb_reader.read_file.close()
 
-        filterbank_writer = FilterbankWriter(filterbank_reader, self.injected_path + f"_{cpu}.tmpfil")
-        return filterbank_writer
+    def open_output_fb(self, cpu):
+        filterbank_reader = FilterbankReader(self.fb_path, load_fb_stats=self.load_fb_stats)
+        start = self.get_file_start(cpu)
+        filterbank_reader.read_file.seek(filterbank_reader.read_data_pos + start*filterbank_reader.nchans*filterbank_reader.nbits//8)
+        return FilterbankWriter(filterbank_reader, self.part_path, sample_offset=start)
     
     def construct_models(self, fb, cpu):
         pulsar_models = []
@@ -112,7 +121,7 @@ class InjectSignal:
         return t_stamp
 
     def inject_signal(self, cpu):
-        fb = self.open_tmp_fb(cpu)
+        fb = self.open_output_fb(cpu)
         models = self.construct_models(fb.fb_reader, cpu)
         rng = np.random.default_rng([self.seed, cpu])
         print_exe('Models constructed, starting injection...') if cpu == 0 else None
@@ -130,32 +139,12 @@ class InjectSignal:
         fb.write_file.close()
 
     def parallel_inject(self):
-        args = list(range(self.n_cpus))
-
+        self.create_output()
         with Pool(self.n_cpus) as p:
-            p.map(self.inject_signal, args)
+            p.map(self.inject_signal, range(self.n_cpus))
 
-    def combine_files(self):
-        filterbank_main = FilterbankWriter(self.fb_path, self.injected_path + ".fil") 
-        
-        for cpu in range(self.n_cpus):
-            print_exe(f'combining file {cpu+1}/{self.n_cpus}...')
-            filterbank_sub = FilterbankReader(self.injected_path + f"_{cpu}.tmpfil", load_fb_stats=self.load_fb_stats) 
-            filterbank_sub.read_file.seek(filterbank_sub.read_data_pos)
-
-            (N_L_blocks, size_L_blocks), (_, size_S_blocks) = self.compute_plan[cpu]
-
-            for _ in range(N_L_blocks):
-                L_sub_block = filterbank_sub.read_block(size_L_blocks)
-                filterbank_main.write_block(L_sub_block)
-
-            S_sub_block = filterbank_sub.read_block(size_S_blocks)
-            filterbank_main.write_block(S_sub_block)
-            filterbank_sub.read_file.close()
-            os.remove(self.injected_path + f"_{cpu}.tmpfil")
-
-        filterbank_main.fb_reader.read_file.close()
-        filterbank_main.write_file.close()
+    def finalise_output(self):
+        os.replace(self.part_path, self.injected_path + '.fil')
 
         n_bits_flipped = np.sum(list(self.bits_flipped))
         print(f'bits flipped: {n_bits_flipped}/{self.n_samples*self.nchans} ({n_bits_flipped/(self.n_samples*self.nchans)*100:.3f}%)')
