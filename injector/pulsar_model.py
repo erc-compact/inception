@@ -35,14 +35,14 @@ class PulsarModel:
         self.prop_effect = PropagationEffects(self.obs, pulsar_pars, self.emission.profile_length, self.period, self.emission.spectra)
 
         if generate:
-            self.get_mode_generators(pulsar_pars, generate)
+            self.get_mode_generators(pulsar_pars)
 
             self.observed_profile_chan = self.get_observed_profile()
             self.calculate_SNR()
 
             self.observed_profile = self.vectorise_observed_profile()
 
-    def get_mode_generators(self, pulsar_pars, generate):
+    def get_mode_generators(self, pulsar_pars):
         if self.mode == 'python':
             if  pulsar_pars['frame'] == 'topo':
                 self.generate_signal = self.generate_signal_python_topo
@@ -50,7 +50,7 @@ class PulsarModel:
                 self.generate_signal = self.generate_signal_python_bary
         elif self.mode == 'pint':
             self.polycos_path = pulsar_pars['polycos']
-            self.get_polyco_interp(generate)
+            self.get_polyco_interp()
             if  pulsar_pars['frame'] == 'topo':
                 self.generate_signal = self.generate_signal_polcos_topo
             else:
@@ -125,10 +125,10 @@ class PulsarModel:
         
         return observed_profile_function
     
-    def get_polyco_interp(self, generate_range):
+    def get_polyco_interp(self):
         from pint.polycos import Polycos # type: ignore
         polycos_model = Polycos.read(self.polycos_path)
-        interp_topo_mjd = self.obs.observation_span(generate_range, n_samples=10**5, return_mjd=True)
+        interp_topo_mjd = self.obs.observation_span(n_samples=10**5, return_mjd=True)
         abs_phase_interp = polycos_model.eval_abs_phase(interp_topo_mjd).value
 
         self.polycos = interp1d(interp_topo_mjd.astype(np.float64), abs_phase_interp.astype(np.float64))

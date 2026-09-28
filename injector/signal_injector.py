@@ -24,6 +24,7 @@ class InjectSignal:
         self.n_samples = setup_manager.fb.n_samples
         self.nchans = setup_manager.fb.nchans
         self.nbits = setup_manager.fb.nbits
+        self.signal_floor = 0.1 / (self.n_samples * self.nchans)
         self.compute_plan = self.create_parallel_plan()
 
         self.fb_path = setup_manager.fb.path
@@ -69,46 +70,24 @@ class InjectSignal:
         filterbank_writer = FilterbankWriter(filterbank_reader, self.injected_path + f"_{cpu}.tmpfil")
         return filterbank_writer
     
-    def get_cpu_range(self, cpu):
-        samp_lower = self.get_file_start(cpu)
-        compute_plan = self.compute_plan[cpu]
-        samp_upper = compute_plan[0][0] * compute_plan[0][1] + compute_plan[1][1]
-        return samp_lower, samp_upper 
-    
     def construct_models(self, fb, cpu):
         pulsar_models = []
-        generate_range = self.get_cpu_range(cpu)
         for pulsar_data in self.pulsars:
-            obs = Observation(fb, self.ephem, pulsar_data, generate=generate_range)
+            obs = Observation(fb, self.ephem, pulsar_data, generate=True)
             binary = BinaryModel(pulsar_data, generate=True)
-            pulsar_model = PulsarModel(obs, binary, pulsar_data, generate=generate_range)
+            pulsar_model = PulsarModel(obs, binary, pulsar_data, generate=True)
             pulsar_models.append(pulsar_model)
 
         return pulsar_models
 
-    def de_digitize(self, fb, data_block, rng):
-
-        def get_rvs(val):
-            centre = (val-fb.fb_mean)/fb.fb_std
-            deviation = 0.5/fb.fb_std
-            d_plus = centre + deviation
-            d_minus = centre - deviation
-            return truncnorm(a=min(d_plus, d_minus), b=max(d_plus, d_minus), loc=fb.fb_mean, scale=fb.fb_std).rvs
-
-        def de_digitizing(val):
-            inds = np.where(data_block == val)
-            sampler = get_rvs(val)
-            data_block[inds] = sampler(size=len(inds[0]), random_state=rng)
-        
-        for data in range(int(data_block.min()), int(data_block.max())+1):
-            de_digitizing(data)
-
-        return data_block
+    def de_digitize(self, fb, values, rng):
+        lower = (values - 0.5 - fb.fb_mean) / fb.fb_std
+        upper = (values + 0.5 - fb.fb_mean) / fb.fb_std
+        return truncnorm.ppf(rng.random(values.shape), lower, upper, loc=fb.fb_mean, scale=fb.fb_std)
     
     def inject_block(self, filterbank, cpu, block_start, block_size, models, rng):
         reader = filterbank.fb_reader
         block = reader.read_block(block_size)
-        original = block.copy()
         sample_start = block_start + self.get_file_start(cpu)
         
         pulsar_signal = np.zeros_like(block)
@@ -118,11 +97,12 @@ class InjectSignal:
         channel_sigma = np.std(block, axis=0)
         pulsar_signal.T[channel_sigma==0] = 0
 
-        analog_block = self.de_digitize(reader, block, rng)
-        injected_block = np.round(analog_block + pulsar_signal)
+        active = np.abs(pulsar_signal) > self.signal_floor
+        injected_block = block.copy()
+        injected_block[active] = np.round(self.de_digitize(reader, block[active], rng) + pulsar_signal[active])
         filterbank.write_block(injected_block)
 
-        self.bits_flipped[cpu] += int(np.count_nonzero(np.clip(injected_block, 0, 2**self.nbits-1) != original))
+        self.bits_flipped[cpu] += int(np.count_nonzero(np.clip(injected_block, 0, 2**self.nbits-1) != block))
 
 
     def progress(self, cpu, N_blocks, block_i, t_stamp):

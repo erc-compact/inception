@@ -71,25 +71,6 @@ class BinaryModel:
         
         return find_eccentric_anomaly(t)
     
-    def true_anomaly(self, t, time_scale=1): 
-        period = self.period * time_scale
-        ecc = self.e
-        tanE2 = np.tan(self.eccentric_anomaly(t, time_scale)/2)
-        tan_ecc = np.sqrt((1+ecc)/(1-ecc)) * tanE2
-        TA = 2*np.arctan(tan_ecc)
-
-        cond_list = [(t < period/2), (t>= period/2)]
-        func_list = [TA,  2*np.pi + TA]
-        return np.select(cond_list, func_list)
-    
-    def get_radial_velocity_proper(self, t, star='pulsar'):
-        numerator_mass = self.mass_c if star=='pulsar' else self.mass_p
-        com = numerator_mass/(self.mass_p+self.mass_c) 
-        Ob = 1/self.P2pi
-        ecc = 1/np.sqrt(1-self.e**2) 
-        theta = self.true_anomaly(t)
-        return com * Ob * self.a * ecc * (np.cos(self.AoP + theta) + self.e*np.cos(self.AoP))
-    
     def get_radial_velocity_coord(self, t):
         E = self.eccentric_anomaly(t)
         sinE, cosE = np.sin(E), np.cos(E)
@@ -99,14 +80,6 @@ class BinaryModel:
         beta = np.sqrt(1-self.e**2) * self.a1_sini_c * np.cos(self.AoP)
 
         return self.v_coord(alpha, beta, self.e, self.P2pi, self.gamma, sinE, cosE, sin2E, cos2E) * const.c.value
-    
-    def get_radial_accel_proper(self, t, star='pulsar'):
-        numerator_mass = self.mass_c if star=='pulsar' else self.mass_p
-        com = numerator_mass/(self.mass_p+self.mass_c) 
-        Ob = 1/self.P2pi
-        ecc = 1/(1-self.e**2) 
-        theta = self.true_anomaly(t)
-        return -com * Ob ** 2 * self.a * ecc * (1 + self.e*np.cos(theta))**2 * np.sin(self.AoP + theta)
     
     def get_radial_accel_coord(self, t):
         E = self.eccentric_anomaly(t)
@@ -119,10 +92,6 @@ class BinaryModel:
 
         return self.a_coord(alpha, beta, self.e, self.P2pi, self.gamma, sinE, cosE, sin2E, cos2E, sin3E, cos3E) * const.c.value
 
-    def get_roemer_delay_proper(self, t):
-        E = self.eccentric_anomaly(t)
-        return self.a1_sini_c * (np.cos(E) - self.e)*np.sin(self.AoP) + self.a1_sini_c*np.sin(E)*np.sqrt(1-self.e**2)*np.cos(self.AoP)
-    
     def get_roemer_delay_coord(self, t):
         E = self.eccentric_anomaly(t)
         sinE, cosE = np.sin(E), np.cos(E)

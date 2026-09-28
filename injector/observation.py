@@ -13,7 +13,7 @@ class Observation:
     telescope_id = {64: ['Meerkat', 'mk'],  1: ['Arecibo', 'ao'], 4: ['Parkes', 'pk'], 5: ['Jodrell', 'jb'], 
                     6: ['GBT', 'gb'], 7: ['GMRT', 'gm'], 8: ['Effelsberg', 'ef']}
 
-    def __init__(self, filterbank, ephem, pulsar_pars, generate=[], override_length=0):
+    def __init__(self, filterbank, ephem, pulsar_pars, generate=False, override_length=0):
         solar_system_ephemeris.set(ephem) 
         self.ephem = ephem
         fb_header = filterbank.header
@@ -32,7 +32,7 @@ class Observation:
 
         self.prop_effect = PropagationEffects(self, pulsar_pars)
         if generate:
-            self.barycentre_delays_interp = self.generate_interp(generate)
+            self.barycentre_delays_interp = self.generate_interp()
 
     def get_pointing_data(self, fb_header, pulsar_pars):
         self.telescope_ID, self.tempo_id = Observation.telescope_id[fb_header['telescope_id']]
@@ -181,14 +181,9 @@ class Observation:
     def sec2mjd(self, time_sec):
         return (self.obs_start_time_TIME + TimeDelta(time_sec, format="sec")).mjd
     
-    def observation_span(self, obs_range, n_samples, return_mjd=True):
-        if type(obs_range) == list:
-            pad_time = 1
-            lower_bound = np.min(self.prop_effect.DM_delays) + obs_range[0] * self.dt - pad_time
-            upper_bound = obs_range[1] * self.dt + pad_time
-        else:
-            lower_bound = np.min(self.prop_effect.DM_delays)
-            upper_bound = self.obs_len + self.dt
+    def observation_span(self, n_samples, return_mjd=True):
+        lower_bound = np.min(self.prop_effect.DM_delays)
+        upper_bound = self.obs_len + self.dt
 
         obs_sec = np.linspace(lower_bound, upper_bound, n_samples)
 
@@ -270,8 +265,8 @@ class Observation:
             bary_times = self.topo2bary_calc(topo_times, return_mjd=return_mjd)
         return bary_times
         
-    def generate_interp(self, obs_range):
-        time_samples = self.observation_span(obs_range, n_samples=10**4, return_mjd=False)
+    def generate_interp(self):
+        time_samples = self.observation_span(n_samples=10**4, return_mjd=False)
         topo_times = self.obs_start_time_TIME + TimeDelta(time_samples, format="sec")
 
         bary_times = self.topo2bary_calc(topo_times, return_mjd=False)
