@@ -198,8 +198,8 @@ class SetupManager:
                 _, presto_z, presto_w = pulsar_pars['AX']
                 harmonic = 1
                 reffreq, obs_length = self.get_presto_conv_pars(pulsar_pars, ref='start')
-                accel_presto = presto_z * const.c.value / (harmonic * reffreq * obs_length**2)
-                jerk_presto = presto_w * const.c.value / (harmonic * reffreq * obs_length**3)
+                accel_presto = -presto_z * const.c.value / (harmonic * reffreq * obs_length**2)
+                jerk_presto = -presto_w * const.c.value / (harmonic * reffreq * obs_length**3)
 
                 if jerk_presto:
                     pulsar_pars['AX'] = [accel_presto, jerk_presto]
@@ -347,7 +347,7 @@ class SetupManager:
             with open(cand_file_path, 'w') as file:
                 file.write("#id DM accel F0 F1 F2 S/N\n")
                 file.write(f"{0} {pm.prop_effect.DM} {accel} {F0} 0 {F2} {pm.SNR}\n")
-            return cand_file_path
+        return cand_file_path
 
     def create_presto_candfile(self, i):
         print('Presto .cand file creation not implemented yet. Creating pulsarX candfile instead...')

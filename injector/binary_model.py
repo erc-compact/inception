@@ -67,7 +67,7 @@ class BinaryModel:
         
         @np.vectorize
         def find_eccentric_anomaly(t):
-            return fsolve(root_eccentric_anomaly, x0=1, args=(t))
+            return fsolve(root_eccentric_anomaly, x0=1, args=(t))[0]
         
         return find_eccentric_anomaly(t)
     

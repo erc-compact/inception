@@ -240,11 +240,17 @@ class CandidateMatcher:
 
             rv_PSR = cand_tools.add_PSR_rv_curve(pm, time, psr_rv, pm.pulsar_pars['ACCEPOCH']) 
 
+            # intrinsic spin frequency on the same time axis: the injector's spin
+            # model is referenced to PEPOCH, spin_ref seconds before the start of
+            # the observation, so F0 alone is only right when PEPOCH is the start
+            # and F1 is negligible
+            f_spin = np.broadcast_to(pm.spin_func(time + pm.spin_ref), time.shape)
+
             F_min = np.empty(len(candidates))
             F_max = np.empty(len(candidates))
             for (seg_i, seg_n), idx in seg_groups.items():
                 window = (obs_frac >= seg_i / seg_n) & (obs_frac <= (seg_i + 1) / seg_n)
-                F_min[idx], F_max[idx] = cand_tools.get_freq_bounds(rv_PSR[window], pm)
+                F_min[idx], F_max[idx] = cand_tools.get_freq_bounds(f_spin[window], rv_PSR[window])
 
             scaled = np.outer(F0_cands, h_arr)
             in_band = ((scaled >= (F_min - bin_tol * fft_bin)[:, None]) &

@@ -81,16 +81,9 @@ def add_PSR_rv_curve(pulsar, time, rv_seg, pepoch_ref):
 
     return rv_seg
 
-def get_freq_bounds(rv, pulsar):
-    F0 = pulsar.FX_list[0]
-
-    rv_min = np.min(rv)
-    rv_max = np.max(rv)
-
-    F_max = F0 * (1 - rv_min / const.c.value)
-    F_min = F0 * (1 - rv_max / const.c.value)
-
-    return F_min, F_max
+def get_freq_bounds(f_spin, rv):
+    f_obs = f_spin * (1 - rv / const.c.value)
+    return np.min(f_obs), np.max(f_obs)
 
 def observed_channel_profiles(pulsar_model):
     pm = pulsar_model

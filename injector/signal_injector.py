@@ -64,7 +64,7 @@ class InjectSignal:
             
     def open_tmp_fb(self, cpu):        
         filterbank_reader = FilterbankReader(self.fb_path, load_fb_stats=self.load_fb_stats) 
-        filterbank_reader.read_file.seek(filterbank_reader.read_data_pos + self.get_file_start(cpu)*filterbank_reader.nchans)
+        filterbank_reader.read_file.seek(filterbank_reader.read_data_pos + self.get_file_start(cpu)*filterbank_reader.nchans*filterbank_reader.nbits//8)
 
         filterbank_writer = FilterbankWriter(filterbank_reader, self.injected_path + f"_{cpu}.tmpfil")
         return filterbank_writer
@@ -86,7 +86,7 @@ class InjectSignal:
 
         return pulsar_models
 
-    def de_digitize(self, fb, data_block):
+    def de_digitize(self, fb, data_block, rng):
 
         def get_rvs(val):
             centre = (val-fb.fb_mean)/fb.fb_std
@@ -98,14 +98,14 @@ class InjectSignal:
         def de_digitizing(val):
             inds = np.where(data_block == val)
             sampler = get_rvs(val)
-            data_block[inds] = sampler(size=len(inds[0]), random_state=(self.seed) % (2**32 - 1))
+            data_block[inds] = sampler(size=len(inds[0]), random_state=rng)
         
         for data in range(int(data_block.min()), int(data_block.max())+1):
             de_digitizing(data)
 
         return data_block
     
-    def inject_block(self, filterbank, cpu, block_start, block_size, models):
+    def inject_block(self, filterbank, cpu, block_start, block_size, models, rng):
         reader = filterbank.fb_reader
         block = reader.read_block(block_size)
         sample_start = block_start + self.get_file_start(cpu)
@@ -117,7 +117,7 @@ class InjectSignal:
         channel_sigma = np.std(block, axis=0)
         pulsar_signal.T[channel_sigma==0] = 0
 
-        analog_block = self.de_digitize(reader, block)
+        analog_block = self.de_digitize(reader, block, rng)
         injected_block = np.round(analog_block + pulsar_signal)
         filterbank.write_block(injected_block)
 
@@ -133,16 +133,17 @@ class InjectSignal:
     def inject_signal(self, cpu):
         fb = self.open_tmp_fb(cpu)
         models = self.construct_models(fb.fb_reader, cpu)
+        rng = np.random.default_rng([self.seed, cpu])
         print_exe('Models constructed, starting injection...') if cpu == 0 else None
         (N_L_blocks, size_L_blocks), (_, size_S_blocks) = self.compute_plan[cpu]
 
         t_stamp = time()
         for block_i in range(N_L_blocks): 
             t_stamp = self.progress(cpu, N_L_blocks+int(size_S_blocks != 0), block_i, t_stamp)
-            self.inject_block(fb, cpu, block_i*size_L_blocks, size_L_blocks, models)
+            self.inject_block(fb, cpu, block_i*size_L_blocks, size_L_blocks, models, rng)
 
         if size_S_blocks != 0:
-            self.inject_block(fb, cpu, N_L_blocks*size_L_blocks, size_S_blocks, models)
+            self.inject_block(fb, cpu, N_L_blocks*size_L_blocks, size_S_blocks, models, rng)
 
         fb.fb_reader.read_file.close()
         fb.write_file.close()

@@ -77,12 +77,13 @@ class Observation:
         
     @staticmethod
     def convert_coord(coord_str):
-        integer, decimal = str(coord_str).split('.')
-        coord_str = f"{'0'*(6-len(integer))}{integer}.{decimal}"
-
+        coord_str = str(coord_str)
         is_negative = coord_str.startswith('-')
         if is_negative:
             coord_str = coord_str[1:]
+
+        integer, decimal = coord_str.split('.')
+        coord_str = f"{'0'*(6-len(integer))}{integer}.{decimal}"
         
         hours = coord_str[:2]
         minutes = coord_str[2:4]
@@ -206,7 +207,7 @@ class Observation:
         
         ep = solar_system.get_body_barycentric('earth', time_scale)
         op, _ = self.observatory.get_gcrs_posvel(time_scale)
-        pos = ep.xyz.value.astype(np.float64) + op.xyz.value.astype(np.float64)*u.m.to(u.km)
+        pos = ep.xyz.to_value(u.km).astype(np.float64) + op.xyz.to_value(u.km).astype(np.float64)
 
         r_p = source.cartesian.xyz.to_value(u.km).T
         d = np.linalg.norm(r_p, axis=1)

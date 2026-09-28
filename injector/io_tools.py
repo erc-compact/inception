@@ -100,7 +100,7 @@ class FilterbankReader:
         M2 = np.zeros(self.nchans)
 
         self.read_file.seek(self.read_data_pos, 0)
-        n_chunks =  int(np.int64(self.n_samples) * self.nchans * self.nbits * 1.25e-10/self.gulp_size_GB)
+        n_chunks =  max(1, int(np.int64(self.n_samples) * self.nchans * self.nbits * 1.25e-10/self.gulp_size_GB))
 
         n_samples = int(stat_samples) if (stat_samples != 0) and (stat_samples < self.n_samples) else self.n_samples
         full_block_size, remainder = divmod(abs(n_samples), n_chunks)
@@ -110,7 +110,7 @@ class FilterbankReader:
             else:
                 block_size = full_block_size
 
-            self.read_file.seek(self.n_samples // n_chunks * self.nchans * chunk, 0)
+            self.read_file.seek(self.read_data_pos + self.n_samples // n_chunks * self.nchans * chunk * self.nbits // 8, 0)
             data = self.read_block(block_size)
             count, mean, M2 = self.Welford_alg(count, mean, M2, data)
 

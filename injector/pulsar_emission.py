@@ -189,7 +189,8 @@ class PulsarEmission:
         if suffix == ".npy":
             try:
                 profile_arr = np.load(self.profile)
-                phase_range = np.linspace(0, 1, len(profile_arr))
+                profile_arr = np.concatenate([profile_arr, profile_arr[..., :1]], axis=-1)
+                phase_range = np.linspace(0, 1, profile_arr.shape[-1])
                 return phase_range, profile_arr
             
             except FileNotFoundError:
@@ -200,6 +201,7 @@ class PulsarEmission:
                 epn_profile = pd.read_csv(self.profile, delimiter=' ', 
                                         names=['col0', 'col1', 'col2', 'intensity'])
                 profile_arr = epn_profile['intensity'].values
+                profile_arr = np.append(profile_arr, profile_arr[0])
                 phase_range = np.linspace(0, 1, len(profile_arr))
                 return phase_range, profile_arr
 
