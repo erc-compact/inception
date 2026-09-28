@@ -108,6 +108,7 @@ class InjectSignal:
     def inject_block(self, filterbank, cpu, block_start, block_size, models, rng):
         reader = filterbank.fb_reader
         block = reader.read_block(block_size)
+        original = block.copy()
         sample_start = block_start + self.get_file_start(cpu)
         
         pulsar_signal = np.zeros_like(block)
@@ -121,7 +122,7 @@ class InjectSignal:
         injected_block = np.round(analog_block + pulsar_signal)
         filterbank.write_block(injected_block)
 
-        self.bits_flipped[cpu] += int(np.sum(injected_block-block))
+        self.bits_flipped[cpu] += int(np.count_nonzero(np.clip(injected_block, 0, 2**self.nbits-1) != original))
 
 
     def progress(self, cpu, N_blocks, block_i, t_stamp):

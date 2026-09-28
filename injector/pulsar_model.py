@@ -98,7 +98,7 @@ class PulsarModel:
 
     def calculate_SNR(self):
         n_chan = self.obs.n_chan
-        p0 = self.pulsar_pars.get('P0_SNR', self.period)
+        p0 = self.pulsar_pars.get('P0_SNR') or self.period
         n_pulse = self.obs.obs_len/p0
 
         nbins = self.emission.profile_length

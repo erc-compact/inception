@@ -61,10 +61,10 @@ def print_exe(output):
 def presto_rfi_cleaner(processing_args):
     s_args = processing_args['presto_search_args']
     cleaner = s_args.get('rfi_cleaner', 'rfifind')
-    if cleaner not in ('rfifind', 'filtool'):
-        sys.exit(f"presto_search_args.rfi_cleaner must be 'rfifind' or 'filtool', not '{cleaner}'.")
+    if cleaner not in ('rfifind', 'filtool', 'none'):
+        sys.exit(f"presto_search_args.rfi_cleaner must be 'rfifind', 'filtool' or 'none', not '{cleaner}'.")
 
-    if cleaner == 'filtool':
+    if cleaner != 'rfifind':
         conflicts = []
         if s_args.get('mask'):
             conflicts.append('presto_search_args.mask')
@@ -75,8 +75,7 @@ def presto_rfi_cleaner(processing_args):
         if processing_args.get('presto_parfold_args', {}).get('mask') == 'rfifind':
             conflicts.append('presto_parfold_args.mask')
         if conflicts:
-            sys.exit(f"rfi_cleaner is 'filtool', so {', '.join(conflicts)} must not use rfifind or a mask "
-                     f"- only one RFI cleaner can be used.")
+            sys.exit(f"rfi_cleaner is '{cleaner}', so {', '.join(conflicts)} must not use rfifind or a mask.")
     return cleaner
 
 def filtool_filterbank(results_dir, inj_id, processing_args):
