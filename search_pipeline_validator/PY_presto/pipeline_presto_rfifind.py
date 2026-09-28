@@ -48,14 +48,13 @@ class RFIPrestoProcess:
         rfi_args = self.processing_args['presto_rfi_args']
 
         cmd = f"rfifind -ncpus {threads} -time {rfi_args['rfifind']['time']} -o {rfi_dir}/{self.inj_id} {self.data}"
-        cmd = inj_tools.add_cmd_args(cmd, rfi_args['rfifind'], skip_keys=['ncpus', 'time', 'o'])
+        cmd = inj_tools.add_cmd_args(cmd, rfi_args['rfifind'])
         inj_tools.print_exe(cmd)
         subprocess.run(cmd, shell=True)
 
         out_file=f"{self.work_dir}/{self.inj_id}_topo_DM0.00"
         cmd=f"prepdata -ncpus {threads} -nobary -o {out_file} -dm 0.0 -mask {rfi_dir}/{self.inj_id}_rfifind.mask {self.data}"
-        cmd = inj_tools.add_cmd_args(cmd, rfi_args.get('prepdata', {}), skip_flags=['-nobary'],
-                                     skip_keys=['ncpus', 'o', 'dm', 'mask'])
+        cmd = inj_tools.add_cmd_args(cmd, rfi_args.get('prepdata', {}))
         inj_tools.print_exe(cmd)
         subprocess.run(cmd, shell=True)
 
@@ -65,7 +64,7 @@ class RFIPrestoProcess:
         subprocess.run(cmd, shell=True)
 
         cmd=f"accelsearch -ncpus {threads} -numharm {rfi_args['birdies']['numharm']} -zmax 0 {out_file}.fft"
-        cmd = inj_tools.add_cmd_args(cmd, rfi_args['birdies'], skip_keys=['ncpus', 'numharm', 'zmax'])
+        cmd = inj_tools.add_cmd_args(cmd, rfi_args['birdies'])
         inj_tools.print_exe(cmd)
         subprocess.run(cmd, shell=True)
 

@@ -65,13 +65,8 @@ class FiltoolProcess:
         rootname = f"{Path(self.data).stem}_FILTOOL" 
 
         cmd = f"filtool -t {threads} --filplan {self.filplan_file}  -o {self.work_dir}/{rootname} -f {self.data}"
+        cmd = inj_tools.add_cmd_args(cmd, self.processing_args['filtool_args'])
 
-        for flag in self.processing_args['filtool_args']['cmd_flags']:
-            cmd += f" {flag}"
-
-        for key, value in self.processing_args['filtool_args']['cmd'].items():
-            cmd += f" --{key} {value}"
-        
         subprocess.run(cmd, shell=True)
 
     def transfer_products(self):

@@ -82,11 +82,7 @@ class PulsarxFoldCandProcess:
         seg_div = float(self.process_tag.split('_')[-1])
         obs_len = self.injection_report['injection_report']['obs_len'] / seg_div
 
-        nsubint = fold_args.get('nsubint', 64)
-        tsubint = fold_args['cmd'].get('tsubint', obs_len/64)
-        if nsubint:
-            tsubint = obs_len / nsubint
-        return tsubint
+        return obs_len / fold_args.get('nsubint', 64)
 
     def get_segment(self):
         fb_reader = FilterbankReader(self.data, stats_samples=0)
@@ -120,17 +116,8 @@ class PulsarxFoldCandProcess:
         template = fold_args['template']
 
         cmd = f"{fold_args['mode']} -t {ncpus} --output_width --cdm {self.cdm} {segment_cmd} --pepoch {pepoch} -o {self.work_dir}/ --tsubint {tsubint} -f {self.data} --template {template} --candfile {self.candfile} {self.zap_string}"
-    
-        for flag in self.processing_args['pulsarx_candfold_args']['cmd_flags']:
-            if flag in ['--output_width']:
-                continue
-            cmd += f" {flag}"
+        cmd = inj_tools.add_cmd_args(cmd, fold_args)
 
-        for key, value in self.processing_args['pulsarx_candfold_args']['cmd'].items():
-            if key in ['tsubint']:
-                continue
-            cmd += f" --{key} {value}"
-        
         print(cmd)
         subprocess.run(cmd, shell=True)
 

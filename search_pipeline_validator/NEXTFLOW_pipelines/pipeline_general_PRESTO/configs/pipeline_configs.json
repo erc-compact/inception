@@ -23,14 +23,7 @@
             "nbins": [64, 128]
         },
 
-        "cmd": {
-            "npart": 64,
-            "nsub": 64
-        },
-
-        "cmd_flags": [
-
-        ],
+        "cmd": "-npart 64 -nsub 64",
 
         "save_png": true,
         "save_pfd": true,
@@ -47,25 +40,21 @@
         "rfifind": {
             "time": 2,
 
-            "cmd": {},
-            "cmd_flags": []
+            "cmd": ""
         },
 
         "prepdata": {
-            "cmd": {},
-            "cmd_flags": []
+            "cmd": ""
         },
 
         "realfft": {
-            "cmd": {},
-            "cmd_flags": []
+            "cmd": ""
         },
 
         "birdies": {
             "numharm": 4,
 
-            "cmd": {},
-            "cmd_flags": []
+            "cmd": ""
         },
 
         "save_dat": false,
@@ -83,17 +72,7 @@
             "baseline_width": 0
         },
 
-        "cmd": {
-            "rfi": "kadaneF 8 4 zdot",
-            "zapthre": 4,
-            "seglen": 2,
-            "baseline": "0 0",
-            "fillPatch": "rand"
-        },
-
-        "cmd_flags": [
-            "-v"
-        ],
+        "cmd": "--rfi kadaneF 8 4 zdot --zapthre 4 --seglen 2 --baseline 0 0 --fillPatch rand -v",
 
         "tscrunch": [1],
 
@@ -124,23 +103,19 @@
         "birdies": "rfifind",
 
         "prepdata": {
-            "cmd": {},
-            "cmd_flags": []
+            "cmd": ""
         },
 
         "realfft": {
-            "cmd": {},
-            "cmd_flags": []
+            "cmd": ""
         },
 
         "zapbirds": {
-            "cmd": {},
-            "cmd_flags": []
+            "cmd": ""
         },
 
         "accelsearch": {
-            "cmd": {},
-            "cmd_flags": []
+            "cmd": ""
         },
 
         "save_dat": false,
@@ -181,12 +156,7 @@
 
         "fold_mode": "filterbank",
 
-        "cmd": {
-            "npart": 64,
-            "nsub": 64
-        },
-
-        "cmd_flags": [],
+        "cmd": "-npart 64 -nsub 64",
 
         "save_png": true,
         "save_pfd": true,

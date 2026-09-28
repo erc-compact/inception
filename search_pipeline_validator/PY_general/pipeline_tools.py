@@ -112,15 +112,13 @@ def segment_samples(n_total, seg_i, seg_n):
     return start_sample, end_sample - start_sample
 
 
-def add_cmd_args(cmd, args, skip_flags=(), skip_keys=()):
-    for flag in args.get('cmd_flags', []):
-        if flag in skip_flags:
-            continue
-        cmd += f' {flag}'
+def add_cmd_args(cmd, args):
+    extra = args.get('cmd', '')
+    if not isinstance(extra, str) or 'cmd_flags' in args:
+        sys.exit(f"'cmd' must be one string of arguments, e.g. \"--nbin 64 -v\", and 'cmd_flags' is no longer used: {args}")
+    return f'{cmd} {extra}'
 
-    for key, value in args.get('cmd', {}).items():
-        if key in skip_keys:
-            continue
-        cmd += f' -{key} {value}'
 
-    return cmd
+def cmd_value(args, option, default=None):
+    tokens = args.get('cmd', '').split()
+    return tokens[tokens.index(option) + 1] if option in tokens else default

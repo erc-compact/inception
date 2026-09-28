@@ -108,7 +108,7 @@ class PrestoFFTProcess:
             return
 
         cmd = f"realfft {cwd}/{seg_root}.dat"
-        cmd = inj_tools.add_cmd_args(cmd, s_args.get('realfft', {}), skip_flags=['-delete'])
+        cmd = inj_tools.add_cmd_args(cmd, s_args.get('realfft', {}))
         inj_tools.print_exe(cmd)
         subprocess.run(cmd, shell=True, cwd=cwd)
 
@@ -118,8 +118,7 @@ class PrestoFFTProcess:
 
         if self.birdies:
             cmd = f"zapbirds -zap {self.birdies} {fft_file}"
-            cmd = inj_tools.add_cmd_args(cmd, s_args.get('zapbirds', {}),
-                                         skip_flags=['-zap'], skip_keys=['zapfile'])
+            cmd = inj_tools.add_cmd_args(cmd, s_args.get('zapbirds', {}))
             inj_tools.print_exe(cmd)
             subprocess.run(cmd, shell=True, cwd=cwd)
 

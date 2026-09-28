@@ -72,11 +72,7 @@ class PulsarxFoldParProcess:
     def set_tsubints(self):
         fold_args = self.processing_args['pulsarx_parfold_args']
         obs_len = self.injection_report['injection_report']['obs_len']
-        nsubint = fold_args.get('nsubint', 64)
-        tsubint = fold_args['cmd'].get('tsubint', obs_len/64)
-        if nsubint:
-            tsubint = obs_len / nsubint
-        return tsubint
+        return obs_len / fold_args.get('nsubint', 64)
 
     def get_parfile(self, psr):
         par_file =  f"{self.out_dir}/inj_{self.injection_number:06}/inj_pulsars/{psr['ID']}.par"
@@ -105,17 +101,8 @@ class PulsarxFoldParProcess:
         template = fold_args['template']
 
         cmd = f"{fold_args['mode']} -o {tmp_cwd}/{psr_id} --cdm {self.cdm} -f {self.data} --tsubint {tsubint} --output_width  --template {template} {fold_file} --blocksize {block_size} --nbin {nbins} {self.zap_string} {save_fits}"
-    
-        for flag in self.processing_args['pulsarx_parfold_args']['cmd_flags']:
-            if flag in ['--output_width', '--saveimage']:
-                continue
-            cmd += f" {flag}"   
+        cmd = inj_tools.add_cmd_args(cmd, fold_args)
 
-        for key, value in self.processing_args['pulsarx_parfold_args']['cmd'].items():
-            if key in ['nbin', 'blocksize', 'tsubint']:
-                continue
-            cmd += f" --{key} {value}"
-        
         inj_tools.print_exe(cmd)
         subprocess.run(cmd, shell=True, cwd=tmp_cwd)
 

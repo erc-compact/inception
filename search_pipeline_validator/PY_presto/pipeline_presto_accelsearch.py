@@ -72,8 +72,7 @@ class PrestoAccelsearchProcess:
         cmd = (f"accelsearch -numharm {self.seg_args['numharm']} -zmax {self.seg_args['zmax']} "
                f"{wmax} {sigma} {self.work_dir}/{root}.fft")
 
-        cmd = inj_tools.add_cmd_args(cmd, s_args.get('accelsearch', {}),
-                                     skip_keys=['numharm', 'zmax', 'wmax', 'sigma'])
+        cmd = inj_tools.add_cmd_args(cmd, s_args.get('accelsearch', {}))
 
         inj_tools.print_exe(cmd)
         subprocess.run(cmd, shell=True, cwd=self.work_dir)

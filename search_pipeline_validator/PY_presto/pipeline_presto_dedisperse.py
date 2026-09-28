@@ -78,8 +78,7 @@ class PrestoDedisperseProcess:
         cmd = (f"prepdata {bary} -o {out_file} -dm {dm:.2f} "
                f"-downsamp {self.downsample} {self.mask} {self.data}")
 
-        cmd = inj_tools.add_cmd_args(cmd, s_args.get('prepdata', {}), skip_flags=['-nobary'],
-                                     skip_keys=['o', 'dm', 'downsamp', 'start', 'numout', 'mask'])
+        cmd = inj_tools.add_cmd_args(cmd, s_args.get('prepdata', {}))
 
         inj_tools.print_exe(cmd)
         subprocess.run(cmd, shell=True, cwd=cwd)

@@ -71,7 +71,7 @@ class PeasoupProcess:
         self.seg_args = self.processing_args['peasoup_args']['segment_plan'][f'{self.seg_size}']
 
         fb_reader = FilterbankReader(self.data, stats_samples=0)
-        fd = self.processing_args.get('filtool_args', {"cmd": {}})['cmd'].get('fd', 1)
+        fd = float(inj_tools.cmd_value(self.processing_args.get('filtool_args', {}), '--fd', 1))
         self.default_dedisp_gulp = int((2048.0 / (fb_reader.nchans/fd)) * 1e6)
 
         seg_fftsize = self.seg_args.get('fftsize', [2, 3, 5])
@@ -157,21 +157,19 @@ class PeasoupProcess:
         
     def run_peasoup(self):
 
-        cmd = f"peasoup -i {self.data} --dm_file {self.DM_file} --cdm {self.cdm} --min_snr {self.seg_args['min_snr']} --acc_start {self.seg_args['acc_start']} --acc_end {self.seg_args['acc_end']} -o {self.work_dir} {self.channel_mask} {self.birdie_list}" 
+        peasoup_args = self.processing_args['peasoup_args']
 
-        cmd_args = self.processing_args['peasoup_args']['cmd']
-        cmd_args['fft_size'] = self.fft_size
-        cmd_args['ram_limit_gb'] = self.ram_limit_gb
-        cmd_args['dedisp_gulp'] = cmd_args.get('dedisp_gulp', self.default_dedisp_gulp)
+        cmd = f"peasoup -i {self.data} --dm_file {self.DM_file} --cdm {self.cdm} --min_snr {self.seg_args['min_snr']} --acc_start {self.seg_args['acc_start']} --acc_end {self.seg_args['acc_end']} -o {self.work_dir} {self.channel_mask} {self.birdie_list}"
+        cmd += f" --fft_size {self.fft_size} --ram_limit_gb {self.ram_limit_gb}"
+
+        if inj_tools.cmd_value(peasoup_args, '--dedisp_gulp') is None:
+            cmd += f" --dedisp_gulp {self.default_dedisp_gulp}"
 
         if not ((self.seg_i == 0) and (self.seg_size == 1)):
-            cmd_args['start_sample'] = self.start_sample
+            cmd += f" --start_sample {self.start_sample}"
 
-        for key, value in cmd_args.items():
-            if key in ['end_sample']:
-                continue
-            cmd += f" --{key} {value}"
-              
+        cmd = inj_tools.add_cmd_args(cmd, peasoup_args)
+
         subprocess.run(cmd, shell=True)
     
     def transfer_products(self):

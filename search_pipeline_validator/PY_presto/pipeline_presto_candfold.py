@@ -110,8 +110,7 @@ class PrestoFoldCandProcess:
         cmd = (f"prepfold {bary} -noxwin -o {out_file} -f {cand['F0']} -fd {cand['F1']} {self.fdd_flag(cand)} "
                f"-dm {cand['dm']} -start {start} -end {end} {mask} {self.data}")
 
-        cmd = inj_tools.add_cmd_args(cmd, f_args, skip_flags=['-noxwin', '-topo'],
-                                     skip_keys=['o', 'f', 'fd', 'fdd', 'dm', 'start', 'end', 'mask'])
+        cmd = inj_tools.add_cmd_args(cmd, f_args)
 
         inj_tools.print_exe(cmd)
         subprocess.run(cmd, shell=True, cwd=cwd)
@@ -136,9 +135,7 @@ class PrestoFoldCandProcess:
         cmd = (f"prepfold -noxwin -o {out_file} -f {cand['F0']} -fd {cand['F1']} {self.fdd_flag(cand)} "
                f"-dm {cand['dm']} {cwd}/{root}.dat")
 
-        cmd = inj_tools.add_cmd_args(cmd, self.processing_args['presto_candfold_args'],
-                                     skip_flags=['-noxwin', '-topo'],
-                                     skip_keys=['o', 'f', 'fd', 'fdd', 'dm', 'start', 'end', 'mask'])
+        cmd = inj_tools.add_cmd_args(cmd, self.processing_args['presto_candfold_args'])
 
         inj_tools.print_exe(cmd)
         subprocess.run(cmd, shell=True, cwd=cwd)

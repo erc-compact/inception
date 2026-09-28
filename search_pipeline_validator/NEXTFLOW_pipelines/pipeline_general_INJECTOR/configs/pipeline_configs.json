@@ -33,18 +33,7 @@
         },
         
         "nsubint": 64,
-        "cmd": {
-            "nsubband": 64,
-            "clfd": 2,
-            "fillPatch": "rand",
-            "rfi": "zdot"
-        },
-
-        "cmd_flags": [
-            "-v",
-            "--render",
-            "--plotx"
-        ],
+        "cmd": "--nsubband 64 --clfd 2 --fillPatch rand --rfi zdot -v --render --plotx",
         
         "save_png": true,
         "save_ar": true,
@@ -66,14 +55,7 @@
             "nbins": [64, 128]
         },
 
-        "cmd": {
-            "npart": 64,
-            "nsub": 64
-        },
-
-        "cmd_flags": [
-
-        ],
+        "cmd": "-npart 64 -nsub 64",
         
         "save_png": true,
         "save_pfd": true,
@@ -96,23 +78,11 @@
         "nsubint": 64,
 
         "dspsr": {
-            "cmd": {
-                "k": "meerkat"
-            },
-
-            "cmd_flags": [
-                "-v"
-            ]
+            "cmd": "-k meerkat -v"
         },
 
         "pdmp": {
-            "cmd": {
-                "c": 2
-            },
-
-            "cmd_flags": [
-                "-bf"
-            ]
+            "cmd": "-c 2 -bf"
         },
         
         "save_png": true,

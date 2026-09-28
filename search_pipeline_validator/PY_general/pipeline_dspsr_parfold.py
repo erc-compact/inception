@@ -64,17 +64,7 @@ class DSPSRFoldParProcess:
 
         psr_id = psr['ID']
         cmd = f"dspsr -A -O {tmp_cwd}/{psr_id} -E {par_file} -b {nbins} -L {tsubint}"
-    
-        for flag in dspsr_args['cmd_flags']:
-            if flag in ['-A']:
-                continue
-            cmd += f" {flag}"
-
-        for key, value in dspsr_args['cmd'].items():
-            if key in ['b', 'L']:
-                continue
-            cmd += f" -{key} {value}"
-        
+        cmd = inj_tools.add_cmd_args(cmd, dspsr_args)
         cmd += f' {self.data}'
         inj_tools.print_exe(cmd)
         subprocess.run(cmd, shell=True, cwd=tmp_cwd)
@@ -84,17 +74,7 @@ class DSPSRFoldParProcess:
 
         psr_id = psr['ID']
         cmd = f"pdmp -g {tmp_cwd}/{psr_id}.png/PNG"
-    
-        for flag in pdmp_args['cmd_flags']:
-            if flag in ["-v"]:
-                continue
-            cmd += f" {flag}"
-
-        for key, value in pdmp_args['cmd'].items():
-            if key in []:
-                continue
-            cmd += f" -{key} {value}"
-        
+        cmd = inj_tools.add_cmd_args(cmd, pdmp_args)
         cmd += f' {tmp_cwd}/{psr_id}.ar'
         inj_tools.print_exe(cmd)
         subprocess.run(cmd, shell=True, cwd=tmp_cwd)
