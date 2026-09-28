@@ -3,7 +3,7 @@ import astropy.units as u
 from math import factorial
 import astropy.constants as const
 from sympy import lambdify, symbols
-from scipy.interpolate import interp1d, RegularGridInterpolator
+from scipy.interpolate import interp1d
 
 from .propagation_effects import PropagationEffects
 from .pulsar_emission import PulsarEmission
@@ -115,14 +115,16 @@ class PulsarModel:
      
     def vectorise_observed_profile(self):
         phases = self.prop_effect.phase
-        freqs = self.obs.freq_arr
-        pulse_arr  = np.vstack([self.observed_profile_chan(phases, chan) for chan in range(self.obs.n_chan)]).T
-        self.grid_interp = RegularGridInterpolator((phases, freqs), pulse_arr)
+        n_phase = len(phases)
+        table = np.vstack([self.observed_profile_chan(phases, chan) for chan in range(self.obs.n_chan)]).ravel() * self.SNR_scale
 
-        def observed_profile_function(phase, freq):
-            grid = np.array([phase.ravel(), freq.ravel()]).T 
-            return self.grid_interp(grid).reshape(phase.shape) * self.SNR_scale
-        
+        def observed_profile_function(phase, chan):
+            x = phase * (n_phase - 1)
+            i0 = np.minimum(x.astype(np.int64), n_phase - 2)
+            frac = x - i0
+            base = chan * n_phase + i0
+            return table[base] * (1 - frac) + table[base + 1] * frac
+
         return observed_profile_function
     
     def get_polyco_interp(self):
@@ -133,12 +135,12 @@ class PulsarModel:
 
         self.polycos = interp1d(interp_topo_mjd.astype(np.float64), abs_phase_interp.astype(np.float64))
     
-    def get_pulse(self, phase_abs, freq):
+    def get_pulse(self, phase_abs, chan):
         if self.micro_structure:
-            pulse_generator = MicroStructure(phase_abs, freq, self.micro_structure, self.period, self.observed_profile, self.seed)
+            pulse_generator = MicroStructure(phase_abs, chan, self.micro_structure, self.period, self.observed_profile, self.seed)
             return pulse_generator.pulse_profile()
         else:
-            return self.observed_profile(phase_abs % 1, freq)
+            return self.observed_profile(phase_abs % 1, chan)
     
     def coord2proper_time(self, bary_times):
         return bary_times+self.spin_ref - self.binary.orbital_delay(bary_times+self.orbit_ref)
@@ -150,54 +152,41 @@ class PulsarModel:
     
     def generate_signal_polcos_bary(self, n_samples, sample_start=0):
         timeseries = np.linspace(self.obs.dt*sample_start, self.obs.dt*(n_samples+sample_start-1), n_samples)
-        freq_array = np.tile(self.obs.freq_arr, (len(timeseries),1))
-        DM_array = np.tile(self.prop_effect.DM_delays, (len(timeseries),1))
+        DM_delays = self.prop_effect.DM_delays[None, :]
 
         topo_times = self.obs.sec2mjd(timeseries)
-        phase_array = np.tile(topo_times, (len(self.obs.freq_arr),1)).T
-        phase_time = (phase_array + DM_array*u.s.to(u.day))
+        phase_time = topo_times[:, None] + DM_delays*u.s.to(u.day)
 
         bary_times = self.obs.topo2bary(timeseries, return_mjd=False, interp=True)
-        bary_array = np.tile(bary_times, (len(self.obs.freq_arr),1)).T
 
-        phase = self.polycos(phase_time) + self.get_phase(bary_array + DM_array)
+        phase = self.polycos(phase_time) + self.get_phase(bary_times[:, None] + DM_delays)
         gain_map = self.emission.gain(bary_times)
-        return self.get_pulse(phase, freq_array) * gain_map
+        return self.get_pulse(phase, np.arange(self.obs.n_chan)[None, :]) * gain_map
     
     def generate_signal_polcos_topo(self, n_samples, sample_start=0):
         timeseries = np.linspace(self.obs.dt*sample_start, self.obs.dt*(n_samples+sample_start-1), n_samples)
-        freq_array = np.tile(self.obs.freq_arr, (len(timeseries),1))
-        DM_array = np.tile(self.prop_effect.DM_delays, (len(timeseries),1))
+        DM_delays = self.prop_effect.DM_delays[None, :]
 
         topo_times = self.obs.sec2mjd(timeseries)
-        phase_array = np.tile(topo_times, (len(self.obs.freq_arr),1)).T
-        phase_time = (phase_array + DM_array*u.s.to(u.day))
-        topo_array = np.tile(timeseries, (len(self.obs.freq_arr),1)).T
+        phase_time = topo_times[:, None] + DM_delays*u.s.to(u.day)
 
-        phase = self.polycos(phase_time) + self.get_phase(topo_array + DM_array)
+        phase = self.polycos(phase_time) + self.get_phase(timeseries[:, None] + DM_delays)
         gain_map = self.emission.gain(timeseries)
-        return self.get_pulse(phase, freq_array) * gain_map
+        return self.get_pulse(phase, np.arange(self.obs.n_chan)[None, :]) * gain_map
         
     def generate_signal_python_bary(self, n_samples, sample_start=0):
         timeseries = np.linspace(self.obs.dt*sample_start, self.obs.dt*(n_samples+sample_start-1), n_samples)
-        DM_array = np.tile(self.prop_effect.DM_delays, (len(timeseries),1))
-        obs_freq_array = np.tile(self.obs.freq_arr, (len(timeseries),1))
-
         bary_times = self.obs.topo2bary(timeseries, return_mjd=False, interp=True)
-        bary_array = np.tile(bary_times, (len(self.obs.freq_arr),1)).T
 
-        phase_array = self.get_phase(bary_array + DM_array)
+        phase_array = self.get_phase(bary_times[:, None] + self.prop_effect.DM_delays[None, :])
         gain_map = self.emission.gain(bary_times)
-        return self.get_pulse(phase_array, obs_freq_array) * gain_map
+        return self.get_pulse(phase_array, np.arange(self.obs.n_chan)[None, :]) * gain_map
     
     def generate_signal_python_topo(self, n_samples, sample_start=0):
         timeseries = np.linspace(self.obs.dt*sample_start, self.obs.dt*(n_samples+sample_start-1), n_samples)
-        DM_array = np.tile(self.prop_effect.DM_delays, (len(timeseries),1))
-        obs_freq_array = np.tile(self.obs.freq_arr, (len(timeseries),1))
-        topo_array = np.tile(timeseries, (len(self.obs.freq_arr),1)).T
 
-        phase_array = self.get_phase(topo_array + DM_array)
+        phase_array = self.get_phase(timeseries[:, None] + self.prop_effect.DM_delays[None, :])
         gain_map = self.emission.gain(timeseries)
-        return self.get_pulse(phase_array, obs_freq_array) * gain_map
+        return self.get_pulse(phase_array, np.arange(self.obs.n_chan)[None, :]) * gain_map
 
    

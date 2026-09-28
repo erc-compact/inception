@@ -111,8 +111,7 @@ class BinaryModel:
         if self.period:
             time_series = np.linspace(0, self.period, int(5e4))
             roemer_delay = self.get_roemer_delay_coord(time_series)
-            interp_func = interp1d(time_series, roemer_delay)
-            return lambda t: interp_func(t % self.period)
+            return lambda t: np.interp(t % self.period, time_series, roemer_delay)
         else:
             return lambda t: np.zeros_like(t)
         

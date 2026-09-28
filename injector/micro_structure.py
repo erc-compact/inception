@@ -4,12 +4,12 @@ import astropy.units as u
 
 
 class MicroStructure: 
-    def __init__(self, phase_abs, freq, scale, pulse_period, profile, seed):
+    def __init__(self, phase_abs, chan, scale, pulse_period, profile, seed):
         self.scale = pulse_period/(scale*u.us.to(u.s))
         self.seed = seed
 
         self.phase_abs = phase_abs
-        self.intrinsic_profile = profile(phase_abs % 1, freq)
+        self.intrinsic_profile = profile(phase_abs % 1, chan)
         self.noise = np.zeros_like(phase_abs)
         self.n_samples, self.nchans = phase_abs.shape
 
