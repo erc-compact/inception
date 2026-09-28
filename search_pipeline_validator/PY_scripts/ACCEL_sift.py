@@ -73,7 +73,7 @@ def get_jerk_value(filename, candnum):
                 if sifting.fund_re.match(line):
                     split_line = line.split()
                     if int(split_line[0]) == candnum:
-                        return float(split_line[11].split("(")[0])
+                        return float(split_line[10].split("(")[0])
     except (OSError, IndexError, ValueError):
         pass
     return 0.0
