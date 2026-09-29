@@ -1,19 +1,17 @@
 {
     "filtool_args":  {
 
-        "cmd": {
-            "td": 4
-        },
-
-        "cmd_flags": [
-            "-v"
-        ]
+        "cmd": "--td 4 -v"
     },
 
     "nullsar":{
 
         "filtool": true,
         "SNR_limit": 15,
+
+        "calibration_offset": 0.5,
+        "dm_fit_sigma": 3,
+        "dm_fit_min_chans": 8,
 
         "delete_filtool": false,
         "delete_processing": false,
@@ -38,19 +36,7 @@
             "blocksize_plan": [2, 10, 0.1],
             "n_subint": 64,
 
-            "cmd": {
-                "nbin": 64,
-                "nbinplan": "0.1 128",
-                "clfd": 2,
-                "fillPatch": "rand",
-                "rfi": "zdot"
-            },
-
-            "cmd_flags": [
-                "-v",
-                "--render",
-                "--plotx"
-            ]
+            "cmd": "--nbin 64 --nbinplan 0.1 128 --clfd 2 --fillPatch rand --rfi zdot -v --render --plotx"
         }
 
     }

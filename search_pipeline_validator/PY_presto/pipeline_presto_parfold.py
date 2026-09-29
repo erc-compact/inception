@@ -21,7 +21,6 @@ class PrestoFoldParProcess:
         self.injection_number = injection_number
 
     def fold_setup(self):
-        inj_tools.presto_rfi_cleaner(self.processing_args)
         self.get_injection_report()
         self.transfer_data()
 
@@ -53,13 +52,15 @@ class PrestoFoldParProcess:
                 return nbins
             
     def get_mask(self):
-        f_args = self.processing_args['presto_parfold_args']
-        results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
-        rfi_dir = f'{results_dir}/processing/PRESTO/RFIFIND'
-        if f_args['mask'] == 'rfifind':
-            return '' if inj_tools.presto_rfi_cleaner(self.processing_args) == 'none' else f'-mask {rfi_dir}/{self.inj_id}_rfifind.mask'
-        elif f_args['mask']:
-            return f"-mask {f_args['mask']}"
+        mask = self.processing_args['presto_parfold_args'].get('mask', '')
+        if mask == 'rfifind':
+            rfi_mask = f'{self.out_dir}/inj_{self.injection_number:06}/processing/PRESTO/RFIFIND/{self.inj_id}_rfifind.mask'
+            if os.path.exists(rfi_mask):
+                return f'-mask {rfi_mask}'
+            inj_tools.print_exe(f'No rfifind mask found at {rfi_mask}, folding without a mask.')
+            return ''
+        elif mask:
+            return f'-mask {mask}'
         else:
             return ''
 

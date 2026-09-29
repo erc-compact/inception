@@ -4,13 +4,13 @@ import glob
 import argparse
 import subprocess
 from pathlib import Path
-from multiprocessing import Manager, Pool
+from multiprocessing import Pool
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 from TOOLS_ar import ARProcessor
-from TOOLS_io import parse_cand_file, parse_par_file, parse_JSON, rsync
+from TOOLS_io import parse_cand_file, parse_par_file, par_float, set_par_value, add_cmd_args, parse_JSON, rsync
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 from injector.io_tools import merge_filterbanks, FilterbankReader, print_exe
@@ -27,9 +27,6 @@ class PulsarxParFolder:
         self.tag = tag
         self.mode = mode
         self.processing_dir = f'{self.out_dir}/{self.tag}'
-        
-        manager = Manager()
-        self.archive = manager.dict()
 
     def setup(self):
         self.check_SNR()
@@ -90,13 +87,13 @@ class PulsarxParFolder:
     def get_psr_params(self, par_file):
         if self.get_folding_alg(par_file) == '--parfile':
             psr = parse_par_file(par_file)
-            p0 = float(psr.get('P0', 0))
-            f0 = float(psr.get('F0', 0))
+            p0 = par_float(psr.get('P0', 0))
+            f0 = par_float(psr.get('F0', 0))
             if not p0 and f0:
                 p0 = 1/f0
         else:
             psr = parse_cand_file(par_file)
-            p0 = 1/psr['F0']
+            p0 = 1/par_float(psr['F0'])
 
         blocksize_plan = self.processing_args['fold_pars'].get('blocksize_plan', [2, 10, 0.1])
         input_blocksize = self.processing_args['fold_pars'].get('blocksize', False)
@@ -119,15 +116,10 @@ class PulsarxParFolder:
             return '--parfile'
 
     def adjust_par_file(self, par_file, psr_id):
-        params = parse_par_file(par_file)
         init_ar_data = parse_JSON(f"{self.processing_dir}/02_INIT/INIT_fold_params.json")
-        
-        params['DM'] = init_ar_data[psr_id]['DM']
 
         new_par_file = f'{self.work_dir}/{psr_id}_new_parfile.par'
-        with open(new_par_file, "w") as f:
-            for key, value in params.items():
-                f.write(f"{key} {value}\n")
+        set_par_value(par_file, new_par_file, 'DM', init_ar_data[psr_id]['DM'])
 
         return new_par_file
     
@@ -152,17 +144,8 @@ class PulsarxParFolder:
         tmp_cwd = f'{self.work_dir}/process_{psr_id}'
         os.makedirs(tmp_cwd, exist_ok=True)
         cmd = f"{fold_args['mode']} {search} -o {tmp_cwd}/ --tsubint {t_subint} --nsubband {fb.nchans} -f {self.data} --template {fold_args['template']} {alg_cmd} {par_file} --blocksize {block_size} {self.zap_string} --saveimage"
-    
-        for flag in fold_args['cmd_flags']:
-            if flag != '--saveimage':
-                cmd += f" {flag}"
+        cmd = add_cmd_args(cmd, fold_args)
 
-        for key, value in fold_args['cmd'].items():
-            if key in ['tsubint', 'nsubband']:
-                print(f'{key} parameter not available in Nullsar')
-            else:
-                cmd += f" --{key} {value}"
-        
         subprocess.run(cmd, shell=True, cwd=tmp_cwd)
 
     def run_fold(self, ncpus):
@@ -267,7 +250,6 @@ def gen_plot(psr_ID, processing_dir):
 
         axes[1][col].imshow(
             FP,
-            origin='lower',
             extent=[0, 1, 0, nchans],
             aspect='auto'
         )
@@ -284,6 +266,7 @@ def gen_plot(psr_ID, processing_dir):
 
     save_path = f'{processing_dir}/04_CONFIRM/CONFIRM_{psr_ID}.png'
     plt.savefig(save_path, dpi=200, bbox_inches="tight")
+    plt.close(fig)
 
 
 

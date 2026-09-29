@@ -4,7 +4,7 @@ import argparse
 import subprocess
 from pathlib import Path
 
-from TOOLS_io import parse_JSON, rsync, print_exe
+from TOOLS_io import parse_JSON, rsync, print_exe, add_cmd_args
 
 
 class FiltoolProcess:
@@ -33,13 +33,8 @@ class FiltoolProcess:
         rootname = f"{self.tag}_FILTOOL" 
 
         cmd = f"filtool -t {threads} -o {self.work_dir}/{rootname} -f {self.data}"
+        cmd = add_cmd_args(cmd, self.processing_args['filtool_args'])
 
-        for flag in self.processing_args['filtool_args']['cmd_flags']:
-            cmd += f" {flag}"
-
-        for key, value in self.processing_args['filtool_args']['cmd'].items():
-            cmd += f" --{key} {value}"
-        
         subprocess.run(cmd, shell=True)
 
     def transfer_products(self):
@@ -49,6 +44,9 @@ class FiltoolProcess:
         rsync(data_product, results_dir)
 
     def process(self, threads):
+        if not self.processing_args['nullsar'].get('filtool', False):
+            print_exe('filtool not requested.')
+            return
 
         check_fb = glob.glob(f'{self.out_dir}/{self.tag}/01_FILES/{self.tag}_FILTOOL*.fil')
         if check_fb:

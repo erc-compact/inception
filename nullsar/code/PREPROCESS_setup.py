@@ -22,6 +22,8 @@ class Setup:
 
         with open(filterbanks) as f:
             for line in f:
+                if (not line.strip()) or line.strip().startswith('#'):
+                    continue
                 tag, path = line.strip().split(maxsplit=1)
                 parsed[tag].append(path)
 

@@ -6,8 +6,8 @@ import numpy as np
 from pathlib import Path
 
 from TOOLS_ar import ARProcessor
-from TOOLS_io import parse_par_file, parse_JSON, rsync, print_exe
-from TOOLS_nullsar import fit_time_phase, fit_phase_offset, fit_subint_phase_offset, fit_chan_phase_offset, scale_freq_phase, plot_INIT, plot_OPT
+from TOOLS_io import parse_par_file, par_period, parse_JSON, rsync, print_exe
+from TOOLS_nullsar import fit_time_phase, fit_phase_offset, fit_subint_phase_offset, fit_chan_phase_offset, scale_freq_phase, plot_INIT, plot_OPT, pulsarx2injector_DM
 
 import os, sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
@@ -47,8 +47,11 @@ class NullerProcess:
             for par_file  in list(self.processing_args['par_files']):
                 psr_ID = Path(par_file).stem
                 fits_path =  f'{self.processing_dir}/02_INIT/FOLDS/{psr_ID}_mode_INIT.fits'
-                archive = ARProcessor(fits_path)
-                SNR = archive.get_SNR()
+                if os.path.exists(fits_path):
+                    SNR = ARProcessor(fits_path).get_SNR() or 0
+                else:
+                    print_exe(f'No INIT fold found for {psr_ID}.')
+                    SNR = 0
                 self.SNR_record[psr_ID] = {"SNR": SNR}
 
             with open(snr_path, 'w') as file:
@@ -94,17 +97,28 @@ class NullerProcess:
             rsync(data, self.new_fb_path)
 
         ephem = self.processing_args['injection']['ephem']
+        self.ephem = 'builtin'
         if ephem != 'builtin':
             rsync(ephem, self.work_dir)
             self.ephem = f'./{Path(ephem).name}'
 
         self.fb = FilterbankReader(self.new_fb_path, load_fb_stats=(128, 6))
 
+    def get_freq_phase(self, archive):
+        freq_phase = archive.get_freq_phase()
+        if len(freq_phase) != self.fb.nchans:
+            sys.exit(f'{archive.ar_file} has {len(freq_phase)} channels but {self.new_fb_path} has {self.fb.nchans}.')
+
+        ar_freqs = archive.get_freqs()
+        if np.sign(ar_freqs[-1] - ar_freqs[0]) != np.sign(self.fb.freq_arr[-1] - self.fb.freq_arr[0]):
+            freq_phase = freq_phase[::-1]
+        return freq_phase
+
     def extract_archive(self):
         par_files = self.processing_args['par_files']
         params_path = f'{self.processing_dir}/02_INIT/INIT_fold_params.json'
         
-        for par_file in par_files:
+        for par_file in list(par_files):
             psr_ID = Path(par_file).stem
             if self.mode == 'INIT':
                 fits_path = f'{self.processing_dir}/02_INIT/FOLDS/{psr_ID}_mode_INIT.fits'
@@ -117,14 +131,26 @@ class NullerProcess:
             if self.mode == 'NULL':
                 fits_path_INIT = f'{self.processing_dir}/02_INIT/FOLDS/{psr_ID}_mode_INIT.fits'
                 fits_path_OPT = f'{self.processing_dir}/03_OPT/FOLDS/{psr_ID}_mode_OPTIMISE.fits'
+                if not os.path.exists(fits_path_OPT):
+                    print_exe(f'No OPTIMISE fold found for {psr_ID}, skipping.')
+                    par_files.remove(par_file)
+                    continue
 
                 archive_INIT = ARProcessor(fits_path_INIT)
                 archive_OPT = ARProcessor(fits_path_OPT)
 
                 out = self.parse_archive(psr_ID, archive_INIT, archive_OPT, params_path)
+                if out is None:
+                    print_exe(f'Unable to fit the OPTIMISE fold of {psr_ID}, skipping.')
+                    par_files.remove(par_file)
+                    continue
                 
                 save_path = f'{self.processing_dir}/03_OPT/MODELS/OPT_{psr_ID}.png'
                 plot_OPT(save_path, archive_INIT, archive_OPT, out)
+
+        if len(par_files) == 0:
+            print_exe('No pulsars to null.')
+            sys.exit(0)
 
         if self.mode == "INIT":
             with open(params_path, 'w') as file:
@@ -149,21 +175,22 @@ class NullerProcess:
         if self.mode == 'INIT':
             SNR = archive_INIT.get_SNR()
             DM = archive_INIT.get_DM()
-            freq_phase = archive_INIT.get_freq_phase()
+            freq_phase = self.get_freq_phase(archive_INIT)
             intensity_profile = archive_INIT.get_intensity_prof()
             
             time_phase = archive_INIT.get_time_phase()
             freq_deriv, phase_offset, phase_shift, SNR_fit, time, time_amp = fit_time_phase(time_phase, intensity_profile, obs_len)
 
-            np.save(flux_time_path, np.stack([time, time_amp]))
+            np.save(flux_time_path, time_amp)
             
             freq_phase_scaled = scale_freq_phase(freq_phase, intensity_profile)
             np.save(profile_path, freq_phase_scaled)
 
+            calibration_offset = self.processing_args.get('calibration_offset', 0.5)
             self.ar_data[psr_ID] = {"SNR": SNR,  
                                     "DM": DM,
-                                    "phase_offset": phase_offset-phase_shift+1/3, 
-                                    "light_curve": flux_time_path,
+                                    "phase_offset": phase_offset-phase_shift+calibration_offset, 
+                                    "gain_map": flux_time_path,
                                     "profile": profile_path,
                                     "FX": freq_deriv}
 
@@ -178,22 +205,27 @@ class NullerProcess:
             intensity_profile_INIT = archive_INIT.get_intensity_prof()
             intensity_profile_OPT = archive_OPT.get_intensity_prof()
             time_phase_OPT = archive_OPT.get_time_phase()
-            freq_phase_OPT = archive_OPT.get_freq_phase()
+            freq_phase_OPT = self.get_freq_phase(archive_OPT)
 
-            phase_offset, SNR_scale, fit_params = fit_phase_offset(intensity_profile_OPT, intensity_profile_INIT)
+            fit = fit_phase_offset(intensity_profile_OPT, intensity_profile_INIT)
+            if fit is None:
+                return None
+            phase_offset, SNR_scale, fit_params = fit
 
-            subint_corr = fit_subint_phase_offset(time_phase_OPT, intensity_profile_INIT, phase_offset)
-            LC_time, LC_INIT = np.load(flux_time_path)
-            LC_OPT = LC_INIT * subint_corr
+            subint_corr = fit_subint_phase_offset(time_phase_OPT, intensity_profile_INIT, fit_params)
+            LC_OPT = np.load(flux_time_path) * subint_corr
+            LC_OPT = LC_OPT / np.mean(LC_OPT) if np.mean(LC_OPT) > 0 else np.ones_like(LC_OPT)
             opt_LC_path = f'{self.processing_dir}/03_OPT/MODELS/light_curve_{psr_ID}.npy'
-            np.save(opt_LC_path, np.stack([LC_time, LC_OPT]))
+            np.save(opt_LC_path, LC_OPT)
 
-            DM_offset, phase_delay = fit_chan_phase_offset(freq_phase_OPT, intensity_profile_INIT, self.fb.freq_arr, phase_offset, archive_OPT.get_period())
+            DM_offset, phase_delay = fit_chan_phase_offset(freq_phase_OPT, intensity_profile_INIT, self.fb.freq_arr, fit_params, archive_OPT.get_period(),
+                                                           min_chans=self.processing_args.get('dm_fit_min_chans', 8),
+                                                           sigma_level=self.processing_args.get('dm_fit_sigma', 3))
 
             self.ar_data[psr_ID] = {"SNR": SNR*SNR_scale,  
                                     "DM": DM+DM_offset,
                                     "phase_offset": init_ar_data[psr_ID]['phase_offset'] + phase_delay, 
-                                    "light_curve": opt_LC_path,
+                                    "gain_map": opt_LC_path,
                                     "profile": profile_path,
                                     "FX": freq_deriv}
 
@@ -205,7 +237,7 @@ class NullerProcess:
             "psr_global": {
                 "injection_id": self.mode,
                 "global_seed": 404,
-                "create_parfile": 0,
+                "create_parfile": "par",
             },
 
             "pulsars": []
@@ -222,17 +254,20 @@ class NullerProcess:
                 "PEPOCH": 0.5,
                 "phase_offset": float(self.ar_data[psr_ID]['phase_offset']),
                 
-                "P0_SNR": 1/float(params['F0']),
-                "DM": self.ar_data[psr_ID]['DM'],
+                "P0_SNR": par_period(params),
+                "DM": pulsarx2injector_DM(self.ar_data[psr_ID]['DM']),
+                "DM_ref": "top",
                 "SNR": -self.ar_data[psr_ID]['SNR'],
 
                 "profile": self.ar_data[psr_ID]['profile'],
-                "light_curve": self.ar_data[psr_ID]['light_curve'],
+                "gain_map": self.ar_data[psr_ID]['gain_map'],
+                "gain_axis": "time",
                 "polycos": par_file
             }
 
             for key, value in self.ar_data[psr_ID]['FX'].items():
                 psr_dict[key] = value
+            psr_dict['F0'] = psr_dict.get('F0') or 1e-12
 
             injection_plan['pulsars'].append(psr_dict)
 
