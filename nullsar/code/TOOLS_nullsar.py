@@ -1,6 +1,4 @@
 import numpy as np
-import astropy.units as u
-import astropy.constants as const
 from scipy.stats import norm
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
@@ -9,11 +7,6 @@ from scipy.interpolate import PchipInterpolator
 
 
 DM_CONST_PULSARX = 1 / 2.41e-4
-DM_CONST_INJECTOR = (const.e.si**2 / (8*np.pi**2*const.m_e*const.c) / const.eps0 * u.pc.to(u.m)*u.m).value * 1e-6
-
-
-def pulsarx2injector_DM(DM):
-    return DM * DM_CONST_PULSARX / DM_CONST_INJECTOR
 
 
 def bin_phase(nbins):

@@ -7,7 +7,7 @@ from pathlib import Path
 
 from TOOLS_ar import ARProcessor
 from TOOLS_io import parse_par_file, par_period, parse_JSON, rsync, print_exe
-from TOOLS_nullsar import fit_time_phase, fit_phase_offset, fit_subint_phase_offset, fit_chan_phase_offset, scale_freq_phase, plot_INIT, plot_OPT, pulsarx2injector_DM
+from TOOLS_nullsar import fit_time_phase, fit_phase_offset, fit_subint_phase_offset, fit_chan_phase_offset, scale_freq_phase, plot_INIT, plot_OPT
 
 import os, sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
@@ -255,8 +255,9 @@ class NullerProcess:
                 "phase_offset": float(self.ar_data[psr_ID]['phase_offset']),
                 
                 "P0_SNR": par_period(params),
-                "DM": pulsarx2injector_DM(self.ar_data[psr_ID]['DM']),
+                "DM": self.ar_data[psr_ID]['DM'],
                 "DM_ref": "top",
+                "DM_const": "historical",
                 "SNR": -self.ar_data[psr_ID]['SNR'],
 
                 "profile": self.ar_data[psr_ID]['profile'],

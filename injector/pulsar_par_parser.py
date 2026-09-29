@@ -56,16 +56,16 @@ class PulsarParParser:
         parser.add_argument('--micro_structure', metavar='(microsec)', required=False, default=0, type=float, help='Mean timescale of pulse microstructure')
         
         parser.add_argument('--DM', metavar='(pc/cm^3)', required=False, default=0, type=float, help='Dispersion measure')
-        parser.add_argument('--scattering_time', metavar='(millisec)', required=False, default=0, type=float, help='Scattering timescale due to ISM')
-        parser.add_argument('--scattering_index', metavar='(-)', required=False, default=-4, type=float, help='Scattering index to describe frequency evolution')
-        parser.add_argument('--scattering_model', metavar='(-)', required=False, type=str, help='DM-scattering law (TPA, CORDES)')
-        parser.add_argument('--scattering_model_sigma', metavar='(sigma)', required=False, default=0, type=float, help='standard devitations for CORDES DM-scattering law')
-        
         parser.add_argument('--cDM', metavar='(pc/cm^3)', required=False, default=0, type=float, help='coherent Dispersion measure')
         parser.add_argument('--DM_smear', metavar='(off, approx or exact)', required=False, default='off', choices=['off', 'approx', 'exact'], help='Smear the pulse profile due to intra-channel DM smearing')
         parser.add_argument('--DM_ref', metavar='(top or inf)', required=False, default='inf', choices=['top', 'inf'], help='reference frequency for DM dispersion')
         parser.add_argument('--DM_const', metavar='(exact, historical or float)', required=False, default='exact', help="Dispersion constant: 'exact' from physical constants (4148.806), 'historical' 1/2.41e-4 (4149.378, TEMPO/PINT/PRESTO/PulsarX) or a value in MHz^2 pc^-1 cm^3 s")
 
+        parser.add_argument('--scattering_time', metavar='(millisec)', required=False, default=0, type=float, help='Scattering timescale due to ISM')
+        parser.add_argument('--scattering_index', metavar='(-)', required=False, default=-4, type=float, help='Scattering index to describe frequency evolution')
+        parser.add_argument('--scattering_model', metavar='(-)', required=False, type=str, help='DM-scattering law (TPA, CORDES)')
+        parser.add_argument('--scattering_model_sigma', metavar='(sigma)', required=False, default=0, type=float, help='standard devitations for CORDES DM-scattering law')
+        
         parser.add_argument('--binary_period', metavar='(hour)', required=False, type=float, help='Period of binary oribit')
         parser.add_argument('--T0', metavar='(MJD)', required=False,  type=float, help='Reference epoch of pulsar periapsis (default: obseravtion start, barycentre)')
         parser.add_argument('--x', metavar='(light-sec)', required=False, type=float, help='Projected semi-major orbital axis')
