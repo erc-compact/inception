@@ -264,13 +264,16 @@ class SetupManager:
 
         parfile_params['DM'] = pulsar_model.prop_effect.DM
 
-        parfile_params['PEPOCH'] = pulsar_model.pepoch
+        pepoch = pulsar_model.pepoch
+        if pulsar_model.AX_list:
+            pepoch += pulsar_model.accepoch * u.s.to(u.day)
+        parfile_params['PEPOCH'] = pepoch
 
         harmonic = pulsar_model.pulsar_pars.get('fold_harmonic', None)
         if not harmonic:
             harmonic = 1
-            
-        for i, freq_deriv in enumerate(pulsar_model.FX_list):
+
+        for i, freq_deriv in enumerate(pulsar_model.FX_doppler):
             if freq_deriv != 0:
                 parfile_params[f'F{i}'] = str(freq_deriv / harmonic).replace('e', 'D')
             
@@ -278,8 +281,9 @@ class SetupManager:
         # parfile_params['EPHEM'] = ephem if (ephem != 'BUILTIN') else 'DE440'
         parfile_params['EPHEM'] = 'DE421' # some old TEMPO singularities seg fault with DE440
 
-        parfile_params['TZRMJD'] = pulsar_model.obs.obs_start_bary
-        parfile_params['TZRFRQ'] = 0
+        parfile_params['TZRMJD'] = pepoch
+        parfile_params['TZRFRQ'] = pulsar_model.obs.high_f if pulsar_model.pulsar_pars['DM_ref'] == 'top' else 0
+        parfile_params['TZRSITE'] = '@'
 
         parfile_params['CLK'] = 'TT(BIPM)'
         parfile_params['UNITS'] = 'TDB'

@@ -2,7 +2,7 @@ import numpy as np
 import astropy.units as u
 from math import factorial
 import astropy.constants as const
-from sympy import lambdify, symbols
+from sympy import lambdify, symbols, diff
 from scipy.interpolate import interp1d
 
 from .propagation_effects import PropagationEffects
@@ -91,10 +91,14 @@ class PulsarModel:
             phase_func_abs = lambdify([t, c], phase_symbolic.subs({**freq_derivs, **accel_derivs}))
             self.phase_func = lambda t: phase_func_abs(t - self.accepoch, const.c.value) + phase_offset
 
+            doppler = spin_doppler.subs({**freq_derivs, **accel_derivs, c: const.c.value})
+            self.FX_doppler = [float(diff(doppler, t, k).subs(t, 0)) for k in range(n_freq + n_accel)]
+
         else:
             phase_symbolic = sum([FX[n]*t**(n+1)/factorial(n+1) for n in range(n_freq)])
             phase_func_abs = lambdify(t, phase_symbolic.subs(freq_derivs))
             self.phase_func = lambda t: phase_func_abs(t) + phase_offset
+            self.FX_doppler = list(self.FX_list)
 
     def calculate_SNR(self):
         n_chan = self.obs.n_chan
