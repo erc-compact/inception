@@ -168,10 +168,10 @@ def pulsarx_par2csv(injection_report, results_dir):
         if not cand_file:
             continue
         cand_df = pd.read_csv(cand_file[0], skiprows=11, engine='python', sep=r'\s+').iloc[0]
-        fold_pars = [psr['ID'], *cand_df[['f0_new', 'f0_err', 'dm_new', 'dm_err', 'acc_new', 'acc_err', 'S/N_new', 'boxcar_width']].values]
+        fold_pars = [psr['ID'], *cand_df[['f0_new', 'f0_err', 'dm_new', 'dm_err', 'acc_new', 'acc_err', 'S/N_new', 'boxcar_width']].values, 0.0]
         psr_candfiles.append(fold_pars)
-    
-    df_cands = pd.DataFrame(psr_candfiles, columns=['PSR_ID', 'F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width'])
+
+    df_cands = pd.DataFrame(psr_candfiles, columns=['PSR_ID', 'F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width', 'sigma'])
     return df_cands
 
 
@@ -179,10 +179,10 @@ def pulsarx_cand2csv(cand_file):
     candidates = []
     cand_df = pd.read_csv(cand_file, skiprows=11, engine='python', sep=r'\s+')
     for _, row in cand_df.iterrows():
-        fold_pars = row[['#id', 'f0_new', 'f0_err', 'dm_new', 'dm_err', 'acc_new', 'acc_err', 'S/N_new', 'boxcar_width']].values
+        fold_pars = [*row[['#id', 'f0_new', 'f0_err', 'dm_new', 'dm_err', 'acc_new', 'acc_err', 'S/N_new', 'boxcar_width']].values, 0.0]
         candidates.append(fold_pars)
-    
-    df_cands = pd.DataFrame(candidates, columns=['cand_ID', 'F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width'])
+
+    df_cands = pd.DataFrame(candidates, columns=['cand_ID', 'F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width', 'sigma'])
     return df_cands
 
 
@@ -250,10 +250,17 @@ def _parse_bestprof(bestprof_file):
     F0_err = P0_err / P0**2
     acc = const.c.value * float(pdot) / P0
     acc_err = const.c.value * float(pdot_err) / P0
-    snr = float(sigma.group(1)) if sigma else 0.0
+
+    tsamp = float(re.search(rf'T_sample\s*=\s*({NUM})', text).group(1))
+    nbins = int(re.search(r'Profile Bins\s*=\s*(\d+)', text).group(1))
+    redchi = float(re.search(rf'Reduced chi-sqr\s*=\s*({NUM})', text).group(1))
+    dt_per_bin = P0 / nbins / tsamp
+    dof_eff = (nbins - 1) * 0.96 * dt_per_bin * (1 + dt_per_bin**1.806)**(-1/1.806)
+    snr = np.sqrt(max(redchi - 1, 0) * dof_eff)
 
     return {'F0': F0, 'F0_err': F0_err, 'DM': float(dm), 'DM_err': 0.0,
-            'acc': acc, 'acc_err': acc_err, 'SNR': snr, 'width': 0.0}
+            'acc': acc, 'acc_err': acc_err, 'SNR': snr, 'width': 0.0,
+            'sigma': float(sigma.group(1)) if sigma else 0.0}
 
 
 def presto_bestprof2csv(injection_report, results_dir):
@@ -263,9 +270,9 @@ def presto_bestprof2csv(injection_report, results_dir):
         if not bestprof_file:
             continue
         p = _parse_bestprof(bestprof_file[0])
-        psr_folds.append([psr['ID'], p['F0'], p['F0_err'], p['DM'], p['DM_err'], p['acc'], p['acc_err'], p['SNR'], p['width']])
+        psr_folds.append([psr['ID'], p['F0'], p['F0_err'], p['DM'], p['DM_err'], p['acc'], p['acc_err'], p['SNR'], p['width'], p['sigma']])
 
-    df_folds = pd.DataFrame(psr_folds, columns=['PSR_ID', 'F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width'])
+    df_folds = pd.DataFrame(psr_folds, columns=['PSR_ID', 'F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width', 'sigma'])
     return df_folds
 
 
@@ -278,10 +285,10 @@ def presto_cand_bestprof2csv(psr_ids, results_dir):
 
         parsed = [(_parse_bestprof(f), f) for f in bestprof_files]
         p, best_file = max(parsed, key=lambda x: abs(x[0]['SNR']))
-        psr_folds.append([psr_id, p['F0'], p['F0_err'], p['DM'], p['DM_err'], p['acc'], p['acc_err'], p['SNR'], p['width'],
+        psr_folds.append([psr_id, p['F0'], p['F0_err'], p['DM'], p['DM_err'], p['acc'], p['acc_err'], p['SNR'], p['width'], p['sigma'],
                           Path(best_file).stem])
 
-    df_folds = pd.DataFrame(psr_folds, columns=['PSR_ID', 'F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width', 'fold'])
+    df_folds = pd.DataFrame(psr_folds, columns=['PSR_ID', 'F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width', 'sigma', 'fold'])
     return df_folds
 
 
@@ -299,7 +306,7 @@ def dspsr_best2csv(injection_report, results_dir):
         F0, F0_err = (float(v) for v in rows[4])
         width, snr = (float(v) for v in rows[5])
 
-        psr_folds.append([psr['ID'], F0, F0_err, DM, DM_err, 0.0, 0.0, snr, width])
+        psr_folds.append([psr['ID'], F0, F0_err, DM, DM_err, 0.0, 0.0, snr, width, 0.0])
 
-    df_folds = pd.DataFrame(psr_folds, columns=['PSR_ID', 'F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width'])
+    df_folds = pd.DataFrame(psr_folds, columns=['PSR_ID', 'F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width', 'sigma'])
     return df_folds

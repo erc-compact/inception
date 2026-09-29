@@ -254,7 +254,7 @@ class Collector:
             for psr in report:
                 inj_keys, inj_results = self.load_injection(psr, inj_dir, header, max_AX, max_PX, max_FX)
                 
-                parfold_keys = ['F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width']
+                parfold_keys = ['F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'sigma', 'width']
 
                 if self.c_args.get('pulsarx_parfold', False):
                     inj_results.extend(self.parfold_row(pulsarx_parfold, psr['ID'], parfold_keys))
@@ -296,7 +296,7 @@ class Collector:
 
                 if self.c_args.get('pulsarx_candfold', False):
                     psr_cand_matched = pulsarx_cands[pulsarx_cands['PSR_ID'] == psr['ID']]
-                    cand_keys = ['segment', 'F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width']
+                    cand_keys = ['segment', 'F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'sigma', 'width']
 
                     if self.c_args['classifier']:
                         cand_keys.extend(model_names)
@@ -306,7 +306,7 @@ class Collector:
                     else:
                         psr_cand_matched = psr_cand_matched.sort_values(by='SNR', key=abs, ascending=False)
                         psr_cand = psr_cand_matched.iloc[0]
-                        inj_results.extend([psr_cand['segment'], psr_cand['F0'], psr_cand['F0_err'], psr_cand['DM'], psr_cand['DM_err'], psr_cand['acc'],  psr_cand['acc_err'], psr_cand['SNR'],  psr_cand['width']])
+                        inj_results.extend([psr_cand['segment'], psr_cand['F0'], psr_cand['F0_err'], psr_cand['DM'], psr_cand['DM_err'], psr_cand['acc'],  psr_cand['acc_err'], psr_cand['SNR'], psr_cand['sigma'], psr_cand['width']])
 
                         if self.c_args['classifier']:
                             inj_results.extend([psr_cand.get(model, np.nan) for model in model_names])
@@ -315,7 +315,7 @@ class Collector:
 
                 if self.c_args.get('presto_candfold', False):
                     psr_cand_matched = presto_cands[presto_cands['PSR_ID'] == psr['ID']]
-                    cand_keys = ['segment', 'F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'width']
+                    cand_keys = ['segment', 'F0', 'F0_err', 'DM', 'DM_err', 'acc', 'acc_err', 'SNR', 'sigma', 'width']
 
                     if self.c_args['classifier']:
                         cand_keys.extend(model_names)
@@ -325,7 +325,7 @@ class Collector:
                     else:
                         psr_cand_matched = psr_cand_matched.sort_values(by='SNR', key=abs, ascending=False)
                         psr_cand = psr_cand_matched.iloc[0]
-                        inj_results.extend([psr_cand['segment'], psr_cand['F0'], psr_cand['F0_err'], psr_cand['DM'], psr_cand['DM_err'], psr_cand['acc'],  psr_cand['acc_err'], psr_cand['SNR'],  psr_cand['width']])
+                        inj_results.extend([psr_cand['segment'], psr_cand['F0'], psr_cand['F0_err'], psr_cand['DM'], psr_cand['DM_err'], psr_cand['acc'],  psr_cand['acc_err'], psr_cand['SNR'], psr_cand['sigma'], psr_cand['width']])
 
                         if self.c_args['classifier']:
                             inj_results.extend([psr_cand.get(model, np.nan) for model in model_names])
