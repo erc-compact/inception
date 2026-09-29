@@ -47,6 +47,7 @@ class PulsarParParser:
         parser.add_argument('--presto_w', metavar='(w)', required=False, type=float, help='presto jerk')
         
         parser.add_argument('--SNR', metavar='(-)', required=True, type=float, help='Injected signal-to-noise')
+        parser.add_argument('--SNR_def', metavar='(total or pulsed)', required=False, default='total', choices=['total', 'pulsed'], help="S/N definition: 'total' includes the profile mean (known baseline), 'pulsed' subtracts it (unknown baseline)")
         parser.add_argument('--spectrum', metavar='(FILE.npy/float)', required=False, default=0, help='1D pulsar spectrum / Spectral index of pulsar')
         parser.add_argument('--duty_cycle', metavar='(phase)', required=False, default=0.1, type=float, help='Duty cycle of default gaussian pulse profile')
         parser.add_argument('--profile', metavar='(FILE.npy/dict)', required=False, default='default', help='NumPy .npy or EPN .txt file containing a custom pulsar pulse profile (1D or 2D), or multi-component dictionary')
@@ -63,6 +64,7 @@ class PulsarParParser:
         parser.add_argument('--cDM', metavar='(pc/cm^3)', required=False, default=0, type=float, help='coherent Dispersion measure')
         parser.add_argument('--DM_smear', metavar='(off, approx or exact)', required=False, default='off', choices=['off', 'approx', 'exact'], help='Smear the pulse profile due to intra-channel DM smearing')
         parser.add_argument('--DM_ref', metavar='(top or inf)', required=False, default='inf', choices=['top', 'inf'], help='reference frequency for DM dispersion')
+        parser.add_argument('--DM_const', metavar='(exact, historical or float)', required=False, default='exact', help="Dispersion constant: 'exact' from physical constants (4148.806), 'historical' 1/2.41e-4 (4149.378, TEMPO/PINT/PRESTO/PulsarX) or a value in MHz^2 pc^-1 cm^3 s")
 
         parser.add_argument('--binary_period', metavar='(hour)', required=False, type=float, help='Period of binary oribit')
         parser.add_argument('--T0', metavar='(MJD)', required=False,  type=float, help='Reference epoch of pulsar periapsis (default: obseravtion start, barycentre)')

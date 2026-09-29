@@ -19,10 +19,25 @@ class PropagationEffects:
         self.spectra = spectra
         self.phase = np.linspace(0, 1, profile_length)
           
+    def get_DM_const(self):
+        DM_const = self.pulsar_pars.get('DM_const', 'exact')
+        if DM_const == 'exact':
+            return (const.e.si**2/(8*np.pi**2*const.m_e*const.c) /(const.eps0) * u.pc.to(u.m)*u.m).value*1e-6   # MHz^2 pc^-1 cm^3 s
+        if DM_const == 'historical':
+            return 1/2.41e-4
+
+        try:
+            value = float(DM_const)
+        except (TypeError, ValueError):
+            value = 0
+        if value <= 0:
+            sys.exit(f"Invalid DM_const for pulsar {self.ID}: {DM_const}. Must be 'exact', 'historical' or a positive value in MHz^2 pc^-1 cm^3 s.")
+        return value
+
     def get_DM_delays(self):
         self.DM = self.pulsar_pars['DM']
         self.cDM = self.pulsar_pars.get('cDM', 0)
-        self.DM_const = (const.e.si**2/(8*np.pi**2*const.m_e*const.c) /(const.eps0) * u.pc.to(u.m)*u.m).value*1e-6   # MHz^2 pc^-1 cm^3 s
+        self.DM_const = self.get_DM_const()
 
         ref_freq = self.pulsar_pars['DM_ref']
         if ref_freq == 'inf':
