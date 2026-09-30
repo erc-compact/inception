@@ -312,6 +312,7 @@ class SetupManager:
         pm = self.pulsar_models[i]
         cand_file_path = self.output_path+f'/{pm.ID}.candfile'
         frame = pm.pulsar_pars['frame']
+        obs_mid = pm.obs.obs_start + 0.5 * pm.obs.obs_len * u.s.to(u.day)
 
         harmonic = pm.pulsar_pars.get('fold_harmonic', None)
         if not harmonic:
@@ -319,7 +320,7 @@ class SetupManager:
 
         F0_psr = pm.FX_list[0] / harmonic
         if frame == 'bary':
-            F0 = F0_psr * (1 - pm.obs.earth_radial_velocity(pm.obs.obs_start)/const.c.value)[0]
+            F0 = F0_psr * (1 - pm.obs.earth_radial_velocity(obs_mid)/const.c.value)[0]
         elif frame == 'topo':
             F0 = F0_psr
 
@@ -341,7 +342,7 @@ class SetupManager:
                 T0 = pm.binary.T0
 
                 if frame == 'bary':
-                    T0 -= pm.obs.obs_start_bary - pm.obs.obs_start
+                    T0 -= pm.obs.topo2bary([obs_mid])[0] - obs_mid
 
                 if pm.pulsar_pars['DM_ref'] == 'inf':
                     dt_ref = pm.prop_effect.DM_const * pm.prop_effect.DM / pm.obs.high_f**2 
