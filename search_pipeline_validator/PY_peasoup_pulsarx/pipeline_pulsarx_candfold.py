@@ -149,7 +149,7 @@ class PulsarxFoldCandProcess:
             inj_tools.rsync(f'{self.work_dir}/*.cands', results_dir)
 
         if self.processing_args['pulsarx_candfold_args']['delete_inj_fb']:
-            check_par = glob.glob(f'{self.out_dir}/inj_{self.injection_number:06}/inj_pulsars/*.png')
+            check_par = glob.glob(f'{self.out_dir}/inj_{self.injection_number:06}/inj_pulsars/*/*.png')
             if check_par:
                 os.remove(f'{self.out_dir}/inj_{self.injection_number:06}/{Path(self.data).name}')
 

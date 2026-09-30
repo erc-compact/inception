@@ -108,7 +108,8 @@ class PrestoFoldParProcess:
             p.map(self.run_parfold, args)
 
     def transfer_products(self):
-        results_dir = f'{self.out_dir}/inj_{self.injection_number:06}/inj_pulsars'
+        results_dir = f'{self.out_dir}/inj_{self.injection_number:06}/inj_pulsars/PRESTO'
+        os.makedirs(results_dir, exist_ok=True)
         psr_ids = [arg['ID'] for arg in self.injection_report['pulsars']]
 
         if self.processing_args['presto_parfold_args'].get('save_png', True):

@@ -56,21 +56,25 @@ class Collector:
 
         return segments
     
+    def parfold_dir(self, inj_dir, mode):
+        mode_dir = f'{inj_dir}/inj_pulsars/{mode}'
+        return mode_dir if os.path.isdir(mode_dir) else f'{inj_dir}/inj_pulsars'
+
     def load_pulsarx_parfold(self, report, inj_dir):
         if self.c_args.get('pulsarx_parfold', False):
-            return cand_tools.pulsarx_par2csv(report, f'{inj_dir}/inj_pulsars')
+            return cand_tools.pulsarx_par2csv(report, self.parfold_dir(inj_dir, 'PULSARX'))
         else:
             return []
 
     def load_presto_parfold(self, report, inj_dir):
         if self.c_args.get('presto_parfold', False):
-            return cand_tools.presto_bestprof2csv(report, f'{inj_dir}/inj_pulsars')
+            return cand_tools.presto_bestprof2csv(report, self.parfold_dir(inj_dir, 'PRESTO'))
         else:
             return []
 
     def load_dspsr_parfold(self, report, inj_dir):
         if self.c_args.get('dspsr_parfold', False):
-            return cand_tools.dspsr_best2csv(report, f'{inj_dir}/inj_pulsars')
+            return cand_tools.dspsr_best2csv(report, self.parfold_dir(inj_dir, 'DSPSR'))
         else:
             return []
 
