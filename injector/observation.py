@@ -7,6 +7,7 @@ from scipy.interpolate import interp1d
 from astropy.coordinates import SkyCoord, EarthLocation, solar_system_ephemeris, solar_system, Distance, CartesianRepresentation
 
 from .propagation_effects import PropagationEffects
+from .external_data import apply as apply_external_data, get_observatory
 
 
 class Observation:
@@ -14,6 +15,7 @@ class Observation:
                     6: ['GBT', 'gb'], 7: ['GMRT', 'gm'], 8: ['Effelsberg', 'ef']}
 
     def __init__(self, filterbank, ephem, pulsar_pars, generate=False, override_length=0):
+        apply_external_data()
         solar_system_ephemeris.set(ephem) 
         self.ephem = ephem
         fb_header = filterbank.header
@@ -37,13 +39,7 @@ class Observation:
     def get_pointing_data(self, fb_header, pulsar_pars):
         self.telescope_ID, self.tempo_id = Observation.telescope_id[fb_header['telescope_id']]
 
-        Meerkat = EarthLocation( # TODO: implement fall back in case astropy cache fails
-            lat=-30.711055553291878* u.deg,
-            lon=21.443888889697842 * u.deg,
-            height=1086.59948488 * u.m,
-        )
-
-        self.observatory = EarthLocation.of_site(self.telescope_ID)
+        self.observatory = get_observatory(self.telescope_ID)
 
         self.obs_pointing = SkyCoord(ra=self.convert_coord(fb_header['src_raj']), 
                                      dec=self.convert_coord(fb_header['src_dej']), 

@@ -53,7 +53,9 @@ class CandidateMatcher:
             ephem = f'./{Path(ephem).name}'
 
         self.fb = FilterbankReader(fb_path, stats_samples=0)
-        self.setup_manager = SetupManager(self.report_path, fb_path, ephem, generate=False, override_length=0)
+        injection_args = self.processing_args['injection_args']
+        self.setup_manager = SetupManager(self.report_path, fb_path, ephem, generate=False, override_length=0,
+                                          cache=injection_args.get('cache') or None, offline=injection_args.get('offline', False))
 
     def get_injection_report(self):
         self.report_path = glob.glob(f'{self.results_dir}/report_*.json')[0]

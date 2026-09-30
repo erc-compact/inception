@@ -94,6 +94,12 @@ class InjectorProcess:
         n_samples = self.processing_args['injection_args']['stats_samples']
 
         inputs = f"--signal={self.seeded_inject_file} --fb={self.new_fb_path} --ephem={ephem} --output={self.work_dir} --ncpu={ncpus} --gulp_size_GB={gulp_size} --stats_samples={n_samples}"
+        cache = self.processing_args['injection_args'].get('cache', '')
+        if cache:
+            os.makedirs(cache, exist_ok=True)
+            inputs += f' --cache={cache}'
+        if self.processing_args['injection_args'].get('offline', False):
+            inputs += ' --offline'
         cmd = f"{self.processing_args['injection_args']['python']} {SCRIPT_inject_pulsars.__file__} {inputs}"
 
         print_exe('starting injection...')

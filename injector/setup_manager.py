@@ -17,12 +17,14 @@ from .binary_model import BinaryModel
 from .pulsar_model import PulsarModel
 from .observation import Observation
 from .phase_predictors import create_predictor
+from .external_data import configure as configure_external_data
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from __init__ import __version__
 
 class SetupManager:
-    def __init__(self, pulsar_data_path, filterbank_path, ephem_path='builtin', output_path=None, generate=False, override_length=0, gulp_size_GB=0.01, stats_samples=0):
+    def __init__(self, pulsar_data_path, filterbank_path, ephem_path='builtin', output_path=None, generate=False, override_length=0, gulp_size_GB=0.01, stats_samples=0, cache=None, offline=False):
+        configure_external_data(cache, offline)
         self.fb = self.get_filterbank(filterbank_path, gulp_size_GB, stats_samples) 
         self.ephem = self.get_ephem(ephem_path)
         self.output_path = output_path

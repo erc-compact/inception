@@ -3,6 +3,8 @@
         "id": "test_1",
         "ephem": "builtin",
         "python": "python3",
+        "cache": "",
+        "offline": false,
         "filterbank" : "random",
         "gulp_size_GB": 0.01,
         "stats_samples": 1e6,

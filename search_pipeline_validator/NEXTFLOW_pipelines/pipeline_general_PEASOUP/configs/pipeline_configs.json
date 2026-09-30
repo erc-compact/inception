@@ -3,6 +3,8 @@
         "id": "test",
         "ephem": ".../de440.bsp",
         "python": "python3",
+        "cache": "",
+        "offline": false,
 
         "filterbank" : "random",
         "gulp_size_GB": 0.01,
