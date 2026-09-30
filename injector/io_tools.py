@@ -36,7 +36,11 @@ class FilterbankReader:
         self.n_samples = self.get_n_samples() 
         self.obs_len = self.n_samples * self.dt
         if load_fb_stats:
-            self.fb_mean, self.fb_std = load_fb_stats
+            self.fb_mean, self.fb_std = load_fb_stats[:2]
+            if len(load_fb_stats) > 2:
+                self.chan_mean, self.chan_std = np.asarray(load_fb_stats[2]), np.asarray(load_fb_stats[3])
+            else:
+                self.chan_mean, self.chan_std = np.full(self.nchans, self.fb_mean), np.full(self.nchans, self.fb_std)
         else:
             if stats_samples:
                 print_exe(f'calculating filterbank statistics using {int(stats_samples)}...')
@@ -44,6 +48,7 @@ class FilterbankReader:
                 print_exe(f'mean: {self.fb_mean}, std: {self.fb_std}')
             else:
                 self.fb_mean, self.fb_std = 128.0, 6.0
+                self.chan_mean, self.chan_std = np.full(self.nchans, self.fb_mean), np.full(self.nchans, self.fb_std)
 
     def read_string(self):
         nchar = np.fromfile(self.read_file, dtype=np.int32, count=1)[0]
@@ -117,6 +122,8 @@ class FilterbankReader:
         std = np.sqrt(M2 / (count - 1)) 
         global_mean = np.median(mean[std != 0])
         global_std = np.median(std[std != 0])
+        self.chan_mean = np.where(std != 0, mean, global_mean)
+        self.chan_std = np.where(std != 0, std, global_std)
         self.read_file.seek(self.read_data_pos, 0)
         return global_mean, global_std
     

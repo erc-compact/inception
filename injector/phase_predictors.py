@@ -10,7 +10,8 @@ from .io_tools import print_exe
 getcontext().prec = 40
 
 MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-TEMPO_SITES = {'mk': 'm', 'ao': '3', 'pk': '7', 'jb': '8', 'gb': '1', 'gm': 'r', 'ef': 'g', 'fast': 'k'}
+TEMPO_SITES = {'mk': 'm', 'ao': '3', 'pk': '7', 'jb': '8', 'gb': '1', 'gm': 'r', 'ef': 'g', 'fast': 'k',
+               'chime': 'y', 'lofar': 't', 'ncy': 'f', 'srt': 'z', 'mwa': 'u'}
 
 
 def cheby_nodes(n):

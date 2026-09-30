@@ -20,7 +20,7 @@ class InjectSignal:
 
         self.n_cpus = n_cpus
         self.gulp_size_GB = gulp_size_GB
-        self.load_fb_stats = [setup_manager.fb.fb_mean, setup_manager.fb.fb_std]
+        self.load_fb_stats = [setup_manager.fb.fb_mean, setup_manager.fb.fb_std, setup_manager.fb.chan_mean, setup_manager.fb.chan_std]
         self.n_samples = setup_manager.fb.n_samples
         self.nchans = setup_manager.fb.nchans
         self.nbits = setup_manager.fb.nbits
@@ -89,10 +89,11 @@ class InjectSignal:
 
         return pulsar_models
 
-    def de_digitize(self, fb, values, rng):
-        lower = (values - 0.5 - fb.fb_mean) / fb.fb_std
-        upper = (values + 0.5 - fb.fb_mean) / fb.fb_std
-        return truncnorm.ppf(rng.random(values.shape), lower, upper, loc=fb.fb_mean, scale=fb.fb_std)
+    def de_digitize(self, fb, values, chans, rng):
+        mean, std = fb.chan_mean[chans], fb.chan_std[chans]
+        lower = (values - 0.5 - mean) / std
+        upper = (values + 0.5 - mean) / std
+        return truncnorm.ppf(rng.random(values.shape), lower, upper, loc=mean, scale=std)
     
     def inject_block(self, filterbank, cpu, block_start, block_size, models, rng):
         reader = filterbank.fb_reader
@@ -108,7 +109,7 @@ class InjectSignal:
 
         active = np.abs(pulsar_signal) > self.signal_floor
         injected_block = block.copy()
-        injected_block[active] = np.round(self.de_digitize(reader, block[active], rng) + pulsar_signal[active])
+        injected_block[active] = np.round(self.de_digitize(reader, block[active], np.nonzero(active)[1], rng) + pulsar_signal[active])
         filterbank.write_block(injected_block)
 
         self.bits_flipped[cpu] += int(np.count_nonzero(np.clip(injected_block, 0, 2**self.nbits-1) != block))

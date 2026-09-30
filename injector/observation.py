@@ -12,7 +12,8 @@ from .external_data import apply as apply_external_data, get_observatory
 
 class Observation:
     telescope_id = {64: ['Meerkat', 'mk'],  1: ['Arecibo', 'ao'], 4: ['Parkes', 'pk'], 5: ['Jodrell', 'jb'], 
-                    6: ['GBT', 'gb'], 7: ['GMRT', 'gm'], 8: ['Effelsberg', 'ef'], 21: ['FAST', 'fast']}
+                    6: ['GBT', 'gb'], 7: ['GMRT', 'gm'], 8: ['Effelsberg', 'ef'], 21: ['FAST', 'fast'], 20: ['CHIME', 'chime'],
+                    11: ['LOFAR', 'lofar'], 3: ['Nancay', 'ncy'], 10: ['SRT', 'srt'], 30: ['MWA', 'mwa']}
 
     def __init__(self, filterbank, ephem, pulsar_pars, generate=False, override_length=0):
         apply_external_data()
