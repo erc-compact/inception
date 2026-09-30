@@ -15,6 +15,7 @@
 
     "presto_parfold_args": {
         "transfer_TMP": true,
+        "use_predictor": false,
 
         "mask": "",
 

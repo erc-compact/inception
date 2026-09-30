@@ -79,6 +79,7 @@ class PulsarParParser:
 
         parser.add_argument('--mode', metavar='(str)', required=False, default='python', choices=['python', 'pint'], help="Inject using analytical 'python' code or polycos from 'pint'")
         parser.add_argument('--create_parfile', metavar='(par or pulsarx)', required=False, default='par', choices=['par', 'pulsarx'], help="Fold file for injected pulsar")
+        parser.add_argument('--create_predictor', metavar='(none, polycos or t2pred)', required=False, default='none', choices=['none', 'polycos', 't2pred'], help="Phase predictor file for folding the injected pulsar")
         parser.add_argument('--fold_harmonic', metavar='(float)', required=False, type=float, help="Generate fold file with p0 * harmonic")
         parser.add_argument('--pint_N', metavar='(-)', required=False, default=12, type=int, help='Number of coefficients per timestep for polycos generation')
         parser.add_argument('--pint_T', metavar='(min)', required=False, default=5, type=float, help='Timestep for polycos generation')

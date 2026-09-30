@@ -124,6 +124,7 @@ class InjectorProcess:
             inj_tools.rsync(f'{self.work_dir}/*.par', par_dir)
             inj_tools.rsync(f'{self.work_dir}/*.polycos', par_dir)
             inj_tools.rsync(f'{self.work_dir}/*.candfile', par_dir)
+            inj_tools.rsync(f'{self.work_dir}/*.t2pred', par_dir)
         
 
 if __name__=='__main__':

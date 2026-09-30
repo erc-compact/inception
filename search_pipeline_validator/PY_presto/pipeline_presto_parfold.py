@@ -22,7 +22,14 @@ class PrestoFoldParProcess:
 
     def fold_setup(self):
         self.get_injection_report()
+        self.get_predictors()
         self.transfer_data()
+
+    def get_predictors(self):
+        pulsar_dir = f'{self.out_dir}/inj_{self.injection_number:06}/inj_pulsars'
+        fold_args = self.processing_args['presto_parfold_args']
+        self.predictors = {psr['ID']: inj_tools.find_predictor(fold_args, pulsar_dir, psr['ID'], ['polycos'])
+                           for psr in self.injection_report['pulsars'] if glob.glob(f"{pulsar_dir}/{psr['ID']}.par")}
 
     def get_injection_report(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
@@ -77,7 +84,15 @@ class PrestoFoldParProcess:
         tmp_cwd = f'{self.work_dir}/_{psr_id}'
         os.makedirs(tmp_cwd, exist_ok=True)
 
-        cmd = f"prepfold -noxwin -o {tmp_cwd}/{psr_id} -filterbank {self.data} -par {par_file} -n {nbins} {mask}"
+        predictor = self.predictors[psr_id]
+        if predictor:
+            with open(predictor) as f:
+                polycos_name = f.readline().split()[0]
+            ephemeris = f'-polycos {predictor} -psr {polycos_name}'
+        else:
+            ephemeris = f'-par {par_file}'
+
+        cmd = f"prepfold -noxwin -o {tmp_cwd}/{psr_id} -filterbank {self.data} {ephemeris} -n {nbins} {mask}"
     
         cmd = inj_tools.add_cmd_args(cmd, self.processing_args['presto_parfold_args'])
 

@@ -20,7 +20,14 @@ class DSPSRFoldParProcess:
 
     def fold_setup(self):
         self.get_injection_report()
+        self.get_predictors()
         self.transfer_data()
+
+    def get_predictors(self):
+        pulsar_dir = f'{self.out_dir}/inj_{self.injection_number:06}/inj_pulsars'
+        fold_args = self.processing_args['dspsr_parfold_args']
+        self.predictors = {psr['ID']: inj_tools.find_predictor(fold_args, pulsar_dir, psr['ID'], ['t2pred', 'polycos'])
+                           for psr in self.injection_report['pulsars'] if glob.glob(f"{pulsar_dir}/{psr['ID']}.par")}
 
     def get_injection_report(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
@@ -63,7 +70,9 @@ class DSPSRFoldParProcess:
         tsubint = self.set_tsubints()
 
         psr_id = psr['ID']
-        cmd = f"dspsr -A -O {tmp_cwd}/{psr_id} -E {par_file} -b {nbins} -L {tsubint}"
+        predictor = f'-P {self.predictors[psr_id]}' if self.predictors[psr_id] else ''
+
+        cmd = f"dspsr -A -O {tmp_cwd}/{psr_id} -E {par_file} {predictor} -b {nbins} -L {tsubint}"
         cmd = inj_tools.add_cmd_args(cmd, dspsr_args)
         cmd += f' {self.data}'
         inj_tools.print_exe(cmd)

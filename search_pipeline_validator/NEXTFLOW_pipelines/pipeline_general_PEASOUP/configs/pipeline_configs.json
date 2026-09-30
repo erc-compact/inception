@@ -18,6 +18,7 @@
     "pulsarx_parfold_args": {
         "mode": "psrfold_fil",
         "transfer_TMP": false,
+        "use_predictor": false,
 
         "channel_mask": "856.0:863.94,923.1:946.2",
         "template": ".../meerkat_fold.template",

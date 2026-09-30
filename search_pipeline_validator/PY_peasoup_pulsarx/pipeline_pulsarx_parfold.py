@@ -22,8 +22,15 @@ class PulsarxFoldParProcess:
 
     def fold_setup(self):
         self.get_injection_report()
+        self.get_predictors()
         self.transfer_data()
         self.create_zap_sting()
+
+    def get_predictors(self):
+        pulsar_dir = f'{self.out_dir}/inj_{self.injection_number:06}/inj_pulsars'
+        fold_args = self.processing_args['pulsarx_parfold_args']
+        self.predictors = {psr['ID']: inj_tools.find_predictor(fold_args, pulsar_dir, psr['ID'], ['t2pred'])
+                           for psr in self.injection_report['pulsars']}
 
     def get_injection_report(self):
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
@@ -100,7 +107,9 @@ class PulsarxFoldParProcess:
         # Path(template).touch()
         template = fold_args['template']
 
-        cmd = f"{fold_args['mode']} -o {tmp_cwd}/{psr_id} --cdm {self.cdm} -f {self.data} --tsubint {tsubint} --output_width  --template {template} {fold_file} --blocksize {block_size} --nbin {nbins} {self.zap_string} {save_fits}"
+        predictor = f'--t2pred {self.predictors[psr_id]}' if self.predictors[psr_id] else ''
+
+        cmd = f"{fold_args['mode']} -o {tmp_cwd}/{psr_id} --cdm {self.cdm} -f {self.data} --tsubint {tsubint} --output_width  --template {template} {fold_file} {predictor} --blocksize {block_size} --nbin {nbins} {self.zap_string} {save_fits}"
         cmd = inj_tools.add_cmd_args(cmd, fold_args)
 
         inj_tools.print_exe(cmd)

@@ -112,6 +112,17 @@ def segment_samples(n_total, seg_i, seg_n):
     return start_sample, end_sample - start_sample
 
 
+def find_predictor(fold_args, pulsar_dir, psr_id, kinds):
+    if not fold_args.get('use_predictor', False):
+        return None
+    for kind in kinds:
+        path = f'{pulsar_dir}/{psr_id}_predictor.{kind}'
+        if os.path.exists(path):
+            return path
+    print_exe(f'No {" or ".join(kinds)} predictor found for {psr_id}, folding without a predictor.')
+    return None
+
+
 def add_cmd_args(cmd, args):
     extra = args.get('cmd', '')
     if not isinstance(extra, str) or 'cmd_flags' in args:

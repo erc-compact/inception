@@ -16,6 +16,7 @@ from .pulsar_par_parser import PulsarParParser
 from .binary_model import BinaryModel
 from .pulsar_model import PulsarModel
 from .observation import Observation
+from .phase_predictors import create_predictor
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from __init__ import __version__
@@ -31,6 +32,7 @@ class SetupManager:
         if self.output_path:
             self.parfile_paths = self.create_foldfiles()
             self.mode_resolver()
+            self.predictor_paths = self.create_predictors()
             self.create_injection_report()
         
     @staticmethod
@@ -371,6 +373,16 @@ class SetupManager:
 
         return parfile_paths
     
+    def create_predictors(self):
+        predictor_paths = []
+        for i, pulsar_pars in enumerate(self.pulsars):
+            kind = pulsar_pars.get('create_predictor', 'none')
+            if kind == 'none':
+                predictor_paths.append('')
+            else:
+                predictor_paths.append(create_predictor(self.pulsar_models[i], kind, self.output_path, self.parfile_paths[i]))
+        return predictor_paths
+
     def create_injection_report(self):
         report_path = os.path.join(self.output_path, f'report_{self.inj_ID}_{self.seed}.json')
         report = {'injection_report': {'ID': self.inj_ID, 'global_seed': self.seed, 'datetime': str(datetime.now()), 'ephem': self.ephem,
