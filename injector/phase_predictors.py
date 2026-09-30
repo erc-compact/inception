@@ -10,6 +10,7 @@ from .io_tools import print_exe
 getcontext().prec = 40
 
 MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+TEMPO_SITES = {'mk': 'm', 'ao': '3', 'pk': '7', 'jb': '8', 'gb': '1', 'gm': 'r', 'ef': 'g'}
 
 
 def cheby_nodes(n):
@@ -218,7 +219,7 @@ class PhasePredictor:
                 self.pm.prop_effect.DM, -v_r / const.c.value * 1e4, np.log10(max(rms[k], 1e-12)))
             rphase = '{:13d}'.format(ph_int + turn_offset) + '{:.6f}'.format(frac_r)[1:]
             line2 = '{:20s} {:17.12f}{:>5s}{:5d}{:5d}{:10.3f}{:16s}\n'.format(
-                rphase, f0[k], self.obs.tempo_id, span_min, self.ncoeff, self.f_ref, '')
+                rphase, f0[k], polyco_site(self.obs.tempo_id), span_min, self.ncoeff, self.f_ref, '')
             block = ''
             for i, value in enumerate(c):
                 value = 0.0 if abs(value) < 1e-99 else value
@@ -239,6 +240,11 @@ class PhasePredictor:
         span = span_min * 60.0
         n_seg = max(1, int(np.ceil((self.t_end - self.t_start - span) / (0.9 * span) - 1e-9)) + 1)
         return range(n_seg)
+
+
+def polyco_site(tempo_id):
+    code = TEMPO_SITES.get(tempo_id, tempo_id)
+    return str(ord(code) - ord('a') + 10) if len(code) == 1 and code.isalpha() else code
 
 
 def predictor_name(pulsar_model, parfile_path):
