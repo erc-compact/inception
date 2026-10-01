@@ -1,12 +1,13 @@
 import os
+import re
 import sys
 import json
-import shutil
 import numpy as np
 import pandas as pd
 from pathlib import Path 
 import astropy.units as u
 from math import factorial
+from decimal import Decimal
 from datetime import datetime
 import astropy.constants as const
 from sympy import lambdify, symbols
@@ -15,6 +16,7 @@ from .io_tools import FilterbankReader, print_exe
 from .pulsar_par_parser import PulsarParParser
 from .binary_model import BinaryModel
 from .pulsar_model import PulsarModel
+from .propagation_effects import TEMPO_DM_CONST
 from .observation import Observation
 from .phase_predictors import create_predictor
 from .external_data import configure as configure_external_data
@@ -250,7 +252,56 @@ class SetupManager:
         ra_str = '{}{:02.0f}:{:02.0f}:{:07.4f}'.format(ra_sign, *np.abs(ra_hms))
         dec_str = '{}{:02.0f}:{:02.0f}:{:07.4f}'.format(dec_sign, *np.abs(dec_dms))
         return ra_str, dec_str
-    
+
+    def adjust_parfile(self, pulsar_model, par_path):
+        with open(par_path) as par_file:
+            lines = par_file.read().splitlines()
+
+        prop = pulsar_model.prop_effect
+        self.set_par_value(lines, 'DM', Decimal(repr(float(prop.DM * prop.DM_const / TEMPO_DM_CONST))))
+
+        epoch = pulsar_model.pepoch + (pulsar_model.accepoch if pulsar_model.AX_list else 0) * u.s.to(u.day)
+        if pulsar_model.pulsar_pars['DM_ref'] != 'inf':
+            epoch -= prop.DM * prop.DM_const / pulsar_model.obs.high_f**2 * u.s.to(u.day)
+        if pulsar_model.pulsar_pars['frame'] == 'topo':
+            epoch = float(pulsar_model.obs.topo2bary([epoch])[0])
+
+        par_pepoch = self.get_par_value(lines, 'PEPOCH')
+        if par_pepoch is None:
+            par_pepoch = Decimal(repr(float(epoch)))
+            self.set_par_value(lines, 'PEPOCH', par_pepoch)
+        shift = (float(par_pepoch) - epoch) * u.day.to(u.s)
+
+        FX = pulsar_model.FX_doppler
+        deltas = [sum(FX[k+j] * shift**j / factorial(j) for j in range(len(FX) - k)) for k in range(len(FX))]
+        highest = max([k for k, delta in enumerate(deltas) if delta], default=-1)
+        for k in range(highest + 1):
+            value = self.get_par_value(lines, f'F{k}')
+            self.set_par_value(lines, f'F{k}', (value or Decimal(0)) + Decimal(repr(float(deltas[k]))))
+        return '\n'.join(lines) + '\n'
+
+    @staticmethod
+    def get_par_value(lines, key):
+        for line in lines:
+            parts = line.split()
+            if len(parts) > 1 and parts[0] == key:
+                return Decimal(parts[1].replace('D', 'E').replace('d', 'e'))
+        return None
+
+    @staticmethod
+    def set_par_value(lines, key, value):
+        for n, line in enumerate(lines):
+            parts = line.split()
+            if len(parts) > 1 and parts[0] == key:
+                if Decimal(parts[1].replace('D', 'E').replace('d', 'e')) == value:
+                    return
+                token = format(value, 'E') if re.search('[EeDd]', parts[1]) else format(value, 'f')
+                head, tail = re.match(r'(\s*\S+\s+)\S+(.*)', line).groups()
+                lines[n] = head + token + tail
+                return
+        if value:
+            lines.append(f'{key:<15}{value}')
+
     def create_parfile(self, i):
         pulsar_model = self.pulsar_models[i]
         ephemeris = pulsar_model.pulsar_pars['pint_polycos']
@@ -258,7 +309,8 @@ class SetupManager:
             if Path(ephemeris).suffix != '.par':
                 return ''
             new_path =  self.output_path+f'/{pulsar_model.ID}.par'
-            shutil.copy(ephemeris, new_path)
+            with open(new_path, 'w') as par_file:
+                par_file.write(self.adjust_parfile(pulsar_model, ephemeris))
             return new_path
 
         parfile_params = {'PSR': f'0000+{i+1:04}i'}

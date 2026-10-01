@@ -8,6 +8,9 @@ from scipy.ndimage import convolve1d
 from scipy.interpolate import interp1d
 
 
+TEMPO_DM_CONST = 1/2.41e-4
+
+
 class PropagationEffects:
     def __init__(self, obs, pulsar_pars, profile_length=1, period=0, spectra=0):
         self.ID = pulsar_pars['ID']
@@ -24,7 +27,7 @@ class PropagationEffects:
         if DM_const == 'exact':
             return (const.e.si**2/(8*np.pi**2*const.m_e*const.c) /(const.eps0) * u.pc.to(u.m)*u.m).value*1e-6   # MHz^2 pc^-1 cm^3 s
         if DM_const == 'historical':
-            return 1/2.41e-4
+            return TEMPO_DM_CONST
 
         try:
             value = float(DM_const)

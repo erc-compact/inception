@@ -7,7 +7,7 @@ from astropy.time import TimeDelta
 from sympy import lambdify, symbols, diff
 from scipy.interpolate import interp1d
 
-from .propagation_effects import PropagationEffects
+from .propagation_effects import PropagationEffects, TEMPO_DM_CONST
 from .pulsar_emission import PulsarEmission
 from .micro_structure import MicroStructure
 
@@ -30,10 +30,9 @@ class PulsarModel:
         self.micro_structure = pulsar_pars['micro_structure']
         
         self.get_epochs()
+        self.ephemeris_freq = self.ephemeris_frequency(pulsar_pars['pint_polycos']) if self.mode == 'pint' else 0.
         self.get_spin_functions(pulsar_pars)
-        if self.mode == 'pint':
-            self.period = self.ephemeris_period(pulsar_pars['pint_polycos'])
-        
+
         self.emission = PulsarEmission(obs, pulsar_pars)
         self.intrinsic_profile_chan = self.emission.get_intrinsic_profile()
         self.prop_effect = PropagationEffects(self.obs, pulsar_pars, self.emission.profile_length, self.period, self.emission.spectra)
@@ -83,7 +82,7 @@ class PulsarModel:
 
         spin_symbolic = sum([FX[n]*t**n/factorial(n) for n in range(n_freq)])
         self.spin_func = lambdify(t, spin_symbolic.subs(freq_derivs))
-        spin_ref_freq = self.spin_func(self.spin_ref)
+        spin_ref_freq = self.spin_func(self.spin_ref) + self.ephemeris_freq
         self.period = 1/spin_ref_freq if spin_ref_freq else np.inf
 
         if n_accel:
@@ -92,6 +91,8 @@ class PulsarModel:
 
             Vel_symbolic = sum([AX[n]*t**(n+1)/factorial(n+1) for n in range(n_accel)])
             spin_doppler = spin_symbolic * (1 - Vel_symbolic/c)
+            if self.ephemeris_freq:
+                spin_doppler = spin_doppler - self.ephemeris_freq * Vel_symbolic/c
             phase_symbolic = spin_doppler.integrate(t)  
             phase_func_abs = lambdify([t, c], phase_symbolic.subs({**freq_derivs, **accel_derivs}))
             self.phase_func = lambda t: phase_func_abs(t - self.accepoch, const.c.value) + phase_offset
@@ -138,18 +139,13 @@ class PulsarModel:
 
         return observed_profile_function
     
-    def ephemeris_period(self, ephemeris_path):
+    def ephemeris_frequency(self, ephemeris_path):
         if (not ephemeris_path) or (not os.path.exists(ephemeris_path)):
-            return self.period
+            return 0.
         if ephemeris_path.endswith('.par'):
-            f_ephem = self.par_frequency(ephemeris_path)
-        else:
-            from pint.polycos import Polycos # type: ignore
-            t_mid = self.obs.obs_start + 0.5 * self.obs.obs_len * u.s.to(u.day)
-            f_ephem = float(np.atleast_1d(Polycos.read(ephemeris_path).eval_spin_freq(np.array([t_mid])))[0])
-        if not f_ephem:
-            return self.period
-        return 1/(f_ephem + float(self.spin_func(self.spin_ref)))
+            return self.par_frequency(ephemeris_path)
+        from pint.polycos import Polycos # type: ignore
+        return float(Polycos.read(ephemeris_path).polycoTable['entry'][0].f0)
 
     @staticmethod
     def par_frequency(par_path):
@@ -165,6 +161,7 @@ class PulsarModel:
         from pint.polycos import Polycos # type: ignore
         polycos_model = Polycos.read(self.polycos_path)
         self.polyco_freq = float(polycos_model.polycoTable['obsfreq'][0])
+        self.polyco_DM = float(polycos_model.polycoTable['dm'][0])
         self.polyco_delays = self.polyco_delay(self.obs.freq_arr)
 
         cover_lo = (np.min(np.asarray(polycos_model.polycoTable['t_start'], dtype=np.float64)) - self.obs.obs_start) * 86400
@@ -181,7 +178,9 @@ class PulsarModel:
         self.polycos = interp1d(interp_sec, rel_phase)
 
     def polyco_delay(self, freq):
-        return -self.prop_effect.DM * self.prop_effect.DM_const * (1/np.asarray(freq, dtype=np.float64)**2 - 1/self.polyco_freq**2)
+        inv_ref = 0. if self.pulsar_pars['DM_ref'] == 'inf' else 1/self.obs.high_f**2
+        ephemeris_shift = self.polyco_DM * TEMPO_DM_CONST * (1/self.polyco_freq**2 - inv_ref)
+        return ephemeris_shift - self.prop_effect.DM * self.prop_effect.DM_const * (1/np.asarray(freq, dtype=np.float64)**2 - inv_ref)
     
     def get_pulse(self, phase_abs, chan):
         if self.micro_structure:
