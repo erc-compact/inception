@@ -250,7 +250,6 @@ class NullerProcess:
 
             psr_dict = {
                 "ID": psr_ID,
-                "mode": "pint",
                 "PEPOCH": 0.5,
                 "phase_offset": float(self.ar_data[psr_ID]['phase_offset']),
                 
@@ -263,12 +262,11 @@ class NullerProcess:
                 "profile": self.ar_data[psr_ID]['profile'],
                 "gain_map": self.ar_data[psr_ID]['gain_map'],
                 "gain_axis": "time",
-                "polycos": par_file
+                "pint_polycos": par_file
             }
 
             for key, value in self.ar_data[psr_ID]['FX'].items():
                 psr_dict[key] = value
-            psr_dict['F0'] = psr_dict.get('F0') or 1e-12
 
             injection_plan['pulsars'].append(psr_dict)
 

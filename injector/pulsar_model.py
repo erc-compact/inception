@@ -1,7 +1,9 @@
+import os
 import numpy as np 
 import astropy.units as u
 from math import factorial
 import astropy.constants as const
+from astropy.time import TimeDelta
 from sympy import lambdify, symbols, diff
 from scipy.interpolate import interp1d
 
@@ -12,7 +14,7 @@ from .micro_structure import MicroStructure
 
 class PulsarModel:
     def __init__(self, obs, binary, pulsar_pars, generate=True):
-        self.mode = pulsar_pars['mode'] if pulsar_pars['mode'] else 'python'
+        self.mode = 'pint' if pulsar_pars['pint_polycos'] else 'python'
 
         self.ID = pulsar_pars['ID']
         self.seed = pulsar_pars['seed']
@@ -29,6 +31,8 @@ class PulsarModel:
         
         self.get_epochs()
         self.get_spin_functions(pulsar_pars)
+        if self.mode == 'pint':
+            self.period = self.ephemeris_period(pulsar_pars['pint_polycos'])
         
         self.emission = PulsarEmission(obs, pulsar_pars)
         self.intrinsic_profile_chan = self.emission.get_intrinsic_profile()
@@ -49,7 +53,7 @@ class PulsarModel:
             else: 
                 self.generate_signal = self.generate_signal_python_bary
         elif self.mode == 'pint':
-            self.polycos_path = pulsar_pars['polycos']
+            self.polycos_path = pulsar_pars['pint_polycos']
             self.get_polyco_interp()
             if  pulsar_pars['frame'] == 'topo':
                 self.generate_signal = self.generate_signal_polcos_topo
@@ -79,7 +83,8 @@ class PulsarModel:
 
         spin_symbolic = sum([FX[n]*t**n/factorial(n) for n in range(n_freq)])
         self.spin_func = lambdify(t, spin_symbolic.subs(freq_derivs))
-        self.period = 1/self.spin_func(self.spin_ref)
+        spin_ref_freq = self.spin_func(self.spin_ref)
+        self.period = 1/spin_ref_freq if spin_ref_freq else np.inf
 
         if n_accel:
             AX = symbols([f'A{x}' for x in range(n_accel)])
@@ -133,13 +138,50 @@ class PulsarModel:
 
         return observed_profile_function
     
+    def ephemeris_period(self, ephemeris_path):
+        if (not ephemeris_path) or (not os.path.exists(ephemeris_path)):
+            return self.period
+        if ephemeris_path.endswith('.par'):
+            f_ephem = self.par_frequency(ephemeris_path)
+        else:
+            from pint.polycos import Polycos # type: ignore
+            t_mid = self.obs.obs_start + 0.5 * self.obs.obs_len * u.s.to(u.day)
+            f_ephem = float(np.atleast_1d(Polycos.read(ephemeris_path).eval_spin_freq(np.array([t_mid])))[0])
+        if not f_ephem:
+            return self.period
+        return 1/(f_ephem + float(self.spin_func(self.spin_ref)))
+
+    @staticmethod
+    def par_frequency(par_path):
+        with open(par_path) as file:
+            for line in file:
+                parts = line.split()
+                if len(parts) > 1 and parts[0] in ('F0', 'P0'):
+                    value = float(parts[1].replace('D', 'E').replace('d', 'e'))
+                    return value if parts[0] == 'F0' else 1/value
+        return 0.0
+
     def get_polyco_interp(self):
         from pint.polycos import Polycos # type: ignore
         polycos_model = Polycos.read(self.polycos_path)
-        interp_topo_mjd = self.obs.observation_span(n_samples=10**5, return_mjd=True)
-        abs_phase_interp = polycos_model.eval_abs_phase(interp_topo_mjd).value
+        self.polyco_freq = float(polycos_model.polycoTable['obsfreq'][0])
+        self.polyco_delays = self.polyco_delay(self.obs.freq_arr)
 
-        self.polycos = interp1d(interp_topo_mjd.astype(np.float64), abs_phase_interp.astype(np.float64))
+        cover_lo = (np.min(np.asarray(polycos_model.polycoTable['t_start'], dtype=np.float64)) - self.obs.obs_start) * 86400
+        cover_hi = (np.max(np.asarray(polycos_model.polycoTable['t_stop'], dtype=np.float64)) - self.obs.obs_start) * 86400
+        interp_lo = max(cover_lo, min(0., np.min(self.polyco_delays)) - 3600)
+        interp_hi = min(cover_hi, self.obs.obs_len + self.obs.dt + max(0., np.max(self.polyco_delays)) + 3600)
+        interp_sec = np.linspace(interp_lo, interp_hi, 10**5)
+        interp_time = self.obs.obs_start_time_TIME + TimeDelta(interp_sec, format='sec')
+        interp_mjd = (interp_time.jd1 - 2400000.5).astype(np.longdouble) + interp_time.jd2.astype(np.longdouble)
+        abs_phase = polycos_model.eval_abs_phase(interp_mjd)
+        pulse_int = abs_phase.int.value
+        rel_phase = (pulse_int - pulse_int[0]).astype(np.float64) + abs_phase.frac.value.astype(np.float64)
+
+        self.polycos = interp1d(interp_sec, rel_phase)
+
+    def polyco_delay(self, freq):
+        return -self.prop_effect.DM * self.prop_effect.DM_const * (1/np.asarray(freq, dtype=np.float64)**2 - 1/self.polyco_freq**2)
     
     def get_pulse(self, phase_abs, chan):
         if self.micro_structure:
@@ -159,13 +201,9 @@ class PulsarModel:
     def generate_signal_polcos_bary(self, n_samples, sample_start=0):
         timeseries = np.linspace(self.obs.dt*sample_start, self.obs.dt*(n_samples+sample_start-1), n_samples)
         DM_delays = self.prop_effect.DM_delays[None, :]
-
-        topo_times = self.obs.sec2mjd(timeseries)
-        phase_time = topo_times[:, None] + DM_delays*u.s.to(u.day)
-
         bary_times = self.obs.topo2bary(timeseries, return_mjd=False, interp=True)
 
-        phase = self.polycos(phase_time) + self.get_phase(bary_times[:, None] + DM_delays)
+        phase = self.polycos(timeseries[:, None] + self.polyco_delays[None, :]) + self.get_phase(bary_times[:, None] + DM_delays)
         gain_map = self.emission.gain(bary_times)
         return self.get_pulse(phase, np.arange(self.obs.n_chan)[None, :]) * gain_map
     
@@ -173,10 +211,7 @@ class PulsarModel:
         timeseries = np.linspace(self.obs.dt*sample_start, self.obs.dt*(n_samples+sample_start-1), n_samples)
         DM_delays = self.prop_effect.DM_delays[None, :]
 
-        topo_times = self.obs.sec2mjd(timeseries)
-        phase_time = topo_times[:, None] + DM_delays*u.s.to(u.day)
-
-        phase = self.polycos(phase_time) + self.get_phase(timeseries[:, None] + DM_delays)
+        phase = self.polycos(timeseries[:, None] + self.polyco_delays[None, :]) + self.get_phase(timeseries[:, None] + DM_delays)
         gain_map = self.emission.gain(timeseries)
         return self.get_pulse(phase, np.arange(self.obs.n_chan)[None, :]) * gain_map
         

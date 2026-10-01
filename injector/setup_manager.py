@@ -253,10 +253,12 @@ class SetupManager:
     
     def create_parfile(self, i):
         pulsar_model = self.pulsar_models[i]
-        if Path(pulsar_model.pulsar_pars['polycos']).suffix == '.par':
-            par_file_path = pulsar_model.pulsar_pars['polycos']
+        ephemeris = pulsar_model.pulsar_pars['pint_polycos']
+        if ephemeris:
+            if Path(ephemeris).suffix != '.par':
+                return ''
             new_path =  self.output_path+f'/{pulsar_model.ID}.par'
-            shutil.copy(par_file_path, new_path)
+            shutil.copy(ephemeris, new_path)
             return new_path
 
         parfile_params = {'PSR': f'0000+{i+1:04}i'}
@@ -397,30 +399,18 @@ class SetupManager:
     
     def mode_resolver(self):
         for i, pulsar_pars in enumerate(self.pulsars):
-            mode = pulsar_pars.get('mode', 'python')
-            polycos_path = pulsar_pars['polycos']
-            
-            if mode not in ['pint', 'python']:
-                sys.exit(f"Invalid mode for pulsar {pulsar_pars['ID']}. Must be either 'python' or 'pint'")
-            if polycos_path:
-                mode = 'pint'
-            self.pulsars[i]['mode'] = mode
-
-            if mode == 'pint':
-                try:
-                    import pint.logging as logging      # type: ignore
-                    _ = logging.setup('ERROR')  
-                    import pint.models as models        # type: ignore
-                    from pint.polycos import Polycos    # type: ignore
-                except ImportError:
-                    sys.exit('pint-pulsar package not installed, cannot use polycos.')
-                else:
-                    if (not polycos_path):
-                        created_polyco_path = self.polycos_creator(self.parfile_paths[i], pulsar_pars, self.pulsar_models[i].obs,  pint_func=[models, Polycos])
-                        self.pulsars[i]['polycos'] = created_polyco_path
-                    elif (Path(polycos_path).suffix == '.par'):
-                        created_polyco_path = self.polycos_creator(polycos_path, pulsar_pars, self.pulsar_models[i].obs,  pint_func=[models, Polycos])
-                        self.pulsars[i]['polycos'] = created_polyco_path
+            ephemeris = pulsar_pars['pint_polycos']
+            if not ephemeris:
+                continue
+            try:
+                import pint.logging as logging      # type: ignore
+                _ = logging.setup('ERROR')
+                import pint.models as models        # type: ignore
+                from pint.polycos import Polycos    # type: ignore
+            except ImportError:
+                sys.exit('pint-pulsar package not installed, cannot use pint_polycos.')
+            if Path(ephemeris).suffix == '.par':
+                self.pulsars[i]['pint_polycos'] = self.polycos_creator(ephemeris, pulsar_pars, self.pulsar_models[i].obs, pint_func=[models, Polycos])
 
     def polycos_creator(self, par_file, pulsar_pars, obs, pint_func): 
         models, Polycos = pint_func

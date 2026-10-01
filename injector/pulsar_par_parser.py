@@ -77,13 +77,12 @@ class PulsarParParser:
         parser.add_argument('--double_pulsar', metavar='(ID)', required=False, type=str, help='Make pulsar the companion of pulsar {double_pulsar:ID}')
         parser.add_argument('--M_func', metavar='(M_sun)', required=False,  default=0, type=float, help='Mass function')
 
-        parser.add_argument('--mode', metavar='(str)', required=False, default='python', choices=['python', 'pint'], help="Inject using analytical 'python' code or polycos from 'pint'")
         parser.add_argument('--create_parfile', metavar='(par or pulsarx)', required=False, default='par', choices=['par', 'pulsarx'], help="Fold file for injected pulsar")
         parser.add_argument('--create_predictor', metavar='(none, polycos or t2pred)', required=False, default='none', choices=['none', 'polycos', 't2pred'], help="Phase predictor file for folding the injected pulsar")
         parser.add_argument('--fold_harmonic', metavar='(float)', required=False, type=float, help="Generate fold file with p0 * harmonic")
         parser.add_argument('--pint_N', metavar='(-)', required=False, default=12, type=int, help='Number of coefficients per timestep for polycos generation')
         parser.add_argument('--pint_T', metavar='(min)', required=False, default=5, type=float, help='Timestep for polycos generation')
-        parser.add_argument('--polycos', metavar='(file)', required=False, default='', type=str, help='.polycos: Pint will use this file, .par: Pint will make polycos from par file, (None) Pint will make from injection params.')
+        parser.add_argument('--pint_polycos', metavar='(file)', required=False, default='', type=str, help='Inject using a PINT ephemeris: a .polycos file is used directly, a .par file is converted to polycos with PINT. Spin parameters are then added as corrections.')
 
         self.parser = parser
     
@@ -183,10 +182,16 @@ class PulsarParParser:
         ID = pulsar_pars['ID']
         p0_find = pulsar_pars.get('P0', 0) 
         f0_find = pulsar_pars.get('F0', 0)
-        if (not p0_find) and (not f0_find):
+        ephemeris_mode = bool(pulsar_pars.get('pint_polycos'))
+        if (not p0_find) and (not f0_find) and (not ephemeris_mode):
             sys.exit(f'No P0 or F0 found for pulsar {ID}. Pulsar must be spinning!')
         if not pulsar_pars.get('SNR', 0):
             sys.exit(f'SNR value is required for pulsar {ID}.')
+
+        if (not p0_find) and (not f0_find):
+            f_orders = [int(key[1:]) for key in pulsar_pars.keys() if re.match(r'^F\d+$', key)]
+            FX_values = [self.str2func(pulsar_pars.get(f'F{i}', 0), f'F{i}', ID, float) for i in range(max(f_orders, default=0) + 1)]
+            return FX_values, [0.0] * len(FX_values)
 
         pattern = re.compile(r'^[PF]\d+$')
         matching_keys = [key for key in pulsar_pars.keys() if pattern.match(key)]
