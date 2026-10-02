@@ -12,11 +12,11 @@ TEMPO_DM_CONST = 1/2.41e-4
 
 
 class PropagationEffects:
-    def __init__(self, obs, pulsar_pars, profile_length=1, period=0, spectra=0):
+    def __init__(self, obs, pulsar_pars, profile_length=1, period=0, spectra=0, ephemeris_DM=0):
         self.ID = pulsar_pars['ID']
         self.obs = obs
         self.pulsar_pars = pulsar_pars
-        self.get_DM_delays()
+        self.get_DM_delays(ephemeris_DM)
 
         self.period = period
         self.spectra = spectra
@@ -37,10 +37,10 @@ class PropagationEffects:
             sys.exit(f"Invalid DM_const for pulsar {self.ID}: {DM_const}. Must be 'exact', 'historical' or a positive value in MHz^2 pc^-1 cm^3 s.")
         return value
 
-    def get_DM_delays(self):
-        self.DM = self.pulsar_pars['DM']
-        self.cDM = self.pulsar_pars.get('cDM', 0)
+    def get_DM_delays(self, ephemeris_DM=0):
         self.DM_const = self.get_DM_const()
+        self.DM = self.pulsar_pars['DM'] + ephemeris_DM * TEMPO_DM_CONST / self.DM_const
+        self.cDM = self.pulsar_pars.get('cDM', 0)
 
         ref_freq = self.pulsar_pars['DM_ref']
         if ref_freq == 'inf':

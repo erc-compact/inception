@@ -48,9 +48,6 @@ class CandidateMatcher:
         fb_path = glob.glob(f"{self.results_dir}/*_{self.inj_id}.fil")[0]
 
         ephem = self.processing_args['injection_args']['ephem']
-        if ephem != 'builtin':
-            inj_tools.rsync(ephem, self.work_dir)
-            ephem = f'./{Path(ephem).name}'
 
         self.fb = FilterbankReader(fb_path, stats_samples=0)
         injection_args = self.processing_args['injection_args']

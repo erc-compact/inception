@@ -6,7 +6,7 @@ import numpy as np
 from pathlib import Path
 
 from TOOLS_ar import ARProcessor
-from TOOLS_io import parse_par_file, par_period, parse_JSON, rsync, print_exe
+from TOOLS_io import parse_par_file, par_period, par_float, parse_JSON, rsync, print_exe
 from TOOLS_nullsar import fit_time_phase, fit_phase_offset, fit_subint_phase_offset, fit_chan_phase_offset, scale_freq_phase, plot_INIT, plot_OPT
 
 import os, sys
@@ -96,11 +96,7 @@ class NullerProcess:
 
             rsync(data, self.new_fb_path)
 
-        ephem = self.processing_args['injection']['ephem']
-        self.ephem = 'builtin'
-        if ephem != 'builtin':
-            rsync(ephem, self.work_dir)
-            self.ephem = f'./{Path(ephem).name}'
+        self.ephem = self.processing_args['injection']['ephem']
 
         self.fb = FilterbankReader(self.new_fb_path, load_fb_stats=(128, 6))
 
@@ -254,7 +250,7 @@ class NullerProcess:
                 "phase_offset": float(self.ar_data[psr_ID]['phase_offset']),
                 
                 "P0_SNR": par_period(params),
-                "DM": self.ar_data[psr_ID]['DM'],
+                "DM": self.ar_data[psr_ID]['DM'] - par_float(params.get('DM', 0)),
                 "DM_ref": "top",
                 "DM_const": "historical",
                 "SNR": -self.ar_data[psr_ID]['SNR'],

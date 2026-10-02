@@ -55,7 +55,7 @@ class PulsarParParser:
         parser.add_argument('--gain_axis', choices=['time', 'freq'], default='time', required=False, help='Axis for a 1D gain map: time or freq')
         parser.add_argument('--micro_structure', metavar='(microsec)', required=False, default=0, type=float, help='Mean timescale of pulse microstructure')
         
-        parser.add_argument('--DM', metavar='(pc/cm^3)', required=False, default=0, type=float, help='Dispersion measure')
+        parser.add_argument('--DM', metavar='(pc/cm^3)', required=False, default=0, type=float, help='Dispersion measure, added to the ephemeris DM when using pint_polycos')
         parser.add_argument('--cDM', metavar='(pc/cm^3)', required=False, default=0, type=float, help='coherent Dispersion measure')
         parser.add_argument('--DM_smear', metavar='(off, approx or exact)', required=False, default='off', choices=['off', 'approx', 'exact'], help='Smear the pulse profile due to intra-channel DM smearing')
         parser.add_argument('--DM_ref', metavar='(top or inf)', required=False, default='inf', choices=['top', 'inf'], help='reference frequency for DM dispersion')
@@ -140,7 +140,7 @@ class PulsarParParser:
             accel_keys = [key for key in pulsar_pars.keys() if pattern.match(key)]
             if accel_keys:
                 accel_keys.sort(key=lambda x: int(x[1:]))
-                accel_vals = [self.str2func(pulsar_pars.get(f'A{i}', 0), accel_keys[i], ID, float) for i in range(int(accel_keys[-1][1:])+1)]
+                accel_vals = [self.str2func(pulsar_pars.get(f'A{i}', 0), f'A{i}', ID, float) for i in range(int(accel_keys[-1][1:])+1)]
             else:
                 accel_vals = []
         return accel_vals

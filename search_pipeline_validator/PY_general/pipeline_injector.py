@@ -87,9 +87,6 @@ class InjectorProcess:
 
     def run_injector(self, ncpus):
         ephem = self.processing_args['injection_args']['ephem']
-        if ephem != 'builtin':
-            inj_tools.rsync(ephem, self.work_dir)
-            ephem = f'./{Path(ephem).name}'
         gulp_size = self.processing_args['injection_args']['gulp_size_GB']
         n_samples = self.processing_args['injection_args']['stats_samples']
 

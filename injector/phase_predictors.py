@@ -51,8 +51,7 @@ class PhasePredictor:
             pm.binary.orbital_delay = pm.binary.generate_interp()
         self.mode = 'pint' if pm.pulsar_pars.get('pint_polycos') else 'python'
         if self.mode == 'pint' and not hasattr(pm, 'polycos'):
-            pm.polycos_path = pm.pulsar_pars['pint_polycos']
-            pm.get_polyco_interp()
+            pm.load_polycos()
 
     def set_ranges(self):
         margin = 0.0 if self.mode == 'pint' else 60.0
@@ -82,7 +81,7 @@ class PhasePredictor:
         delay = self.DM_delay(freq)
         phase = self.pm.get_phase(base + delay)
         if self.mode == 'pint':
-            phase = phase + self.pm.polycos(t_sec + self.pm.polyco_delay(freq))
+            phase = phase + self.pm.polycos(t_sec, freq)
         return phase
 
     def mjd_string(self, sec, digits=20):
