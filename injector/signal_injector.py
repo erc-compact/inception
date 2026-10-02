@@ -112,7 +112,7 @@ class InjectSignal:
         injected_block[active] = np.round(self.de_digitize(reader, block[active], np.nonzero(active)[1], rng) + pulsar_signal[active])
         filterbank.write_block(injected_block)
 
-        self.bits_flipped[cpu] += int(np.count_nonzero(np.clip(injected_block, 0, 2**self.nbits-1) != block))
+        self.bits_flipped[cpu] += int(np.count_nonzero(np.clip(injected_block, *reader.value_range) != block))
 
 
     def progress(self, cpu, N_blocks, block_i, t_stamp):

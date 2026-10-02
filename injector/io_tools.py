@@ -24,6 +24,10 @@ class FilterbankReader:
         self.dt = self.header['tsamp']
         self.nchans = int(self.header['nchans'])
         self.nbits = int(self.header['nbits'])
+        self.signed = bool(self.header.get('signed', 0))
+        if self.signed and self.nbits not in (8, 16):
+            sys.exit(f"Signed {self.nbits} bit filterbank is not supported.")
+        self.value_range = (-2**(self.nbits-1), 2**(self.nbits-1)-1) if self.signed else (0, 2**self.nbits-1)
         self.bandwidth = abs(self.header['foff']) * self.header['nchans']
         self.ftop = self.header['fch1'] - 0.5 * self.header['foff']
         self.fbottom = self.ftop + self.header['foff'] * self.header['nchans']
@@ -47,7 +51,7 @@ class FilterbankReader:
                 self.fb_mean, self.fb_std = self.get_FB_stats(stats_samples)
                 print_exe(f'mean: {self.fb_mean}, std: {self.fb_std}')
             else:
-                self.fb_mean, self.fb_std = 128.0, 6.0
+                self.fb_mean, self.fb_std = (0.0 if self.signed else 128.0), 6.0
                 self.chan_mean, self.chan_std = np.full(self.nchans, self.fb_mean), np.full(self.nchans, self.fb_std)
 
     def read_string(self):
@@ -137,9 +141,9 @@ class FilterbankReader:
         nbytes = nsamples * self.nchans
 
         if self.nbits == 16:
-            out = np.fromfile(self.read_file,dtype=np.uint16,count=nbytes)
+            out = np.fromfile(self.read_file,dtype=np.int16 if self.signed else np.uint16,count=nbytes)
         elif self.nbits == 8:
-            out = np.fromfile(self.read_file,dtype=np.uint8,count=nbytes)
+            out = np.fromfile(self.read_file,dtype=np.int8 if self.signed else np.uint8,count=nbytes)
         elif self.nbits == 4:
             raw = np.fromfile(self.read_file, dtype=np.uint8, count=nbytes // 2)
             out = np.empty(nbytes, dtype=np.uint8)
@@ -165,7 +169,7 @@ class FilterbankReader:
         block_size = 2**11
         n_blocks, remainder = divmod(self.n_samples, block_size)
         open_files = [open(output_path+f'/{ext}_{chan}.dat', 'wb') for chan in range(self.nchans)]
-        data_type = {64: np.float64, 32: np.float32, 8: np.uint8}
+        data_type = {64: np.float64, 32: np.float32, 8: np.int8 if self.signed else np.uint8}
         def split_block(block):
             for chan in range(self.nchans):
                 raw = block.T[chan].astype(data_type[nbits])
@@ -227,12 +231,12 @@ class FilterbankWriter:
         self.write_file.seek(self.write_data_pos + sample_offset * self.fb_reader.nchans * self.nbits // 8)
 
     def write_block(self, block):
-        block = np.clip(block, 0, 2**self.nbits-1)
+        block = np.clip(block, *self.fb_reader.value_range)
 
         if self.nbits == 16:
-            out = block.flatten(order='C').astype('uint16')
+            out = block.flatten(order='C').astype('int16' if self.fb_reader.signed else 'uint16')
         elif self.nbits == 8:
-            out = block.flatten(order='C').astype('uint8')
+            out = block.flatten(order='C').astype('int8' if self.fb_reader.signed else 'uint8')
         elif self.nbits in [1, 2, 4]:
             raw = block.flatten(order='C').astype('uint8')
             values_per_byte = 8 // self.nbits
