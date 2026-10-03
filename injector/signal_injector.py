@@ -24,6 +24,7 @@ class InjectSignal:
         self.n_samples = setup_manager.fb.n_samples
         self.nchans = setup_manager.fb.nchans
         self.nbits = setup_manager.fb.nbits
+        self.generate_fb = setup_manager.generate_fb
         if (self.nchans * self.nbits) % 8:
             sys.exit(f'nchans x nbits ({self.nchans} x {self.nbits}) must be a multiple of 8.')
         self.signal_floor = 0.1 / (self.n_samples * self.nchans)
@@ -97,19 +98,24 @@ class InjectSignal:
     
     def inject_block(self, filterbank, cpu, block_start, block_size, models, rng):
         reader = filterbank.fb_reader
-        block = reader.read_block(block_size)
         sample_start = block_start + self.get_file_start(cpu)
         
-        pulsar_signal = np.zeros_like(block)
+        pulsar_signal = np.zeros((block_size, self.nchans), dtype=reader.output_dtype)
         for pulsar_model in models:
             pulsar_signal += pulsar_model.generate_signal(block_size, sample_start)
 
-        channel_sigma = np.std(block, axis=0)
-        pulsar_signal.T[channel_sigma==0] = 0
+        if self.generate_fb:
+            noise = rng.normal(*self.generate_fb, size=pulsar_signal.shape)
+            block = np.clip(np.round(noise), *reader.value_range)
+            injected_block = np.round(noise + pulsar_signal)
+        else:
+            block = reader.read_block(block_size)
+            channel_sigma = np.std(block, axis=0)
+            pulsar_signal.T[channel_sigma==0] = 0
 
-        active = np.abs(pulsar_signal) > self.signal_floor
-        injected_block = block.copy()
-        injected_block[active] = np.round(self.de_digitize(reader, block[active], np.nonzero(active)[1], rng) + pulsar_signal[active])
+            active = np.abs(pulsar_signal) > self.signal_floor
+            injected_block = block.copy()
+            injected_block[active] = np.round(self.de_digitize(reader, block[active], np.nonzero(active)[1], rng) + pulsar_signal[active])
         filterbank.write_block(injected_block)
 
         self.bits_flipped[cpu] += int(np.count_nonzero(np.clip(injected_block, *reader.value_range) != block))

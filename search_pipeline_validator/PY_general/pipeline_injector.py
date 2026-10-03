@@ -97,6 +97,9 @@ class InjectorProcess:
             inputs += f' --cache={cache}'
         if self.processing_args['injection_args'].get('offline', False):
             inputs += ' --offline'
+        generate_fb = self.processing_args['injection_args'].get('generate_fb', [])
+        if generate_fb:
+            inputs += f" --generate_fb={','.join(str(value) for value in generate_fb)}"
         cmd = f"{self.processing_args['injection_args']['python']} {SCRIPT_inject_pulsars.__file__} {inputs}"
 
         print_exe('starting injection...')

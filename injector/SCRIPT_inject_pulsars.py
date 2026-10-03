@@ -23,9 +23,19 @@ if __name__=='__main__':
     parser.add_argument('--stats_samples', metavar='integer', required=False, default=1e6, type=float, help='number of samples to use for fb statistics')
     parser.add_argument('--cache', metavar='directory', required=False, default=None, help='cache directory for downloaded data such as astropy IERS tables')
     parser.add_argument('--offline', action='store_true', help='never download, use bundled IERS tables and built in telescope positions')
+    parser.add_argument('--generate_fb', metavar='mean,std', required=False, default=None, help='replace the filterbank data with Gaussian noise of this mean and standard deviation, keeping only its header')
     args = parser.parse_args()
 
-    setup = SetupManager(args.signal, args.fb, args.ephem, args.output, gulp_size_GB=args.gulp_size_GB, stats_samples=args.stats_samples, cache=args.cache, offline=args.offline)
+    generate_fb = None
+    if args.generate_fb:
+        try:
+            generate_fb = [float(value) for value in args.generate_fb.split(',')]
+        except ValueError:
+            generate_fb = []
+        if len(generate_fb) != 2 or generate_fb[1] <= 0:
+            sys.exit(f'Invalid --generate_fb {args.generate_fb}, must be mean,std with std > 0.')
+
+    setup = SetupManager(args.signal, args.fb, args.ephem, args.output, gulp_size_GB=args.gulp_size_GB, stats_samples=args.stats_samples, cache=args.cache, offline=args.offline, generate_fb=generate_fb)
    
     injector = InjectSignal(setup, args.ncpu, args.gulp_size_GB)
     injector.parallel_inject()

@@ -23,9 +23,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from __init__ import __version__
 
 class SetupManager:
-    def __init__(self, pulsar_data_path, filterbank_path, ephem_path='builtin', output_path=None, generate=False, override_length=0, gulp_size_GB=0.01, stats_samples=0, cache=None, offline=False):
+    def __init__(self, pulsar_data_path, filterbank_path, ephem_path='builtin', output_path=None, generate=False, override_length=0, gulp_size_GB=0.01, stats_samples=0, cache=None, offline=False, generate_fb=None):
         configure_external_data(cache, offline)
-        self.fb = self.get_filterbank(filterbank_path, gulp_size_GB, stats_samples) 
+        self.generate_fb = generate_fb
+        self.fb = self.get_filterbank(filterbank_path, gulp_size_GB, stats_samples, generate_fb) 
         self.ephem = self.get_ephem(ephem_path)
         self.output_path = output_path
         self.pulsars = self.get_pulsars(pulsar_data_path)
@@ -38,9 +39,9 @@ class SetupManager:
             self.create_injection_report()
         
     @staticmethod
-    def get_filterbank(filterbank_path, gulp_size_GB, stats_samples):
+    def get_filterbank(filterbank_path, gulp_size_GB, stats_samples, generate_fb=None):
         try:
-            fb = FilterbankReader(filterbank_path, gulp_size_GB, stats_samples)
+            fb = FilterbankReader(filterbank_path, gulp_size_GB, stats_samples, load_fb_stats=generate_fb or [])
         except FileNotFoundError:
             sys.exit(f'Unable to open filterbank file: {filterbank_path}')
         else:
@@ -390,7 +391,7 @@ class SetupManager:
         report_path = os.path.join(self.output_path, f'report_{self.inj_ID}_{self.seed}.json')
         report = {'injection_report': {'ID': self.inj_ID, 'global_seed': self.seed, 'datetime': str(datetime.now()), 'ephem': self.ephem,
                                 'fb': self.fb.path, 'obs_len': self.fb.obs_len,  'obs_dt': self.fb.dt, 'obs_nchan': self.fb.nchans, 'obs_nsamples': self.fb.n_samples,
-                                'obs_f0': self.fb.center, 'fb_mean': self.fb.fb_mean, 'fb_sigma': self.fb.fb_std, 'version': __version__}, 
+                                'obs_f0': self.fb.center, 'fb_mean': self.fb.fb_mean, 'fb_sigma': self.fb.fb_std, 'generate_fb': self.generate_fb, 'version': __version__}, 
                   'pulsars': self.pulsars}
         with open(report_path, 'w') as report_file:
             json.dump(report, report_file, indent=4)

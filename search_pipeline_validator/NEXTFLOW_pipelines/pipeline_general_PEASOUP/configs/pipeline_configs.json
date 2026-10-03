@@ -5,6 +5,7 @@
         "python": "python3",
         "cache": "",
         "offline": false,
+        "generate_fb": [],
 
         "filterbank" : "random",
         "gulp_size_GB": 0.01,
