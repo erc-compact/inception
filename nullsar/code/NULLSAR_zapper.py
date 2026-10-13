@@ -122,7 +122,7 @@ class NullerProcess:
                 out = self.parse_archive(psr_ID, archive_INIT, archive_INIT, params_path)
 
                 save_path = f'{self.processing_dir}/02_INIT/MODELS/model_{psr_ID}.png'
-                plot_INIT(save_path, archive_INIT, out)
+                plot_INIT(save_path, archive_INIT, out, self.profile_components(psr_ID))
 
             if self.mode == 'NULL':
                 fits_path_INIT = f'{self.processing_dir}/02_INIT/FOLDS/{psr_ID}_mode_INIT.fits'
@@ -142,7 +142,7 @@ class NullerProcess:
                     continue
                 
                 save_path = f'{self.processing_dir}/03_OPT/MODELS/OPT_{psr_ID}.png'
-                plot_OPT(save_path, archive_INIT, archive_OPT, out)
+                plot_OPT(save_path, archive_INIT, archive_OPT, out, self.profile_components(psr_ID))
 
         if len(par_files) == 0:
             print_exe('No pulsars to null.')
@@ -162,9 +162,14 @@ class NullerProcess:
         #         json.dump(self.ar_data, file, indent=4)
 
 
+    def profile_components(self, psr_ID):
+        components = self.processing_args.get('profile_components', {})
+        return int(components.get(psr_ID, components.get('default', 2)))
+
     def parse_archive(self, psr_ID, archive_INIT, archive_OPT, params_path):
 
         obs_len = self.fb.dt * self.fb.n_samples
+        n_components = self.profile_components(psr_ID)
 
         profile_path = f'{self.processing_dir}/02_INIT/MODELS/profile_{psr_ID}.npy'
         flux_time_path = f'{self.processing_dir}/02_INIT/MODELS/light_curve_{psr_ID}.npy'        
@@ -175,11 +180,11 @@ class NullerProcess:
             intensity_profile = archive_INIT.get_intensity_prof()
             
             time_phase = archive_INIT.get_time_phase()
-            freq_deriv, phase_offset, phase_shift, SNR_fit, time, time_amp = fit_time_phase(time_phase, intensity_profile, obs_len)
+            freq_deriv, phase_offset, phase_shift, SNR_fit, time, time_amp = fit_time_phase(time_phase, intensity_profile, obs_len, n_components=n_components)
 
             np.save(flux_time_path, time_amp)
             
-            freq_phase_scaled = scale_freq_phase(freq_phase, intensity_profile)
+            freq_phase_scaled = scale_freq_phase(freq_phase, intensity_profile, n_components)
             np.save(profile_path, freq_phase_scaled)
 
             calibration_offset = self.processing_args.get('calibration_offset', 0.5)
@@ -203,12 +208,12 @@ class NullerProcess:
             time_phase_OPT = archive_OPT.get_time_phase()
             freq_phase_OPT = self.get_freq_phase(archive_OPT)
 
-            fit = fit_phase_offset(intensity_profile_OPT, intensity_profile_INIT)
+            fit = fit_phase_offset(intensity_profile_OPT, intensity_profile_INIT, n_components)
             if fit is None:
                 return None
             phase_offset, SNR_scale, fit_params = fit
 
-            subint_corr = fit_subint_phase_offset(time_phase_OPT, intensity_profile_INIT, fit_params)
+            subint_corr = fit_subint_phase_offset(time_phase_OPT, intensity_profile_INIT, fit_params, n_components)
             LC_OPT = np.load(flux_time_path) * subint_corr
             LC_OPT = LC_OPT / np.mean(LC_OPT) if np.mean(LC_OPT) > 0 else np.ones_like(LC_OPT)
             opt_LC_path = f'{self.processing_dir}/03_OPT/MODELS/light_curve_{psr_ID}.npy'
@@ -216,7 +221,8 @@ class NullerProcess:
 
             DM_offset, phase_delay = fit_chan_phase_offset(freq_phase_OPT, intensity_profile_INIT, self.fb.freq_arr, fit_params, archive_OPT.get_period(),
                                                            min_chans=self.processing_args.get('dm_fit_min_chans', 8),
-                                                           sigma_level=self.processing_args.get('dm_fit_sigma', 3))
+                                                           sigma_level=self.processing_args.get('dm_fit_sigma', 3),
+                                                           n_components=n_components)
 
             self.ar_data[psr_ID] = {"SNR": SNR*SNR_scale,  
                                     "DM": DM+DM_offset,

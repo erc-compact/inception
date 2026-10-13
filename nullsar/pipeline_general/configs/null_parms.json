@@ -13,6 +13,10 @@
         "dm_fit_sigma": 3,
         "dm_fit_min_chans": 8,
 
+        "profile_components": {
+            "default": 2
+        },
+
         "delete_filtool": false,
         "delete_processing": false,
         

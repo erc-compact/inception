@@ -67,17 +67,17 @@ def xml2csv(xml_file):
     return csv_cands, pepoch, fftsize, dt
 
 
-def add_PSR_rv_curve(pulsar, time, rv_seg, pepoch_ref):
+def spin_time(pulsar, time):
+    return time + pulsar.spin_ref - (pulsar.accepoch if pulsar.AX_list else 0)
 
-    tref = pulsar.obs.obs_len * pepoch_ref
-    dt = time - tref
 
+def add_PSR_rv_curve(pulsar, time, rv_seg):
     if pulsar.binary.period:
         rv_seg += pulsar.binary.get_radial_velocity_coord(time + pulsar.orbit_ref)
-    else:
-        v_deriv = pulsar.AX_list
-        for n, deriv in enumerate(v_deriv):
-            rv_seg += deriv * dt**(n + 1) / factorial(n + 1)
+
+    dt = spin_time(pulsar, time)
+    for n, deriv in enumerate(pulsar.AX_list):
+        rv_seg += deriv * dt**(n + 1) / factorial(n + 1)
 
     return rv_seg
 

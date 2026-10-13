@@ -40,27 +40,34 @@ def profile(t, phase, sigma, Amp):
     g = norm(phase, sigma).pdf(t)
     return Amp * g
 
-def profile_2(t, phase1, sigma1, Amp1, phase2, sigma2, Amp2):
-    g1 = norm(phase1, sigma1).pdf(t)
-    g2 = norm(phase2, sigma2).pdf(t)
-    return Amp1 * g1 + Amp2 * g2
+def profile_sum(t, *pars):
+    total = 0
+    for phase, sigma, Amp in zip(pars[0::3], pars[1::3], pars[2::3]):
+        total = total + Amp * norm(phase, sigma).pdf(t)
+    return total
+
+
+def profile_base(t, *pars):
+    return profile_sum(t, *pars[:-1]) + pars[-1]
 
 
 def two_pulse_model(profile_pars):
     def func_r(x, A1, A2, x1, x2, d):
-        g1 = profile_2((x-x1) % 1, *profile_pars)
-        g2 = profile_2((x-x2) % 1, *profile_pars)
+        g1 = profile_sum((x-x1) % 1, *profile_pars)
+        g2 = profile_sum((x-x2) % 1, *profile_pars)
         return A1*g1 + A2*g2 + d
     return func_r
 
 
-def scale_freq_phase(freq_phase, intensity_profile):
+def scale_freq_phase(freq_phase, intensity_profile, n_components=2):
 
-    profile_pars, phase_corr, _ = get_IP_interp(intensity_profile)
+    profile_pars, phase_corr, _ = get_IP_interp(intensity_profile, n_components)
+    n_comp = len(profile_pars) // 3
 
-    def fit_phase(phase, phase_off, Amp1, Amp2, base):
-        g = profile_2((phase-phase_off)%1, *profile_pars[:2], Amp1, *profile_pars[3:5], Amp2)
-        return g + base
+    def fit_phase(phase, phase_off, *args):
+        pars = profile_pars.copy()
+        pars[2::3] = args[:-1]
+        return profile_sum((phase-phase_off)%1, *pars) + args[-1]
 
     prof_nbins = freq_phase.shape[1]
     phase_arr = bin_phase(prof_nbins)
@@ -73,19 +80,33 @@ def scale_freq_phase(freq_phase, intensity_profile):
             profile_s.append(np.zeros(prof_nbins))
             continue
         try:
-            out = curve_fit(fit_phase, phase_arr, time_phase_arr, p0=[1e-6, 1, 1, 0], bounds =[[-profile_pars[1], 0, 0, -np.inf], [profile_pars[1], np.inf, np.inf, np.inf]])
+            out = curve_fit(fit_phase, phase_arr, time_phase_arr, p0=[1e-6, *[1]*n_comp, 0],
+                            bounds=[[-profile_pars[1], *[0]*n_comp, -np.inf], [profile_pars[1], *[np.inf]*n_comp, np.inf]])
         except (RuntimeError, ValueError):
             profile_s.append(np.zeros(prof_nbins))
         else:
             updated_pars = profile_pars.copy()
-            updated_pars[2] = out[0][1]
-            updated_pars[5] = out[0][2]
-            profile_s.append(profile_2((phase_tmpl-out[0][0]) % 1, *updated_pars))
+            updated_pars[2::3] = out[0][1:1+n_comp]
+            profile_s.append(profile_sum((phase_tmpl-out[0][0]) % 1, *updated_pars))
 
     return np.array(profile_s)
 
 
-def get_IP_interp(intensity_profile):
+def fit_profile_model(phase, true_prof, starts, n_components, min_sigma):
+    bounds = [[0, min_sigma, 0]*n_components + [-1], [1, 1, 1]*n_components + [1]]
+    best, best_cost = None, np.inf
+    for p0 in starts:
+        try:
+            fit = curve_fit(profile_base, phase, true_prof, p0=p0, bounds=bounds)
+        except (RuntimeError, ValueError):
+            continue
+        cost = np.sum((true_prof-profile_base(phase, *fit[0]))**2)
+        if cost < best_cost:
+            best, best_cost = fit[0], cost
+    return best
+
+
+def get_IP_interp(intensity_profile, n_components=2):
 
     true_prof = intensity_profile / np.max(intensity_profile)
 
@@ -94,46 +115,45 @@ def get_IP_interp(intensity_profile):
     true_prof = np.roll(true_prof, len(true_prof)//2-max_ind)
     phase = bin_phase(len(true_prof))
     min_sigma = 0.25 / len(true_prof)
-    bounds = [[0, min_sigma, 0, 0, min_sigma, 0, -1], [1, 1, 1, 1, 1, 1, 1]]
+    widths = (0.015, 0.03, 0.06)
 
-    def profile_2_base(t, phase1, sigma1, Amp1, phase2, sigma2, Amp2, base):
-        return profile_2(t, phase1, sigma1, Amp1, phase2, sigma2, Amp2) + base
+    if n_components == 2:
+        starts = [[0.49, 0.05, 0.5, 0.51, 0.05, 0.5, 0]]
+        for width in widths:
+            for dx in (-0.06, -0.03, -0.01, 0.01, 0.03, 0.06):
+                starts.append([0.5, width, 2.5*width, 0.5+dx, 1.5*width, 0.75*width, 0])
+        best = fit_profile_model(phase, true_prof, starts, 2, min_sigma)
+    else:
+        best = fit_profile_model(phase, true_prof, [[0.5, width, 2.5*width, 0] for width in widths], 1, min_sigma)
+        for n in range(2, n_components+1):
+            residual = true_prof - profile_base(phase, *best)
+            peak = int(np.argmax(residual))
+            height = max(residual[peak], 0.01)
+            starts = [[*best[:-1], phase[peak], width, min(height*width*np.sqrt(2*np.pi), 1), best[-1]] for width in widths]
+            new = fit_profile_model(phase, true_prof, starts, n, min_sigma)
+            best = new if new is not None else np.concatenate([best[:-1], [0.5, 0.05, 0.0], best[-1:]])
 
-    starts = [[0.49, 0.05, 0.5, 0.51, 0.05, 0.5, 0]]
-    for width in (0.015, 0.03, 0.06):
-        for dx in (-0.06, -0.03, -0.01, 0.01, 0.03, 0.06):
-            starts.append([0.5, width, 2.5*width, 0.5+dx, 1.5*width, 0.75*width, 0])
+    true_prof = true_prof - best[-1]
+    profile_pars = best[:-1]
 
-    out, best_cost = None, np.inf
-    for p0 in starts:
-        try:
-            fit = curve_fit(profile_2_base, phase, true_prof, p0=p0, bounds=bounds)
-        except (RuntimeError, ValueError):
-            continue
-        cost = np.sum((true_prof-profile_2_base(phase, *fit[0]))**2)
-        if cost < best_cost:
-            out, best_cost = fit, cost
-
-    true_prof = true_prof - out[0][6]
-    out = (out[0][:6], out[1][:6, :6])
-
-    noise = true_prof-profile_2(phase, *out[0])
+    noise = true_prof-profile_sum(phase, *profile_pars)
     SNR = np.sqrt(np.sum((true_prof-np.mean(noise))**2)/np.std(noise)**2)
 
-    return out[0], max_ind, SNR
+    return profile_pars, max_ind, SNR
 
 
 def fit_f(t, theta0, f0, f1):
     return theta0 + f0*t + (1/2)*f1*t**2
 
 
-def fit_time_phase(time_phase, intensity_profile, obs_len, min_subints=5):
+def fit_time_phase(time_phase, intensity_profile, obs_len, min_subints=5, n_components=2):
 
-    profile_pars, phase_corr, SNR = get_IP_interp(intensity_profile)
+    profile_pars, phase_corr, SNR = get_IP_interp(intensity_profile, n_components)
 
     def fit_phase(phase, phase_off, Amp, base):
-        g = profile_2((phase-phase_off)%1, *profile_pars[:2], profile_pars[2]*Amp, *profile_pars[3:5], profile_pars[5]*Amp)
-        return g + base
+        pars = profile_pars.copy()
+        pars[2::3] = profile_pars[2::3]*Amp
+        return profile_sum((phase-phase_off)%1, *pars) + base
 
     prof_nbins = len(intensity_profile)
     time_nbins = len(time_phase)
@@ -174,7 +194,7 @@ def fit_time_phase(time_phase, intensity_profile, obs_len, min_subints=5):
     model_phase = fit_f(time, *theta)
     time_amp = np.zeros(time_nbins)
     for i, time_phase_arr in enumerate(time_phase):
-        g = profile_2((phase_arr-model_phase[i]) % 1, *profile_pars)
+        g = profile_sum((phase_arr-model_phase[i]) % 1, *profile_pars)
         design = np.vstack([g, np.ones_like(g)]).T
         time_amp[i] = np.linalg.lstsq(design, time_phase_arr, rcond=None)[0][0]
 
@@ -183,9 +203,9 @@ def fit_time_phase(time_phase, intensity_profile, obs_len, min_subints=5):
     return freq_deriv, phase_offset, phase_shift, SNR, time+obs_len/2, time_amp_smooth
 
 
-def fit_phase_offset(intensity_profile_OPT, intensity_profile_INIT):
+def fit_phase_offset(intensity_profile_OPT, intensity_profile_INIT, n_components=2):
 
-    profile_pars, phase_corr, _ = get_IP_interp(intensity_profile_INIT)
+    profile_pars, phase_corr, _ = get_IP_interp(intensity_profile_INIT, n_components)
     func_r = two_pulse_model(profile_pars)
 
     prof_nbins = len(intensity_profile_OPT)
@@ -231,9 +251,9 @@ def fit_two_pulse(intensity_profile_OPT, func_r, phase_corr, x1, x2, width=0.15,
     return popt, np.sqrt(offset_var)
 
 
-def fit_subint_phase_offset(time_phase_OPT, intensity_profile_INIT, fit_params):
+def fit_subint_phase_offset(time_phase_OPT, intensity_profile_INIT, fit_params, n_components=2):
 
-    profile_pars, phase_corr, _ = get_IP_interp(intensity_profile_INIT)
+    profile_pars, phase_corr, _ = get_IP_interp(intensity_profile_INIT, n_components)
     func_r = two_pulse_model(profile_pars)
     x1, x2 = fit_params[0][2], fit_params[0][3]
 
@@ -250,9 +270,9 @@ def fit_subint_phase_offset(time_phase_OPT, intensity_profile_INIT, fit_params):
     return normalise_light_curve(snr_arr)
 
 
-def fit_chan_phase_offset(freq_phase_OPT, intensity_profile_INIT, freq_arr, fit_params, PSR_P0, min_chans=8, sigma_level=3):
+def fit_chan_phase_offset(freq_phase_OPT, intensity_profile_INIT, freq_arr, fit_params, PSR_P0, min_chans=8, sigma_level=3, n_components=2):
 
-    profile_pars, phase_corr, _ = get_IP_interp(intensity_profile_INIT)
+    profile_pars, phase_corr, _ = get_IP_interp(intensity_profile_INIT, n_components)
     func_r = two_pulse_model(profile_pars)
     x1, x2 = fit_params[0][2], fit_params[0][3]
     phase_off = wrap_phase(x2-x1)
@@ -285,12 +305,12 @@ def fit_chan_phase_offset(freq_phase_OPT, intensity_profile_INIT, freq_arr, fit_
 
 
 
-def plot_OPT(save_path, archive_INIT, archive_OPT, fit_params):
+def plot_OPT(save_path, archive_INIT, archive_OPT, fit_params, n_components=2):
 
     intensity_profile_INIT = archive_INIT.get_intensity_prof()
     intensity_profile_OPT = archive_OPT.get_intensity_prof()
 
-    profile_pars, phase_corr, _ = get_IP_interp(intensity_profile_INIT)
+    profile_pars, phase_corr, _ = get_IP_interp(intensity_profile_INIT, n_components)
     func_r = two_pulse_model(profile_pars)
 
     prof_nbins = len(intensity_profile_OPT)
@@ -360,7 +380,7 @@ def plot_OPT(save_path, archive_INIT, archive_OPT, fit_params):
 
 
 
-def plot_INIT(save_path, archive_INIT, out):
+def plot_INIT(save_path, archive_INIT, out, n_components=2):
     fig = plt.figure(figsize=(12, 8))
 
     gs = fig.add_gridspec(3, 3, height_ratios=[1, 2, 2], hspace=0.0, wspace=0.3)
@@ -395,9 +415,9 @@ def plot_INIT(save_path, archive_INIT, out):
     time_nbins = len(TP)
     phase_bins = len(IP)
 
-    params, phase_corr, _ = get_IP_interp(IP)
+    params, phase_corr, _ = get_IP_interp(IP, n_components)
 
-    prof2D = scale_freq_phase(FP, IP)
+    prof2D = scale_freq_phase(FP, IP, n_components)
     prof2D = 0.5 * (prof2D + np.roll(prof2D, -1, axis=1))
     prof2D /= np.max(prof2D)
     prof2D = np.roll(prof2D, phase_bins//2+phase_corr, axis=1)
@@ -411,11 +431,11 @@ def plot_INIT(save_path, archive_INIT, out):
     axes[0][0].plot(phase_arr, IP)
 
     phase_plot = (np.arange(phase_bins*10) + 0.5) / (phase_bins*10)
-    axes[0][1].plot(phase_plot, np.roll(profile_2(phase_plot, *params), -10*(phase_bins//2-phase_corr)), 'C0-')
-    axes[0][1].plot(phase_plot, np.roll(profile(phase_plot, *params[:3]), -10*(phase_bins//2-phase_corr)), 'C3--', lw=1)
-    axes[0][1].plot(phase_plot, np.roll(profile(phase_plot, *params[3:]), -10*(phase_bins//2-phase_corr)), 'C3--', lw=1)
+    axes[0][1].plot(phase_plot, np.roll(profile_sum(phase_plot, *params), -10*(phase_bins//2-phase_corr)), 'C0-')
+    for k in range(0, len(params), 3):
+        axes[0][1].plot(phase_plot, np.roll(profile(phase_plot, *params[k:k+3]), -10*(phase_bins//2-phase_corr)), 'C3--', lw=1)
 
-    axes[0][2].plot(phase_arr, IP-np.roll(profile_2(phase_arr, *params), phase_corr-phase_bins//2), 'C2-')
+    axes[0][2].plot(phase_arr, IP-np.roll(profile_sum(phase_arr, *params), phase_corr-phase_bins//2), 'C2-')
 
     for i in range(3):
         axes[0][i].set_ylabel('Intensity')
@@ -440,7 +460,7 @@ def plot_INIT(save_path, archive_INIT, out):
 
     time_interp = PchipInterpolator(time, time_amp, extrapolate=True)
     for i in range(len(TP)):
-        TP_model[i] = np.roll(profile_2((phase_arr-phase_tp[i]) % 1, *params), -(phase_bins//2-phase_corr)) * time_interp(time_tp[i]+Tobs/2)
+        TP_model[i] = np.roll(profile_sum((phase_arr-phase_tp[i]) % 1, *params), -(phase_bins//2-phase_corr)) * time_interp(time_tp[i]+Tobs/2)
 
     axes[2][1].imshow(TP_model, origin='lower', extent=[0, 1, 0, Tobs], aspect='auto')
     axes[2][2].imshow(TP/np.mean(TP) - TP_model/np.mean(TP_model), origin='lower', extent=[0, 1, 0, Tobs], aspect='auto')

@@ -144,7 +144,6 @@ class CandidateMatcher:
             print_exe('PRESTO found no candidates.')
             return pd.DataFrame()
 
-        # presto_candfold names its folds by the row in the candidates csv
         candidates['fold_id'] = 'CAND' + candidates.index.astype(str)
 
         ref_obs = self.setup_manager.pulsar_models[0].obs
@@ -237,13 +236,8 @@ class CandidateMatcher:
             else:
                 psr_rv = -obs_rv
 
-            rv_PSR = cand_tools.add_PSR_rv_curve(pm, time, psr_rv, pm.pulsar_pars['ACCEPOCH']) 
-
-            # intrinsic spin frequency on the same time axis: the injector's spin
-            # model is referenced to PEPOCH, spin_ref seconds before the start of
-            # the observation, so F0 alone is only right when PEPOCH is the start
-            # and F1 is negligible
-            f_spin = np.broadcast_to(pm.spin_func(time + pm.spin_ref), time.shape)
+            rv_PSR = cand_tools.add_PSR_rv_curve(pm, time, psr_rv)
+            f_spin = np.broadcast_to(pm.spin_func(cand_tools.spin_time(pm, time)), time.shape)
 
             F_min = np.empty(len(candidates))
             F_max = np.empty(len(candidates))

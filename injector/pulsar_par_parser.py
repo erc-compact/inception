@@ -185,7 +185,7 @@ class PulsarParParser:
         ephemeris_mode = bool(pulsar_pars.get('pint_polycos'))
         if (not p0_find) and (not f0_find) and (not ephemeris_mode):
             sys.exit(f'No P0 or F0 found for pulsar {ID}. Pulsar must be spinning!')
-        if not pulsar_pars.get('SNR', 0):
+        if pulsar_pars.get('SNR') is None:
             sys.exit(f'SNR value is required for pulsar {ID}.')
 
         if (not p0_find) and (not f0_find):

@@ -1,5 +1,6 @@
 import os
 import sys
+import shutil
 import numpy as np 
 from time import time
 from pathlib import Path
@@ -83,6 +84,8 @@ class InjectSignal:
     def construct_models(self, fb, cpu):
         pulsar_models = []
         for pulsar_data in self.pulsars:
+            if not pulsar_data['SNR']:
+                continue
             obs = Observation(fb, self.ephem, pulsar_data, generate=True)
             binary = BinaryModel(pulsar_data, generate=True)
             pulsar_model = PulsarModel(obs, binary, pulsar_data, generate=True)
@@ -145,7 +148,17 @@ class InjectSignal:
         fb.fb_reader.read_file.close()
         fb.write_file.close()
 
+    def pass_through(self):
+        try:
+            os.link(self.fb_path, self.part_path)
+        except OSError:
+            shutil.copyfile(self.fb_path, self.part_path)
+
     def parallel_inject(self):
+        if (not self.generate_fb) and (not any(pulsar['SNR'] for pulsar in self.pulsars)):
+            print_exe('No pulsars with non-zero S/N, data passed through unchanged.')
+            self.pass_through()
+            return
         self.create_output()
         with Pool(self.n_cpus) as p:
             p.map(self.inject_signal, range(self.n_cpus))
