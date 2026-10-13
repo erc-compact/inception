@@ -195,10 +195,10 @@ class PeasoupProcess:
         if self.processing_args['peasoup_args']['save_dm_list']:
             inj_tools.rsync(self.DM_file, f'{processing_dir}/PEASOUP/{prefix}_{Path(self.DM_file).name}')
 
-        if self.processing_args['peasoup_args']['delete_filtool_fb']:
-            data = glob.glob(f"{processing_dir}/*_{self.inj_id}_FILTOOL_0{self.tscrunch_index+1}.fil")
-            if data:
-                os.remove(data[0])
+        inj_tools.touch_marker(f'{processing_dir}/PEASOUP/{self.process_tag}.searched')
+        process_plan = f'{processing_dir}/PEASOUP/inj_{self.injection_number:06}_PROCESS_PLAN.txt'
+        if self.processing_args['peasoup_args'].get('delete_filtool_fb', False) and inj_tools.plan_done(process_plan, '.searched'):
+            inj_tools.remove_files(f'{processing_dir}/FILTOOL/*_{self.inj_id}_FILTOOL_*.fil')
 
         if self.processing_args['peasoup_args']['delete_inj_fb']:
             data = glob.glob(f"{results_dir}/*_{self.inj_id}.fil")

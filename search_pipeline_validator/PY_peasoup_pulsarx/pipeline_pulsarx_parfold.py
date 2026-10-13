@@ -164,10 +164,11 @@ class PulsarxFoldParProcess:
         if self.processing_args['pulsarx_parfold_args']['delete_inj_fb']:
             os.remove(f'{self.out_dir}/inj_{self.injection_number:06}/{Path(self.data).name}')
 
-        if self.processing_args.get('pulsarx_candfold_args', {}).get('delete_inj_fb', False):
-            check_cands = glob.glob(f'{self.out_dir}/inj_{self.injection_number:06}/inj_cands/PEASOUP/*/*.png')
-            if check_cands:
-                os.remove(f'{self.out_dir}/inj_{self.injection_number:06}/{Path(self.data).name}')
+        inj_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
+        inj_tools.touch_marker(inj_tools.parfold_marker(inj_dir))
+        fold_plan = f'{inj_dir}/processing/PEASOUP/inj_{self.injection_number:06}_FOLD_PLAN.txt'
+        if self.processing_args.get('pulsarx_candfold_args', {}).get('delete_inj_fb', False) and inj_tools.plan_done(fold_plan, '.folded'):
+            inj_tools.remove_files(f'{inj_dir}/*_{self.inj_id}.fil')
 
 
 if __name__=='__main__':

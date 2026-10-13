@@ -137,3 +137,40 @@ def add_cmd_args(cmd, args):
 def cmd_value(args, option, default=None):
     tokens = args.get('cmd', '').split()
     return tokens[tokens.index(option) + 1] if option in tokens else default
+
+
+def touch_marker(path):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, 'a'):
+        os.utime(path)
+
+
+def is_fresh(path, reference):
+    return os.path.exists(path) and os.path.exists(reference) and os.path.getmtime(path) >= os.path.getmtime(reference)
+
+
+def plan_done(plan_file, suffix):
+    if not os.path.exists(plan_file):
+        return False
+    with open(plan_file) as plan:
+        tags = [line.strip() for line in plan if line.strip()]
+    marker_dir = os.path.dirname(plan_file)
+    return all(is_fresh(f'{marker_dir}/{tag}{suffix}', plan_file) for tag in tags)
+
+
+def parfold_marker(results_dir):
+    return f'{results_dir}/processing/PARFOLD.done'
+
+
+def parfold_done(results_dir):
+    reports = glob.glob(f'{results_dir}/report_*.json')
+    return bool(reports) and is_fresh(parfold_marker(results_dir), reports[0])
+
+
+def remove_files(pattern):
+    for path in glob.glob(pattern):
+        try:
+            os.remove(path)
+            print_exe(f'Removed {os.path.basename(path)}')
+        except FileNotFoundError:
+            pass

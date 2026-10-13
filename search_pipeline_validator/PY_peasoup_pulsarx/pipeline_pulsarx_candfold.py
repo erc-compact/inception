@@ -45,12 +45,15 @@ class PulsarxFoldCandProcess:
         results_dir = f'{self.out_dir}/inj_{self.injection_number:06}'
 
         data = glob.glob(f"{results_dir}/*_{self.inj_id}.fil")
-        if data:
-            inj_tools.rsync(data[0], self.work_dir)
+        if not data:
+            print_exe('No injected filterbank found.')
+            sys.exit(0)
 
+        if self.processing_args['pulsarx_candfold_args'].get('transfer_TMP', True):
+            inj_tools.rsync(data[0], self.work_dir)
             self.data = f'{self.work_dir}/{Path(data[0]).name}'
         else:
-            sys.exit(0)
+            self.data = data[0]
 
     def create_zap_sting(self):
         cmask = self.processing_args['pulsarx_candfold_args'].get('channel_mask', '')
@@ -148,10 +151,13 @@ class PulsarxFoldCandProcess:
                 os.rename(cand, f"{Path(cand).parent}/{self.processing_args['injection_args']['id']}_{self.inj_id}_inj_{self.injection_number:06}.cands")
             inj_tools.rsync(f'{self.work_dir}/*.cands', results_dir)
 
-        if self.processing_args['pulsarx_candfold_args']['delete_inj_fb']:
-            check_par = glob.glob(f'{self.out_dir}/inj_{self.injection_number:06}/inj_pulsars/*/*.png')
-            if check_par:
-                os.remove(f'{self.out_dir}/inj_{self.injection_number:06}/{Path(self.data).name}')
+    def clean_up(self):
+        processing_dir = f'{self.results_dir}/processing/PEASOUP'
+        inj_tools.touch_marker(f'{processing_dir}/{self.process_tag}.folded')
+
+        fold_plan = f'{processing_dir}/inj_{self.injection_number:06}_FOLD_PLAN.txt'
+        if self.processing_args['pulsarx_candfold_args'].get('delete_inj_fb', False) and inj_tools.plan_done(fold_plan, '.folded') and inj_tools.parfold_done(self.results_dir):
+            inj_tools.remove_files(f'{self.results_dir}/*_{self.inj_id}.fil')
 
 
 if __name__=='__main__':
@@ -171,3 +177,4 @@ if __name__=='__main__':
     fold_exec.fold_setup()
     fold_exec.run_fold(args.ncpus)
     fold_exec.transfer_products()
+    fold_exec.clean_up()

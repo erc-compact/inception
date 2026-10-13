@@ -34,6 +34,8 @@ class PrestoFoldCandProcess:
         self.get_injection_report()
         self.get_candidates()
         self.mode = self.processing_args['presto_candfold_args'].get('fold_mode', 'filterbank')
+        if self.mode not in ('filterbank', 'filtool', 'dat'):
+            sys.exit(f"presto_candfold_args.fold_mode must be 'filterbank', 'filtool' or 'dat', not '{self.mode}'.")
         if self.mode != 'dat':
             self.transfer_filterbank()
 
@@ -55,7 +57,7 @@ class PrestoFoldCandProcess:
             sys.exit(0)
 
     def transfer_filterbank(self):
-        if inj_tools.presto_rfi_cleaner(self.processing_args) == 'filtool':
+        if self.mode == 'filtool':
             data = [inj_tools.filtool_filterbank(self.results_dir, self.inj_id, self.processing_args)]
         else:
             data = glob.glob(f"{self.results_dir}/*_{self.inj_id}.fil")
@@ -185,6 +187,19 @@ class PrestoFoldCandProcess:
                                     f'{results_dir}/{psr_id}_CAND{idx}_{tag}{out_ext}')
                     break
 
+    def clean_up(self):
+        f_args = self.processing_args['presto_candfold_args']
+        processing_dir = f'{self.results_dir}/processing/PRESTO'
+        inj_tools.touch_marker(f'{processing_dir}/{self.process_tag}.folded')
+
+        if not inj_tools.plan_done(f'{processing_dir}/inj_{self.injection_number:06}_FOLD_PLAN.txt', '.folded'):
+            return
+
+        if f_args.get('delete_filtool_fb', False):
+            inj_tools.remove_files(f'{self.results_dir}/processing/FILTOOL/*_{self.inj_id}_FILTOOL_*.fil')
+        if f_args.get('delete_inj_fb', False) and inj_tools.parfold_done(self.results_dir):
+            inj_tools.remove_files(f'{self.results_dir}/*_{self.inj_id}.fil')
+
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(prog='Presto candidate-folder for search pipeline validator',
@@ -203,3 +218,4 @@ if __name__=='__main__':
     fold_exec.fold_setup()
     fold_exec.run_fold(args.ncpus)
     fold_exec.transfer_products()
+    fold_exec.clean_up()

@@ -166,7 +166,8 @@
         "save_png": true,
         "save_pfd": true,
 
-        "delete_inj_fb": false
+        "delete_inj_fb": false,
+        "delete_filtool_fb": false
     },
 
 
