@@ -30,13 +30,16 @@ class SetupManager:
         self.ephem = self.get_ephem(ephem_path)
         self.output_path = output_path
         self.pulsars = self.get_pulsars(pulsar_data_path)
+        print_exe(f'building {len(self.pulsars)} pulsar models...')
         self.pulsar_models = self.construct_models(generate, override_length)
 
         if self.output_path:
+            print_exe('writing fold files...')
             self.parfile_paths = self.create_foldfiles()
             self.mode_resolver()
             self.predictor_paths = self.create_predictors()
             self.create_injection_report()
+            print_exe('injection report written.')
         
     @staticmethod
     def get_filterbank(filterbank_path, gulp_size_GB, stats_samples, generate_fb=None):
@@ -384,6 +387,7 @@ class SetupManager:
             if kind == 'none':
                 predictor_paths.append('')
             else:
+                print_exe(f'creating {kind} predictor for {pulsar_pars["ID"]}...')
                 predictor_paths.append(create_predictor(self.pulsar_models[i], kind, self.output_path, self.parfile_paths[i]))
         return predictor_paths
 
@@ -400,4 +404,5 @@ class SetupManager:
         for i, pulsar_pars in enumerate(self.pulsars):
             ephemeris = pulsar_pars['pint_polycos']
             if ephemeris and Path(ephemeris).suffix == '.par':
+                print_exe(f'generating PINT polycos for {pulsar_pars["ID"]}...')
                 self.pulsars[i]['pint_polycos'] = create_polycos(ephemeris, pulsar_pars, self.pulsar_models[i].obs, self.output_path)

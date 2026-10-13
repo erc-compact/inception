@@ -28,6 +28,8 @@
         "injection": {
             "ephem": "builtin",
             "python": "python3",
+            "cache": "",
+            "offline": false,
             "gulp_size_GB": 0.01,
             "stats_samples": 1e6
         },

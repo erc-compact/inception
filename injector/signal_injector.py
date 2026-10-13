@@ -160,6 +160,7 @@ class InjectSignal:
             self.pass_through()
             return
         self.create_output()
+        print_exe(f'starting {self.n_cpus} workers, each builds its own models...')
         with Pool(self.n_cpus) as p:
             p.map(self.inject_signal, range(self.n_cpus))
 
