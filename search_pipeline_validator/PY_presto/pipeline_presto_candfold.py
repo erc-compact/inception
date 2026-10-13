@@ -1,11 +1,11 @@
 import os
 import sys
+import csv
 import glob
 import shutil
 import argparse
 import subprocess
 import numpy as np
-import pandas as pd
 from pathlib import Path
 from multiprocessing import Pool
 
@@ -46,7 +46,10 @@ class PrestoFoldCandProcess:
         processing_dir = f'{self.results_dir}/processing/PRESTO'
         cand_csv = glob.glob(f'{processing_dir}/{self.process_tag}.csv')
         if cand_csv:
-            self.candidates = pd.read_csv(cand_csv[0], index_col=0)
+            with open(cand_csv[0], newline='') as file:
+                reader = csv.reader(file)
+                header = next(reader)[1:]
+                self.candidates = [(row[0], dict(zip(header, row[1:]))) for row in reader]
         else:
             print_exe('No matched candidate file found.')
             sys.exit(0)
@@ -78,7 +81,7 @@ class PrestoFoldCandProcess:
 
     @staticmethod
     def fdd_flag(cand):
-        return f"-fdd {cand['F2']}" if cand['F2'] else ''
+        return f"-fdd {cand['F2']}" if float(cand['F2']) else ''
 
     def get_segment_bounds(self, seg_i, seg_n):
         fb_reader = FilterbankReader(self.data, stats_samples=0)
@@ -96,7 +99,7 @@ class PrestoFoldCandProcess:
         search_bary = self.processing_args['presto_search_args'].get('bary', False)
         return '' if f_args.get('bary', search_bary) else '-topo'
 
-    def fold_candidate_fb(self, cand):
+    def fold_candidate_fb(self, idx, cand):
         f_args = self.processing_args['presto_candfold_args']
         bary = self.bary_flag()
         mask = self.get_mask()
@@ -105,7 +108,7 @@ class PrestoFoldCandProcess:
 
         cwd = f"{self.work_dir}/_{cand['PSR_ID']}"
         os.makedirs(cwd, exist_ok=True)
-        out_file = f"{cwd}/{cand['PSR_ID']}_{cand.name}"
+        out_file = f"{cwd}/{cand['PSR_ID']}_{idx}"
 
         cmd = (f"prepfold {bary} -noxwin -o {out_file} -f {cand['F0']} -fd {cand['F1']} {self.fdd_flag(cand)} "
                f"-dm {cand['dm']} -start {start} -end {end} {mask} {self.data}")
@@ -115,9 +118,9 @@ class PrestoFoldCandProcess:
         inj_tools.print_exe(cmd)
         subprocess.run(cmd, shell=True, cwd=cwd)
 
-    def fold_candidate_dat(self, cand):
+    def fold_candidate_dat(self, idx, cand):
         dat_dir = f'{self.results_dir}/processing/PRESTO/FILES'
-        root = f"{self.inj_id}_SEG_{int(cand['seg_i'])}_{int(cand['seg_n'])}_DS{int(cand['downsample'])}_DM{cand['dm']:.2f}"
+        root = f"{self.inj_id}_SEG_{int(cand['seg_i'])}_{int(cand['seg_n'])}_DS{int(cand['downsample'])}_DM{float(cand['dm']):.2f}"
 
         dat_file = glob.glob(f'{dat_dir}/{root}.dat')
         inf_file = glob.glob(f'{dat_dir}/{root}.inf')
@@ -130,7 +133,7 @@ class PrestoFoldCandProcess:
         inj_tools.rsync(dat_file[0], cwd)
         inj_tools.rsync(inf_file[0], cwd)
 
-        out_file = f"{cwd}/{cand['PSR_ID']}_{cand.name}"
+        out_file = f"{cwd}/{cand['PSR_ID']}_{idx}"
 
         cmd = (f"prepfold -noxwin -o {out_file} -f {cand['F0']} -fd {cand['F1']} {self.fdd_flag(cand)} "
                f"-dm {cand['dm']} {cwd}/{root}.dat")
@@ -140,16 +143,16 @@ class PrestoFoldCandProcess:
         inj_tools.print_exe(cmd)
         subprocess.run(cmd, shell=True, cwd=cwd)
 
-    def fold_candidate(self, cand):
+    def fold_candidate(self, candidate):
+        idx, cand = candidate
         if self.mode == 'dat':
-            self.fold_candidate_dat(cand)
+            self.fold_candidate_dat(idx, cand)
         else:
-            self.fold_candidate_fb(cand)
+            self.fold_candidate_fb(idx, cand)
 
     def run_fold(self, ncpus):
-        cands = [row for _, row in self.candidates.iterrows()]
         with Pool(ncpus) as p:
-            p.map(self.fold_candidate, cands)
+            p.map(self.fold_candidate, self.candidates)
 
     CAND_PRODUCTS = [('.pfd.bestprof', 'save_bestprof', '.bestprof'),
                      ('.pfd.ps',       'save_ps',       '.ps'),
@@ -163,7 +166,7 @@ class PrestoFoldCandProcess:
         f_args = self.processing_args['presto_candfold_args']
         tag = f"{self.processing_args['injection_args']['id']}_{self.inj_id}_inj_{self.injection_number:06}"
 
-        for idx, cand in self.candidates.iterrows():
+        for idx, cand in self.candidates:
             psr_id = cand['PSR_ID']
             cwd = f'{self.work_dir}/_{psr_id}'
             if not os.path.isdir(cwd):
