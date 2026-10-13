@@ -73,6 +73,7 @@
         "transfer_TMP": true,
         "filtool": true,
         "inj_DM": false,
+        "inj_DM_offsets": [0],
         
         "ddplan" : {
             "1": [40, 60, 0.1],

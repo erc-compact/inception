@@ -137,19 +137,12 @@ class PeasoupProcess:
             self.birdie_list = ''
 
     def create_dm_list(self):
-        self.ddplan = self.processing_args['peasoup_args']['ddplan'][f'{self.tscrunch}']
-        
-        if self.processing_args['peasoup_args']['inj_DM']:
-            DM_values = np.array([pulsar['DM'] for pulsar in self.injection_report['pulsars']])
-            if len(DM_values) == 0:
-                print_exe('No DMs to search.')
-                sys.exit(0)
-            else:
-                DM_values.sort()
-        else:
-            low_dm, high_dm, dm_step = self.ddplan
-            n_trial = int(round((high_dm-low_dm)/dm_step))
-            DM_values = np.linspace(low_dm, high_dm, n_trial, endpoint=False)
+        p_args = self.processing_args['peasoup_args']
+        DM_values = inj_tools.build_dm_list(p_args['ddplan'], self.tscrunch, p_args['inj_DM'],
+                                            self.injection_report, p_args.get('inj_DM_offsets', [0]))
+        if len(DM_values) == 0:
+            print_exe('No DMs to search.')
+            sys.exit(0)
 
         DM_file = f'{self.work_dir}/dm_list_T0{int(self.tscrunch_index)}.ascii'
         np.savetxt(DM_file, DM_values, fmt='%.3f')

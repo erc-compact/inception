@@ -89,6 +89,7 @@
     "presto_search_args": {
         "transfer_TMP": false,
         "inj_DM": true,
+        "inj_DM_offsets": [0],
         "bary": true,
 
         "ddplan" : {

@@ -44,7 +44,8 @@ class PrestoAccelsearchProcess:
     def get_DM_list(self):
         s_args = self.processing_args['presto_search_args']
         self.DM_list = inj_tools.build_dm_list(s_args['ddplan'], self.downsample,
-                                               s_args.get('inj_DM', True), self.injection_report)
+                                               s_args.get('inj_DM', True), self.injection_report,
+                                               s_args.get('inj_DM_offsets', [0]))
 
     def segment_root(self, dm):
         return f'{self.inj_id}_SEG_{self.seg_i}_{self.seg_n}_DS{self.downsample}_DM{dm:.2f}'

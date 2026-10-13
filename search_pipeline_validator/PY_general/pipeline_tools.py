@@ -97,9 +97,13 @@ def parse_process_tag(process_tag):
     return downsample, None, None
 
 
-def build_dm_list(ddplan, downsample, inj_DM, injection_report):
+def build_dm_list(ddplan, downsample, inj_DM, injection_report, inj_DM_offsets=(0,)):
     if inj_DM:
-        return sorted(psr['DM'] for psr in injection_report['pulsars'])
+        trials = {}
+        for dm in sorted(psr['DM'] + offset for psr in injection_report['pulsars'] for offset in inj_DM_offsets):
+            if dm >= 0:
+                trials.setdefault(f'{dm:.2f}', dm)
+        return list(trials.values())
 
     low, high, step = ddplan[str(downsample)]
     n_trial = int(round((high - low) / step))

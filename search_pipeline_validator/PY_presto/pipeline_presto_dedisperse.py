@@ -41,7 +41,8 @@ class PrestoDedisperseProcess:
     def get_DM_list(self):
         s_args = self.processing_args['presto_search_args']
         self.DM_list = inj_tools.build_dm_list(s_args['ddplan'], self.downsample,
-                                               s_args.get('inj_DM', True), self.injection_report)
+                                               s_args.get('inj_DM', True), self.injection_report,
+                                               s_args.get('inj_DM_offsets', [0]))
 
     def transfer_data(self):
         if inj_tools.presto_rfi_cleaner(self.processing_args) == 'filtool':
