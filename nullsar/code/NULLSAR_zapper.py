@@ -7,7 +7,7 @@ from pathlib import Path
 
 from TOOLS_ar import ARProcessor
 from TOOLS_io import parse_par_file, par_period, par_float, parse_JSON, rsync, print_exe
-from TOOLS_nullsar import fit_time_phase, fit_phase_offset, fit_subint_phase_offset, fit_chan_phase_offset, scale_freq_phase, plot_INIT, plot_OPT
+from TOOLS_nullsar import fit_time_phase, fit_phase_offset, fit_subint_phase_offset, fit_chan_phase_offset, scale_freq_phase, plot_INIT, plot_OPT, DM_CONST_PULSARX
 
 import os, sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
@@ -119,7 +119,7 @@ class NullerProcess:
             if self.mode == 'INIT':
                 fits_path = f'{self.processing_dir}/02_INIT/FOLDS/{psr_ID}_mode_INIT.fits'
                 archive_INIT = ARProcessor(fits_path)
-                out = self.parse_archive(psr_ID, archive_INIT, archive_INIT, params_path)
+                out = self.parse_archive(psr_ID, archive_INIT, archive_INIT, params_path, par_file)
 
                 save_path = f'{self.processing_dir}/02_INIT/MODELS/model_{psr_ID}.png'
                 plot_INIT(save_path, archive_INIT, out, self.profile_components(psr_ID))
@@ -135,7 +135,7 @@ class NullerProcess:
                 archive_INIT = ARProcessor(fits_path_INIT)
                 archive_OPT = ARProcessor(fits_path_OPT)
 
-                out = self.parse_archive(psr_ID, archive_INIT, archive_OPT, params_path)
+                out = self.parse_archive(psr_ID, archive_INIT, archive_OPT, params_path, par_file)
                 if out is None:
                     print_exe(f'Unable to fit the OPTIMISE fold of {psr_ID}, skipping.')
                     par_files.remove(par_file)
@@ -166,7 +166,13 @@ class NullerProcess:
         components = self.processing_args.get('profile_components', {})
         return int(components.get(psr_ID, components.get('default', 2)))
 
-    def parse_archive(self, psr_ID, archive_INIT, archive_OPT, params_path):
+    def fold_phase_shift(self, archive, par_file):
+        DM = par_float(parse_par_file(par_file).get('DM', 0))
+        f_top = np.max(self.fb.freq_arr)
+        f_ref = 0.5 * (f_top + np.min(self.fb.freq_arr))
+        return DM * DM_CONST_PULSARX * (1/f_ref**2 - 1/f_top**2) / archive.get_period()
+
+    def parse_archive(self, psr_ID, archive_INIT, archive_OPT, params_path, par_file):
 
         obs_len = self.fb.dt * self.fb.n_samples
         n_components = self.profile_components(psr_ID)
@@ -190,7 +196,7 @@ class NullerProcess:
             calibration_offset = self.processing_args.get('calibration_offset', 0.5)
             self.ar_data[psr_ID] = {"SNR": SNR,  
                                     "DM": DM,
-                                    "phase_offset": phase_offset-phase_shift+calibration_offset, 
+                                    "phase_offset": (phase_offset-phase_shift+calibration_offset-self.fold_phase_shift(archive_INIT, par_file)) % 1,
                                     "gain_map": flux_time_path,
                                     "profile": profile_path,
                                     "FX": freq_deriv}
