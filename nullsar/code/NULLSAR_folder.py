@@ -95,24 +95,23 @@ class PulsarxParFolder:
             psr = parse_cand_file(par_file)
             p0 = 1/par_float(psr['F0'])
 
-        return Path(par_file).stem, p0, par_float(psr.get('DM', 0))
+        return Path(par_file).stem, p0
 
-    def fold_settings(self, p0, DM, fb):
+    def fold_settings(self, p0, fb):
         fold_args = self.processing_args['fold_pars']
 
         block_size = fold_args.get('blocksize', 'auto')
         if block_size == 'auto':
             block_size = max(2, int(np.ceil(fold_args.get('min_block_pulses', 10) * p0)))
 
-        n_subint = int(fold_args.get('n_subint', 64))
+        n_subint = min(int(fold_args.get('n_subint', 64)), 256)
         t_subint = block_size * max(1, int(np.ceil(fb.obs_len / n_subint / block_size)))
 
         tokens = fold_args.get('cmd', '').split()
         if ('--nbin' in tokens) or ('--nbinplan' in tokens):
             return block_size, t_subint, ''
 
-        t_DM = 8.3e-6 * abs(DM - self.processing_args.get('cDM', 0)) * abs(fb.header['foff']) / (fb.center / 1e3)**3
-        nbin = int(np.clip(2**np.floor(np.log2(p0 / np.hypot(fb.dt, t_DM))), 64, 1024))
+        nbin = int(np.clip(2**np.floor(np.log2(p0 / fb.dt)), 64, 256))
         return block_size, t_subint, f'--nbin {nbin} --nbinplan 0 {nbin}'
 
     def get_folding_alg(self, par_file):
@@ -133,7 +132,7 @@ class PulsarxParFolder:
     def run_parfold(self, par_file):
         fold_args = self.processing_args['fold_pars']
 
-        psr_id, p0, DM = self.get_psr_params(par_file)
+        psr_id, p0 = self.get_psr_params(par_file)
         alg_cmd = self.get_folding_alg(par_file)
 
 
@@ -146,7 +145,7 @@ class PulsarxParFolder:
             search = ''
 
         fb = FilterbankReader(self.data, load_fb_stats=(128, 6))
-        block_size, t_subint, nbin_cmd = self.fold_settings(p0, DM, fb)
+        block_size, t_subint, nbin_cmd = self.fold_settings(p0, fb)
         print_exe(f'{psr_id} fold settings blocksize {block_size} s, tsubint {t_subint} s, {nbin_cmd or "nbin from cmd"}')
 
         tmp_cwd = f'{self.work_dir}/process_{psr_id}'

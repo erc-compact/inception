@@ -12,7 +12,6 @@
         "calibration_offset": 0.5,
         "dm_fit_sigma": 3,
         "dm_fit_min_chans": 8,
-        "cDM": 0,
 
         "profile_components": {
             "default": 2,
