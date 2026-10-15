@@ -15,8 +15,6 @@ from TOOLS_io import parse_cand_file, parse_par_file, par_float, set_par_value, 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 from injector.io_tools import merge_filterbanks, FilterbankReader, print_exe
 
-MAX_SUBINTS = 256
-
 
 class PulsarxParFolder:
     def __init__(self, tag, processing_args, out_dir, work_dir, mode='INIT'):
@@ -106,8 +104,7 @@ class PulsarxParFolder:
         if block_size == 'auto':
             block_size = max(2, int(np.ceil(fold_args.get('min_block_pulses', 10) * p0)))
 
-        n_subint = fold_args.get('n_subint', 'auto')
-        n_subint = MAX_SUBINTS if n_subint == 'auto' else int(n_subint)
+        n_subint = int(fold_args.get('n_subint', 64))
         t_subint = block_size * max(1, int(np.ceil(fb.obs_len / n_subint / block_size)))
 
         tokens = fold_args.get('cmd', '').split()

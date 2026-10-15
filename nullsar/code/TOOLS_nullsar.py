@@ -2,7 +2,7 @@ import numpy as np
 from scipy.stats import norm
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
-from scipy.signal import savgol_filter
+from scipy.signal import savgol_filter, savgol_coeffs
 from scipy.interpolate import PchipInterpolator
 
 
@@ -27,20 +27,27 @@ def normalise_profile(prof):
     return prof / peak if peak > 0 else prof
 
 
-def normalise_light_curve(amps, subint_snr=np.inf, target_snr=10):
+def smooth_light_curve(amps, noise_var=None):
+    n = len(amps)
+    if noise_var is None:
+        diffs = np.diff(amps)
+        noise_var = (1.4826 * np.median(np.abs(diffs - np.median(diffs))))**2 / 2
+    best, best_risk = amps, n * noise_var
+    for window in range(5, n - (1 - n % 2) + 1, 2):
+        smooth = savgol_filter(amps, window_length=window, polyorder=3)
+        trace = n * savgol_coeffs(window, 3)[window//2]
+        risk = np.sum((amps - smooth)**2) + 2 * noise_var * trace - n * noise_var
+        if risk < best_risk:
+            best, best_risk = smooth, risk
+    return best
+
+
+def normalise_light_curve(amps, noise_var=None):
     amps = np.asarray(amps, dtype=np.float64)
-    window = int(np.ceil(2.25 * (target_snr / subint_snr)**2)) if subint_snr > 0 else len(amps)
-    window = min(window + 1 - window % 2, len(amps) - (1 - len(amps) % 2))
-    if window > 3:
-        amps = savgol_filter(amps, window_length=window, polyorder=3)
+    if len(amps) > 5:
+        amps = smooth_light_curve(amps, noise_var)
     amps = np.clip(amps, 0, None)
     return amps / np.mean(amps) if np.mean(amps) > 0 else np.ones_like(amps)
-
-
-def group_subints(time_phase, snr, target_snr=10, min_groups=5):
-    n_subints = len(time_phase)
-    n_groups = int(np.clip((snr / target_snr)**2, min(min_groups, n_subints), n_subints))
-    return np.array([chunk.sum(axis=0) for chunk in np.array_split(time_phase, n_groups)])
 
 
 def profile(t, phase, sigma, Amp):
@@ -149,36 +156,32 @@ def get_IP_interp(intensity_profile, n_components=2):
     return profile_pars, max_ind, SNR
 
 
-def select_components(intensity_profile, max_components=6):
+def select_components(intensity_profile, max_components=6, min_delta_chi2=25):
     true_prof = intensity_profile / np.max(intensity_profile)
     true_prof = np.roll(true_prof, len(true_prof)//2-np.argmax(true_prof))
     phase = bin_phase(len(true_prof))
     diffs = np.diff(true_prof)
     sigma = 1.4826 * np.median(np.abs(diffs - np.median(diffs))) / np.sqrt(2)
 
-    n_bins = len(true_prof)
-    threshold = 1 + 2 * np.sqrt(2 / n_bins)
-    best_n, best_bic = 1, np.inf
+    previous_chi2 = np.inf
     for n in range(1, max_components+1):
         try:
             profile_pars = get_IP_interp(intensity_profile, n)[0]
         except (TypeError, ValueError):
-            continue
+            return max(n-1, 1)
         residual = true_prof - profile_sum(phase, *profile_pars)
         chi2 = np.sum((residual - np.mean(residual))**2) / sigma**2
-        if chi2 / (n_bins - 3*n - 1) <= threshold:
-            return n
-        bic = chi2 + (3*n + 1) * np.log(n_bins)
-        if bic < best_bic:
-            best_n, best_bic = n, bic
-    return best_n
+        if previous_chi2 - chi2 < min_delta_chi2:
+            return max(n-1, 1)
+        previous_chi2 = chi2
+    return max_components
 
 
 def fit_f(t, theta0, f0, f1):
     return theta0 + f0*t + (1/2)*f1*t**2
 
 
-def fit_time_phase(time_phase, intensity_profile, obs_len, min_subints=5, n_components=2, subint_snr=np.inf, target_snr=10):
+def fit_time_phase(time_phase, intensity_profile, obs_len, min_subints=5, n_components=2):
 
     profile_pars, phase_corr, SNR = get_IP_interp(intensity_profile, n_components)
 
@@ -225,12 +228,15 @@ def fit_time_phase(time_phase, intensity_profile, obs_len, min_subints=5, n_comp
 
     model_phase = fit_f(time, *theta)
     time_amp = np.zeros(time_nbins)
+    amp_var = np.zeros(time_nbins)
     for i, time_phase_arr in enumerate(time_phase):
         g = profile_sum((phase_arr-model_phase[i]) % 1, *profile_pars)
         design = np.vstack([g, np.ones_like(g)]).T
-        time_amp[i] = np.linalg.lstsq(design, time_phase_arr, rcond=None)[0][0]
+        coeffs = np.linalg.lstsq(design, time_phase_arr, rcond=None)[0]
+        time_amp[i] = coeffs[0]
+        amp_var[i] = np.var(time_phase_arr - design @ coeffs) * np.linalg.pinv(design.T @ design)[0, 0]
 
-    time_amp_smooth = normalise_light_curve(time_amp, subint_snr, target_snr)
+    time_amp_smooth = normalise_light_curve(time_amp, np.median(amp_var))
 
     return freq_deriv, phase_offset, phase_shift, SNR, time+obs_len/2, time_amp_smooth
 
@@ -280,26 +286,32 @@ def fit_two_pulse(intensity_profile_OPT, func_r, phase_corr, x1, x2, width=0.15,
     if (not np.isfinite(offset_var)) or (offset_var <= 0):
         return None
 
-    return popt, np.sqrt(offset_var)
+    return popt, np.sqrt(offset_var), pcov
 
 
-def fit_subint_phase_offset(time_phase_OPT, intensity_profile_INIT, fit_params, n_components=2, subint_snr=np.inf, target_snr=10):
+def fit_subint_phase_offset(time_phase_OPT, intensity_profile_INIT, fit_params, n_components=2):
 
     profile_pars, phase_corr, _ = get_IP_interp(intensity_profile_INIT, n_components)
     func_r = two_pulse_model(profile_pars)
     x1, x2 = fit_params[0][2], fit_params[0][3]
 
-    snr_arr = []
+    snr_arr, ratio_var = [], []
     for subint_i in time_phase_OPT:
         fit = fit_two_pulse(subint_i, func_r, phase_corr, x1, x2)
-        snr_arr.append(np.abs(fit[0][0]/fit[0][1]) if fit else np.nan)
+        if fit:
+            popt, _, pcov = fit
+            ratio = np.abs(popt[0]/popt[1])
+            snr_arr.append(ratio)
+            ratio_var.append(ratio**2 * (pcov[0, 0]/popt[0]**2 + pcov[1, 1]/popt[1]**2 - 2*pcov[0, 1]/(popt[0]*popt[1])))
+        else:
+            snr_arr.append(np.nan)
 
     snr_arr = np.array(snr_arr)
     if np.all(np.isnan(snr_arr)):
         return np.ones(len(snr_arr))
     snr_arr[np.isnan(snr_arr)] = np.nanmedian(snr_arr)
 
-    return normalise_light_curve(snr_arr, subint_snr/np.sqrt(2), target_snr)
+    return normalise_light_curve(snr_arr, np.median(ratio_var))
 
 
 def fit_chan_phase_offset(freq_phase_OPT, intensity_profile_INIT, freq_arr, fit_params, PSR_P0, min_chans=8, sigma_level=3, n_components=2):

@@ -13,7 +13,6 @@
         "dm_fit_sigma": 3,
         "dm_fit_min_chans": 8,
         "cDM": 0,
-        "subint_snr": 10,
 
         "profile_components": {
             "default": 2,
@@ -44,7 +43,7 @@
             "template": "/path/meerkat_fold.template",
             "blocksize": "auto",
             "min_block_pulses": 10,
-            "n_subint": "auto",
+            "n_subint": 64,
 
             "cmd": "--clfd 2 --fillPatch rand --rfi zdot -v --render --plotx"
         }
