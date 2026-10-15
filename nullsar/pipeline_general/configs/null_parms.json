@@ -12,9 +12,12 @@
         "calibration_offset": 0.5,
         "dm_fit_sigma": 3,
         "dm_fit_min_chans": 8,
+        "cDM": 0,
+        "subint_snr": 10,
 
         "profile_components": {
-            "default": 2
+            "default": 2,
+            "PulsarA": "auto"
         },
 
         "delete_filtool": false,
@@ -39,10 +42,11 @@
 
             "channel_mask": "",
             "template": "/path/meerkat_fold.template",
-            "blocksize_plan": [2, 10, 0.1],
-            "n_subint": 64,
+            "blocksize": "auto",
+            "min_block_pulses": 10,
+            "n_subint": "auto",
 
-            "cmd": "--nbin 64 --nbinplan 0.1 128 --clfd 2 --fillPatch rand --rfi zdot -v --render --plotx"
+            "cmd": "--clfd 2 --fillPatch rand --rfi zdot -v --render --plotx"
         }
 
     }

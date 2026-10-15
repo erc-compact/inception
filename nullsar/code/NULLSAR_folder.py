@@ -15,6 +15,8 @@ from TOOLS_io import parse_cand_file, parse_par_file, par_float, set_par_value, 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 from injector.io_tools import merge_filterbanks, FilterbankReader, print_exe
 
+MAX_SUBINTS = 256
+
 
 class PulsarxParFolder:
     def __init__(self, tag, processing_args, out_dir, work_dir, mode='INIT'):
@@ -95,18 +97,26 @@ class PulsarxParFolder:
             psr = parse_cand_file(par_file)
             p0 = 1/par_float(psr['F0'])
 
-        blocksize_plan = self.processing_args['fold_pars'].get('blocksize_plan', [2, 10, 0.1])
-        input_blocksize = self.processing_args['fold_pars'].get('blocksize', False)
-        if not input_blocksize:
-            if p0 > blocksize_plan[2]:
-                block_size = blocksize_plan[1]
-            else:
-                block_size = blocksize_plan[0]
-        else:
-            block_size = input_blocksize
+        return Path(par_file).stem, p0, par_float(psr.get('DM', 0))
 
-        psrid = Path(par_file).stem
-        return psrid, block_size
+    def fold_settings(self, p0, DM, fb):
+        fold_args = self.processing_args['fold_pars']
+
+        block_size = fold_args.get('blocksize', 'auto')
+        if block_size == 'auto':
+            block_size = max(2, int(np.ceil(fold_args.get('min_block_pulses', 10) * p0)))
+
+        n_subint = fold_args.get('n_subint', 'auto')
+        n_subint = MAX_SUBINTS if n_subint == 'auto' else int(n_subint)
+        t_subint = block_size * max(1, int(np.ceil(fb.obs_len / n_subint / block_size)))
+
+        tokens = fold_args.get('cmd', '').split()
+        if ('--nbin' in tokens) or ('--nbinplan' in tokens):
+            return block_size, t_subint, ''
+
+        t_DM = 8.3e-6 * abs(DM - self.processing_args.get('cDM', 0)) * abs(fb.header['foff']) / (fb.center / 1e3)**3
+        nbin = int(np.clip(2**np.floor(np.log2(p0 / np.hypot(fb.dt, t_DM))), 64, 1024))
+        return block_size, t_subint, f'--nbin {nbin} --nbinplan 0 {nbin}'
 
     def get_folding_alg(self, par_file):
         suffix = Path(par_file).suffix 
@@ -126,7 +136,7 @@ class PulsarxParFolder:
     def run_parfold(self, par_file):
         fold_args = self.processing_args['fold_pars']
 
-        psr_id, block_size = self.get_psr_params(par_file)
+        psr_id, p0, DM = self.get_psr_params(par_file)
         alg_cmd = self.get_folding_alg(par_file)
 
 
@@ -139,11 +149,12 @@ class PulsarxParFolder:
             search = ''
 
         fb = FilterbankReader(self.data, load_fb_stats=(128, 6))
-        t_subint = fb.obs_len / fold_args['n_subint']
+        block_size, t_subint, nbin_cmd = self.fold_settings(p0, DM, fb)
+        print_exe(f'{psr_id} fold settings blocksize {block_size} s, tsubint {t_subint} s, {nbin_cmd or "nbin from cmd"}')
 
         tmp_cwd = f'{self.work_dir}/process_{psr_id}'
         os.makedirs(tmp_cwd, exist_ok=True)
-        cmd = f"{fold_args['mode']} {search} -o {tmp_cwd}/ --tsubint {t_subint} --nsubband {fb.nchans} -f {self.data} --template {fold_args['template']} {alg_cmd} {par_file} --blocksize {block_size} {self.zap_string} --saveimage"
+        cmd = f"{fold_args['mode']} {search} -o {tmp_cwd}/ --tsubint {t_subint} --nsubband {fb.nchans} -f {self.data} --template {fold_args['template']} {alg_cmd} {par_file} --blocksize {block_size} {nbin_cmd} {self.zap_string} --saveimage"
         cmd = add_cmd_args(cmd, fold_args)
 
         subprocess.run(cmd, shell=True, cwd=tmp_cwd)

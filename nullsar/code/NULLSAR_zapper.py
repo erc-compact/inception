@@ -8,6 +8,7 @@ from pathlib import Path
 from TOOLS_ar import ARProcessor
 from TOOLS_io import parse_par_file, par_period, par_float, parse_JSON, rsync, print_exe
 from TOOLS_nullsar import fit_time_phase, fit_phase_offset, fit_subint_phase_offset, fit_chan_phase_offset, scale_freq_phase, plot_INIT, plot_OPT, DM_CONST_PULSARX
+from TOOLS_nullsar import select_components, group_subints, bin_phase
 
 import os, sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
@@ -119,10 +120,11 @@ class NullerProcess:
             if self.mode == 'INIT':
                 fits_path = f'{self.processing_dir}/02_INIT/FOLDS/{psr_ID}_mode_INIT.fits'
                 archive_INIT = ARProcessor(fits_path)
-                out = self.parse_archive(psr_ID, archive_INIT, archive_INIT, params_path, par_file)
+                n_components = self.resolve_components(psr_ID, archive_INIT, params_path)
+                out = self.parse_archive(psr_ID, archive_INIT, archive_INIT, params_path, par_file, n_components)
 
                 save_path = f'{self.processing_dir}/02_INIT/MODELS/model_{psr_ID}.png'
-                plot_INIT(save_path, archive_INIT, out, self.profile_components(psr_ID))
+                plot_INIT(save_path, archive_INIT, out, n_components)
 
             if self.mode == 'NULL':
                 fits_path_INIT = f'{self.processing_dir}/02_INIT/FOLDS/{psr_ID}_mode_INIT.fits'
@@ -135,14 +137,15 @@ class NullerProcess:
                 archive_INIT = ARProcessor(fits_path_INIT)
                 archive_OPT = ARProcessor(fits_path_OPT)
 
-                out = self.parse_archive(psr_ID, archive_INIT, archive_OPT, params_path, par_file)
+                n_components = self.resolve_components(psr_ID, archive_INIT, params_path)
+                out = self.parse_archive(psr_ID, archive_INIT, archive_OPT, params_path, par_file, n_components)
                 if out is None:
                     print_exe(f'Unable to fit the OPTIMISE fold of {psr_ID}, skipping.')
                     par_files.remove(par_file)
                     continue
-                
+
                 save_path = f'{self.processing_dir}/03_OPT/MODELS/OPT_{psr_ID}.png'
-                plot_OPT(save_path, archive_INIT, archive_OPT, out, self.profile_components(psr_ID))
+                plot_OPT(save_path, archive_INIT, archive_OPT, out, n_components)
 
         if len(par_files) == 0:
             print_exe('No pulsars to null.')
@@ -164,7 +167,22 @@ class NullerProcess:
 
     def profile_components(self, psr_ID):
         components = self.processing_args.get('profile_components', {})
-        return int(components.get(psr_ID, components.get('default', 2)))
+        n_components = components.get(psr_ID, components.get('default', 2))
+        return n_components if n_components == 'auto' else int(n_components)
+
+    def resolve_components(self, psr_ID, archive_INIT, params_path):
+        n_components = self.profile_components(psr_ID)
+        if self.mode == 'NULL':
+            n_components = parse_JSON(params_path)[psr_ID].get('profile_components', n_components)
+        if n_components == 'auto':
+            n_components = select_components(archive_INIT.get_intensity_prof())
+        print_exe(f'{psr_ID} profile model uses {n_components} components')
+        return n_components
+
+    def grouped_subints(self, time_phase, SNR):
+        target_snr = self.processing_args.get('subint_snr', 10)
+        grouped = group_subints(time_phase, SNR, target_snr)
+        return grouped, SNR / np.sqrt(len(grouped)), target_snr
 
     def fold_phase_shift(self, archive, par_file):
         DM = par_float(parse_par_file(par_file).get('DM', 0))
@@ -172,10 +190,9 @@ class NullerProcess:
         f_ref = 0.5 * (f_top + np.min(self.fb.freq_arr))
         return DM * DM_CONST_PULSARX * (1/f_ref**2 - 1/f_top**2) / archive.get_period()
 
-    def parse_archive(self, psr_ID, archive_INIT, archive_OPT, params_path, par_file):
+    def parse_archive(self, psr_ID, archive_INIT, archive_OPT, params_path, par_file, n_components):
 
         obs_len = self.fb.dt * self.fb.n_samples
-        n_components = self.profile_components(psr_ID)
 
         profile_path = f'{self.processing_dir}/02_INIT/MODELS/profile_{psr_ID}.npy'
         flux_time_path = f'{self.processing_dir}/02_INIT/MODELS/light_curve_{psr_ID}.npy'        
@@ -185,8 +202,9 @@ class NullerProcess:
             freq_phase = self.get_freq_phase(archive_INIT)
             intensity_profile = archive_INIT.get_intensity_prof()
             
-            time_phase = archive_INIT.get_time_phase()
-            freq_deriv, phase_offset, phase_shift, SNR_fit, time, time_amp = fit_time_phase(time_phase, intensity_profile, obs_len, n_components=n_components)
+            time_phase, subint_snr, target_snr = self.grouped_subints(archive_INIT.get_time_phase(), SNR)
+            freq_deriv, phase_offset, phase_shift, SNR_fit, time, time_amp = fit_time_phase(time_phase, intensity_profile, obs_len, n_components=n_components,
+                                                                                             subint_snr=subint_snr, target_snr=target_snr)
 
             np.save(flux_time_path, time_amp)
             
@@ -199,6 +217,7 @@ class NullerProcess:
                                     "phase_offset": (phase_offset-phase_shift+calibration_offset-self.fold_phase_shift(archive_INIT, par_file)) % 1,
                                     "gain_map": flux_time_path,
                                     "profile": profile_path,
+                                    "profile_components": n_components,
                                     "FX": freq_deriv}
 
             return freq_deriv, phase_offset, time, time_amp, obs_len
@@ -211,7 +230,7 @@ class NullerProcess:
 
             intensity_profile_INIT = archive_INIT.get_intensity_prof()
             intensity_profile_OPT = archive_OPT.get_intensity_prof()
-            time_phase_OPT = archive_OPT.get_time_phase()
+            time_phase_OPT, subint_snr, target_snr = self.grouped_subints(archive_OPT.get_time_phase(), SNR)
             freq_phase_OPT = self.get_freq_phase(archive_OPT)
 
             fit = fit_phase_offset(intensity_profile_OPT, intensity_profile_INIT, n_components)
@@ -219,8 +238,12 @@ class NullerProcess:
                 return None
             phase_offset, SNR_scale, fit_params = fit
 
-            subint_corr = fit_subint_phase_offset(time_phase_OPT, intensity_profile_INIT, fit_params, n_components)
-            LC_OPT = np.load(flux_time_path) * subint_corr
+            subint_corr = fit_subint_phase_offset(time_phase_OPT, intensity_profile_INIT, fit_params, n_components,
+                                                  subint_snr=subint_snr, target_snr=target_snr)
+            LC_INIT = np.load(flux_time_path)
+            if len(LC_INIT) != len(subint_corr):
+                LC_INIT = np.interp(bin_phase(len(subint_corr)), bin_phase(len(LC_INIT)), LC_INIT)
+            LC_OPT = LC_INIT * subint_corr
             LC_OPT = LC_OPT / np.mean(LC_OPT) if np.mean(LC_OPT) > 0 else np.ones_like(LC_OPT)
             opt_LC_path = f'{self.processing_dir}/03_OPT/MODELS/light_curve_{psr_ID}.npy'
             np.save(opt_LC_path, LC_OPT)
@@ -235,6 +258,7 @@ class NullerProcess:
                                     "phase_offset": init_ar_data[psr_ID]['phase_offset'] + phase_delay, 
                                     "gain_map": opt_LC_path,
                                     "profile": profile_path,
+                                    "profile_components": n_components,
                                     "FX": freq_deriv}
 
             return fit_params
