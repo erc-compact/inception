@@ -291,7 +291,11 @@ class CandidateMatcher:
         mode = self.get_mode()
 
         if len(self.fold_cands) == 0:
-            self.write_fold_plan([], f'{self.results_dir}/processing')
+            # empty plan goes where the parfold looks for it, so a parfold finishing later can still delete the filterbank
+            self.write_fold_plan([], f'{self.results_dir}/processing/{mode}')
+            fold_args = self.processing_args.get({'PEASOUP': 'pulsarx_candfold_args', 'PRESTO': 'presto_candfold_args'}.get(mode, ''), {})
+            if fold_args.get('delete_inj_fb', False) and inj_tools.parfold_done(self.results_dir):
+                inj_tools.remove_files(f'{self.results_dir}/*_{self.inj_id}.fil')
             return
 
         generator = self.fold_file_generators.get(mode)
