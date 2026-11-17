@@ -1,0 +1,20 @@
+{
+    "psr_global": {
+        "injection_id": "followup",
+        "global_seed": 1
+    },
+    "pulsars": [
+        {
+            "ID": "candidate_1",
+            "pint_polycos": "path/to/candidate_1.par",
+            "SNR": 0
+        },
+        {
+            "ID": "candidate_2",
+            "P0": 0.00312,
+            "DM": 61.3,
+            "SNR": 0,
+            "PEPOCH": 60500.0
+        }
+    ]
+}

@@ -1,0 +1,33 @@
+{
+    "psr_global": {
+        "injection_id": "propagation",
+        "global_seed": 11,
+        "DM_smear": "exact"
+    },
+    "pulsars": [
+        {
+            "ID": "scattered",
+            "P0": 0.0331,
+            "DM": 40,
+            "SNR": 80,
+            "spectrum": -1.4,
+            "scattering_time": 1.0,
+            "scattering_index": -4
+        },
+        {
+            "ID": "scattering_from_DM",
+            "P0": 0.0089,
+            "DM": 350,
+            "SNR": 40,
+            "scattering_model": "CORDES"
+        },
+        {
+            "ID": "coherent_data",
+            "P0": 0.0021,
+            "DM": 52.5,
+            "cDM": 52.0,
+            "SNR": 30,
+            "duty_cycle": 0.04
+        }
+    ]
+}

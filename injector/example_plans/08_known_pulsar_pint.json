@@ -1,0 +1,23 @@
+{
+    "psr_global": {
+        "injection_id": "known",
+        "global_seed": 1
+    },
+    "pulsars": [
+        {
+            "ID": "known_psr",
+            "pint_polycos": "path/to/known_psr.par",
+            "SNR": 40,
+            "DM": 0.0,
+            "duty_cycle": 0.08
+        },
+        {
+            "ID": "known_psr_dm_offset",
+            "pint_polycos": "path/to/known_psr.par",
+            "SNR": 40,
+            "DM": 0.05,
+            "A0": 0.5,
+            "create_predictor": "t2pred"
+        }
+    ]
+}

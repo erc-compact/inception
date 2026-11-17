@@ -1,25 +1,12 @@
 /.venv
-
 /.vscode
-
 /dev_offline_injector
-
 /dev_nulsar
 
-/injector/__pycache__
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.DS_Store
 
-/nullsar/__pycache__
-
-/nullsar/code/__pycache__
-
-/search_pipeline_validator/__pycache__
-
-/search_pipeline_validator/PY_general/__pycache__
-
-/search_pipeline_validator/PY_peasoup_pulsarx/__pycache__
-
-/search_pipeline_validator/PY_presto/__pycache__
-
-/search_pipeline_validator/PY_scripts/__pycache__
-
-/__pycache__
+.nextflow/
+.nextflow.log*

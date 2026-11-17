@@ -1,0 +1,14 @@
+{
+    "psr_global": {
+        "injection_id": "minimal",
+        "global_seed": 42
+    },
+    "pulsars": [
+        {
+            "ID": "psr_A",
+            "P0": 0.005,
+            "DM": 50,
+            "SNR": 25
+        }
+    ]
+}

@@ -1,0 +1,41 @@
+{
+    "psr_global": {
+        "injection_id": "binaries",
+        "global_seed": 42,
+        "create_predictor": "t2pred"
+    },
+    "pulsars": [
+        {
+            "ID": "nsns",
+            "F0": 140.0,
+            "F1": -1e-15,
+            "DM": 120,
+            "SNR": 30,
+            "duty_cycle": 0.05,
+            "binary_period": 7.75,
+            "ecc": 0.6,
+            "AoP": 290,
+            "M1": 1.44,
+            "M2": 1.39,
+            "inc": 47
+        },
+        {
+            "ID": "nswd",
+            "P0": 0.0036,
+            "DM": 80,
+            "SNR": 25,
+            "binary_period": 5.0,
+            "M2": 0.2
+        },
+        {
+            "ID": "spider",
+            "P0": 0.00213,
+            "DM": 45,
+            "SNR": 15,
+            "binary_period": 2.4,
+            "x": 0.06,
+            "gain_map": "injector/example_plans/eclipse.npy",
+            "gain_axis": "time"
+        }
+    ]
+}

@@ -123,6 +123,8 @@ class SetupManager:
                     pulsar_list_resolved.append(psr_pars)
             else:
                 psr_pars = pulsar_list[i]
+                drawn_seed = rng.integers(1e11, 1e12)
+                psr_pars['seed'] = psr_pars.get('seed', drawn_seed)
                 psr_pars = self.random_resolve_pulsar(psr_pars)
                 pulsar_list_resolved.append(psr_pars)
 

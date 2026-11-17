@@ -1,0 +1,37 @@
+{
+    "psr_global": {
+        "injection_id": "cluster",
+        "global_seed": "random",
+        "DM_smear": "exact",
+        "DM_const": "historical"
+    },
+    "pulsars": [
+        {
+            "ID": "msp_1",
+            "P0": 0.00499,
+            "DM": {"rng": "normal", "mean": 52.1, "sigma": 0.2},
+            "spectrum": -1.6,
+            "SNR": 30,
+            "A0": 1.2
+        },
+        {
+            "ID": "msp_2",
+            "P0": 0.00282,
+            "DM": {"rng": "normal", "mean": 52.1, "sigma": 0.2},
+            "spectrum": -2.1,
+            "SNR": 12,
+            "A0": -0.8,
+            "A1": 0.0001,
+            "ACCEPOCH": 0.5
+        },
+        {
+            "ID": "msp_3",
+            "P0": 0.00419,
+            "DM": {"rng": "normal", "mean": 52.1, "sigma": 0.2},
+            "spectrum": -1.2,
+            "SNR": 15,
+            "presto_z": 20,
+            "presto_w": 0
+        }
+    ]
+}

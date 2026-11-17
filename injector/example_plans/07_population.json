@@ -1,0 +1,28 @@
+{
+    "psr_global": {
+        "injection_id": "population",
+        "global_seed": "random",
+        "DM_smear": "exact"
+    },
+    "pulsars": [
+        {
+            "ID": {"replicate": 10, "prefix": "msp"},
+            "P0": {"rng": "loguniform", "low": 0.0015, "high": 0.03},
+            "DM": {"rng": "uniform", "low": 0, "high": 300},
+            "SNR": {"rng": "uniform", "low": 8, "high": 20},
+            "duty_cycle": {"rng": "loguniform", "low": 0.02, "high": 0.3},
+            "binary_period": {
+                "rng": "uniform",
+                "low": 0.5,
+                "high": 10,
+                "units": "T_obs"
+            },
+            "M2": {"rng": "normal", "mean": 0.3, "sigma": 0.08},
+            "ecc": {
+                "rng": "choice",
+                "samples": [0.0, 0.1, 0.5],
+                "weights": [0.7, 0.2, 0.1]
+            }
+        }
+    ]
+}

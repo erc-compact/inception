@@ -1,0 +1,27 @@
+{
+    "psr_global": {
+        "injection_id": "double_pulsar",
+        "global_seed": 7
+    },
+    "pulsars": [
+        {
+            "ID": "A",
+            "P0": 0.0227,
+            "DM": 48.9,
+            "SNR": 60,
+            "binary_period": 2.45,
+            "ecc": 0.088,
+            "M1": 1.338,
+            "M2": 1.249,
+            "inc": 89.3,
+            "AoP": 87
+        },
+        {
+            "ID": "B",
+            "P0": 2.77,
+            "SNR": 20,
+            "duty_cycle": 0.02,
+            "double_pulsar": "A"
+        }
+    ]
+}
