@@ -79,6 +79,16 @@ def solar_system_ephemeris(ephem):
     return ephem_name
 
 
+def shift_polyco_phases(polycos):
+    from pint.phase import Phase    # type: ignore
+    entries = polycos.polycoTable['entry']
+    lowest = min(int(entry.rphase.int[0]) for entry in entries)
+    if lowest < 1:
+        shift = Phase(np.longdouble(1 - lowest))
+        for entry in entries:
+            entry.rphase = entry.rphase + shift
+
+
 def create_polycos(par_file, pulsar_pars, obs, output_path):
     models, Polycos = load_pint()
     timing_model = models.get_model(par_file, EPHEM=solar_system_ephemeris(obs.ephem))
@@ -92,6 +102,7 @@ def create_polycos(par_file, pulsar_pars, obs, output_path):
     gen_poly = Polycos.generate_polycos(timing_model, start, end, obs.tempo_id,
                                         polycos_tspan, polycos_coeff,
                                         obs.f0, progress=False)
+    shift_polyco_phases(gen_poly)
 
     polycos_path = f"{output_path}/{pulsar_pars['ID']}.polycos"
     gen_poly.write_polyco_file(polycos_path)

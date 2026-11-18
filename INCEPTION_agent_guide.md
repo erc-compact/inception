@@ -48,7 +48,7 @@ Rules:
 |---|---|---|---|
 | A | Add simulated pulsars to one or a few filterbanks | standalone injector | Standalone injector, Injection plans, Parameter reference |
 | B | Clean test data: pulsars in Gaussian noise with a real header | standalone injector, `--generate_fb` | Standalone injector |
-| C | Inject a pulsar from a TEMPO/TEMPO2 par file (known, new or made up; any PINT timing or binary model) | standalone injector, `pint_polycos` | PINT injections and follow-up mode |
+| C | Inject a pulsar from a TEMPO/TEMPO2 par file (known, new or made up; any PINT timing or binary model) | standalone injector, `pint_polycos` | PINT injections |
 | D | Measure how well a search or folding setup recovers pulsars, with many injections | Nextflow: `INJECTOR`, `PEASOUP` or `PRESTO` | Nextflow pipelines |
 | E | Fold known pulsars or candidates through a pipeline without injecting anything | plan with `SNR: 0` (follow-up mode) | Follow-up mode, Nextflow pipelines |
 | F | Remove bright known pulsars from data before a search | Nextflow: Nullsar | Nullsar |
@@ -162,8 +162,7 @@ Ask only what is still open after *Discover before asking*. Recommended defaults
 
 ### Task C
 
-The par file path. Check that it is valid at the epoch of the data and that `TZRMJD` lies before the start
-of the data (see *Known issues*). DM offset or extra spin or acceleration terms on top of the timing model? S/N,
+The par file path. Check that it is valid at the epoch of the data. DM offset or extra spin or acceleration terms on top of the timing model? S/N,
 profile and spectrum as for any pulsar.
 
 ### Task D
@@ -184,7 +183,7 @@ profile and spectrum as for any pulsar.
 ### Task F
 
 - Filterbanks and their tags (files with the same tag form one observation).
-- Par files of the pulsars to remove (accurate at the epoch of the data; `TZRMJD` before the data).
+- Par files of the pulsars to remove (accurate at the epoch of the data).
 - S/N limit below which a pulsar is left alone [15].
 - filtool options [`--td 4 -v`; downsampling is optional].
 - Gaussian components per profile [2, or `"auto"` for complex profiles].
@@ -365,7 +364,7 @@ the results no longer describe a single pulsar in that data.
 | `06_propagation.json` | Scattering, DM–scattering relation, coherently dedispersed data (`cDM`). |
 | `07_population.json` | Replicated random population. |
 | `08_known_pulsar_pint.json` | PINT injection, with a DM offset and extra acceleration. Replace the par path. |
-| `09_followup.json` | Follow-up mode, `SNR: 0`. Replace the par path. |
+| `09_followup.json` | Follow-up mode, `SNR: 0`: a known pulsar (par file) and an accelerated candidate. Replace the par path. |
 
 ## Parameter reference
 
@@ -436,9 +435,9 @@ Notes:
 - Accelerations are written to the par file as spin derivatives (`F1 = -F0 A0 / c`, `F2 = -F0 A1 / c`).
   For compact orbits use the binary model, not large accelerations and jerks. Accelerations can be
   combined with an orbit or with a PINT ephemeris.
-- Post-Keplerian effects need a par file through PINT (see *PINT injections and follow-up mode*).
+- Post-Keplerian effects need a par file through PINT (see *PINT injections*).
 
-## PINT injections and follow-up mode
+## PINT injections
 
 ### PINT plan
 
@@ -458,9 +457,8 @@ the `EPHEM` line of the par file.
 
 - `pint-pulsar` installed; clock files reachable or cached.
 - The par file is valid at the epoch of the data.
-- **`TZRMJD` must lie before the start of the data** (see *Known issues*). Check it before running: read `TZRMJD`
-  from the par file and compare with `tstart` from the header. If it lies after, tell the user and ask
-  for a par file with an earlier `TZRMJD`.
+- If the user wants microsecond-level timing across epochs, tell them INCEPTION is not yet verified for
+  timing-grade injections (see *Known issues*).
 
 ### What happens and what is written
 
@@ -473,12 +471,6 @@ the `EPHEM` line of the par file.
 - `F0`, `F1`, ... and `A0`, `A1`, ... are added to the timing model.
 - `create_predictor: "t2pred"` writes a TEMPO2 predictor of the final model (PulsarX folds it directly).
 - `pint_polycos` can point at an earlier run's `.polycos` file to skip PINT (no par file is written then).
-
-### Follow-up mode (task E)
-
-A pulsar with `SNR: 0` is not injected but its ephemeris is written. If every pulsar has `SNR: 0`, the
-data pass through unchanged. Use such a plan in the pipelines on real data to search for and fold known
-pulsars or candidates (`09_followup.json`). Pulsars can be given by par file or by `P0`, `DM`, `PEPOCH`.
 
 ## Nextflow pipelines (tasks D and E)
 
@@ -699,6 +691,29 @@ whatever read its output**. Then set that step to `false` in `collector_args`.
 - `save_inj_fb: false` keeps them out of `output_dir` (only if no later step needs them).
 - Delete `work/` after a successful run (with approval).
 
+## Follow-up mode (task E)
+
+A trick that turns the validator pipelines into a tool for real data: the plan lists pulsars that are in
+the data, or might be, each with `"SNR": 0`. Nothing is injected (data pass through unchanged when every
+pulsar has `SNR: 0`), but ephemerides are written, so the pipeline folds the data at them (parfold),
+searches as usual, matches search candidates to them and folds the matches.
+
+- Known pulsars: `pint_polycos` par file (any timing or binary model).
+- Unconfirmed candidates: in-built model, e.g. `P0`, `DM`, `A0` = 100 m/s², with `PEPOCH` at the
+  candidate's reference epoch and `ACCEPOCH: 0`; a constant acceleration only holds within one
+  observation.
+- New pulsars: `candidate_matcher_args.fold_all: true` also folds the brightest unmatched candidates of
+  every segment, so the run doubles as a normal search.
+
+Ask: which pulsars or candidates (par files, or period, DM, acceleration and epoch), which observations,
+which pipeline, and whether unmatched candidates should be folded too.
+
+Settings: `data` = the observations, `filterbank: "injection_number"`, `start` 1, `end` = number of data
+entries (each processed once); `generate_fb: []` (otherwise the data are replaced by noise); `inj_DM: true`
+for a fast search around the listed DMs, but not for `pint_polycos` pulsars, whose plan `DM` is an offset
+(see *Known issues*); each observation is copied to the output folder, so set `delete_inj_fb`.
+Example: `injector/example_plans/09_followup.json`.
+
 ## Nullsar (task F)
 
 Removes bright known pulsars by injecting a calibrated negative copy. Typical removal 90–99% of the
@@ -714,7 +729,7 @@ phase, DM correction and per-subint light-curve correction; inject at the pulsar
 - `nullsar/pipeline_general/configs/filterbanks.txt`: one line per file, `<tag> <path>`; same tag = one
   observation (merged).
 - Par files (or PulsarX `.candfile`s) listed in `par_files`. They must be accurate at the epoch (frequency
-  searches are off when folding) and have `TZRMJD` before the data (see *Known issues*).
+  searches are off when folding).
 
 **`nextflow.config`** (`nullsar/pipeline_general/`): `output_dir`, `pipeline_code` (path to
 `nullsar/code`), `tmp_dir`, `filterbanks`, `pipeline_config` (`configs/null_parms.json`), `nullsar_image`
@@ -745,8 +760,8 @@ pulsars removed, ready to search), `04_CONFIRM/` (`FOLDS/`, `CONFIRM_<psr>.png`)
 - `02_INIT/MODELS/model_<psr>.png`: residual panels should look like noise. Systematic profile residuals →
   more `profile_components` or `"auto"`.
 - `03_OPT/MODELS/OPT_<psr>.png`: the inverted copy should sit about 0.5 turns from the pulse with similar
-  shape and amplitude. A copy far from 0.5, or a copy that jumps in phase during the observation, points to
-  the `TZRMJD` issue (see *Known issues*).
+  shape and amplitude. A copy far from 0.5, or one that drifts or jumps in phase, means the model or the
+  ephemeris does not match the data; report it to the user.
 - CONFIRM fold: no pulse should remain. Leftovers: narrow +/− pattern (profile not captured), variation
   within sub-integrations (fast scintillation, time–frequency structure).
 - Not removed by design: pulse-to-pulse variability. Very wide duty cycles make pulse and copy overlap.
@@ -796,7 +811,7 @@ Cluster pulsar (own DM draw around the cluster DM, acceleration):
 Pure noise (task B): one pulsar with `"SNR": 0` plus `--generate_fb=<mean>,<std>`, with a new seed for
 every file.
 
-Follow-up (task E): every pulsar with `"SNR": 0` and a `pint_polycos` par file or `P0`, `DM`, `PEPOCH`.
+Follow-up (task E): every pulsar with `"SNR": 0`; known pulsars by `pint_polycos` par file, candidates by `P0`, `DM`, `A0`, `PEPOCH` and `ACCEPOCH: 0` (see *Follow-up mode*).
 
 ## Pitfalls
 
@@ -834,7 +849,8 @@ As of INCEPTION version 1.0.9.
 
 | Issue | Effect | Work-around |
 |---|---|---|
-| PINT 1.1.4 writes negative polyco reference phases wrongly | `pint_polycos` injections (and Nullsar calibration copies) jump in phase at every `pint_T` boundary for times before the par file's `TZRMJD` | Use a par file whose `TZRMJD` lies before the data. Par files written by INCEPTION have `TZRMJD` = their `PEPOCH`, near the start of the injected observation. |
+| Not verified for timing-grade injections (µs or better across epochs) | In-built model: no Solar System Shapiro delay or topocentric TT–TDB term (up to tens of µs), TT(TAI) without observatory clock corrections while its par files state `CLK TT(BIPM)` (about 27 µs), fixed `EPHEM DE421` in par files, no solar-wind dispersion. PINT injections: about 0.5 µs from PINT's rounding of polyco reference times. No µs-level validation yet | Negligible for searches and folding. If the user needs timing-grade injections, tell them this will be addressed in a future version. |
+| `.polycos` files written by older INCEPTION versions | PINT wrote wrong reference phases for times before the par file's `TZRMJD`, so injections with such a file jump in phase every few minutes | Regenerate the polycos from the par file. |
 | `inj_DM` with PINT pulsars | The search uses the plan's `DM`, which is an offset for `pint_polycos` pulsars | Use the full DM plan, or give the DMs explicitly. |
 | Candidate folding's `delete_inj_fb` waits for the parfold | If the parfold is removed from `main.nf`, injected filterbanks are never deleted | Delete them yourself (with approval) or keep the parfold. |
 | The injector does not create `--output` | It fails if the directory is missing | `mkdir -p` first. |
@@ -852,7 +868,7 @@ As of INCEPTION version 1.0.9.
 | Recovered DM off by about 0.01% | `DM_const`; use `historical`. |
 | Job hangs after printing the filterbank statistics | Waiting for downloads. Use `--cache` and `--offline`. |
 | `--offline` fails at once for PINT | Clock files not cached. Run once online with `--cache`. |
-| Phase jumps every few minutes in a PINT injection | `TZRMJD` after the data start (see *Known issues*). |
+| Phase jumps every few minutes in a PINT injection | A `.polycos` file from an older INCEPTION version (see *Known issues*); regenerate it from the par file. |
 | `create_parfile` rejected | Must be `"par"` or `"pulsarx"`. |
 | Recovered S/N differs from injected | `SNR_def` against the folding software; smearing, scattering, masks and RFI lower it. |
 | Nextflow process fails | Read `.command.err` and `.command.log` in the work directory named in the error. Path missing in a container: add a `-B` bind. |

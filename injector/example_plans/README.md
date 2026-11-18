@@ -22,4 +22,4 @@ with the Nextflow pipelines, which run the same plan on many filterbanks.
 | `06_propagation.json` | Scattering with a given timescale, scattering from the DM–scattering relation, and smearing in coherently dedispersed data (`cDM`). |
 | `07_population.json` | A replicated population of ten pulsars with random draws (uniform, log-uniform, normal, weighted choice, orbital periods in units of the observation length). |
 | `08_known_pulsar_pint.json` | A known pulsar injected from its timing ephemeris with PINT, and the same pulsar with a DM offset and an extra acceleration. Replace `path/to/known_psr.par`. Needs `pint-pulsar`. |
-| `09_followup.json` | Follow-up mode: every pulsar has `SNR: 0`, so the data pass through unchanged while ephemerides are written for folding and candidate matching. Replace `path/to/candidate_1.par`. |
+| `09_followup.json` | Follow-up mode: every pulsar has `SNR: 0`, so the data pass through unchanged while ephemerides are written for folding and candidate matching. A known pulsar from its par file (replace `path/to/known_psr.par`) and an unconfirmed candidate given by period, DM and a 100 m/s² acceleration at its reference epoch. |
