@@ -19,7 +19,8 @@ Follow this order:
    values (S/N, DM, period or orbit ranges, search parameters) on your own; propose them and let the user
    decide.
 4. **Propose.** Write the plan file and the exact commands. Show them with the expected outputs, the disk
-   space needed and a rough run time. Wait for approval.
+   space needed and a rough run time for every step, not only the injection (see *Cost of a run*). Wait
+   for approval.
 5. **Test small.** Run one filterbank or one injection first and verify it (see *Verifying an
    injection*). Show the result. Scale up only after the user agrees.
 6. **Report.** Give the paths of every output. Keep the plan, the injection report and the commands
@@ -34,6 +35,10 @@ Rules:
 - Check free disk space before injecting. Every injection writes a full-size copy of the input filterbank.
 - Do not edit INCEPTION's code to make a run work. Tell the user what failed and why.
 - Check every plan against *Pitfalls* and *Known issues* before you run it.
+- When you start from an existing plan, show the user its `DM_smear`, `DM_const` and `SNR_def` (or say
+  they are unset, so the code defaults `off`, `exact` and `total` apply) and confirm them.
+- If the user explicitly delegates the choices ("pulsars of your choice, start processing"), choose
+  sensible values yourself, state them, and proceed. Still ask before deleting anything.
 - Warn the user when a plan puts more than about 20 pulsars into one filterbank, and recommend fewer
   (about 10 or less) when the pulsars have similar DMs (a globular cluster), very high S/N or long periods
   (see *Pulsars per filterbank*).
@@ -170,6 +175,8 @@ profile and spectrum as for any pulsar.
 - Pipeline: `INJECTOR` (inject and fold only; recommended with only the PulsarX parfold), `PEASOUP` (GPU
   acceleration search) or `PRESTO` (`accelsearch`).
 - Steps to run: filtool, parfold, candidate folding, classifier (see *Turning steps on and off*).
+- Several epochs of the same pulsars? (see *Multi-epoch injections*)
+- Target search S/N? It differs from the injected S/N (see *Pitfalls*); propose a pilot run.
 - Number of injections (`start`..`end`) and how many at once [`batch_size` 25].
 - The data list: filterbanks per entry, coherent DM per entry, random or cycling choice per injection.
 - Search settings: DM plan per time-downsampling factor, segment plan (full observation, halves, ...),
@@ -664,6 +671,35 @@ output_dir/
   classifier scores.
 - Recovery fraction = injections with a match / all injections, binned in injected parameters.
 
+### Checking candidates yourself
+
+The matcher converts frames internally. For your own comparisons:
+
+- Injected `PEPOCH`, `T0`, `ACCEPOCH` (frame `bary`) are barycentric TDB epochs; the data start in that
+  frame differs from the header `tstart` (UTC at the telescope) by TT−UTC (about 69 s) plus the Rømer
+  delay (up to about 500 s).
+- PEASOUP (and PRESTO unless `bary: true`) search topocentric data: f_topo = f_bary (1 − v_r/c), with v_r
+  the telescope's velocity away from the pulsar (up to 30 km/s, several Fourier bins for fast pulsars).
+- `processing/PEASOUP/inj_XXXXXX_PEASOUP_candidates.csv` columns: `period` (s), `dm`, `acc` (m/s²),
+  `snr`, `xml_id`, `pepoch` (segment reference epoch, topocentric MJD), `n_samples`, `T` (FFT length, s),
+  `XML`, `tscrunch`, `downsample`, `segment` (`i_n`), `fold_id`, `F_match` (1/`period`). Frequencies refer
+  to `pepoch`. The `_matches.csv` adds `PSR_ID`, `harmonic`, `dF0_bins`, `dDM`.
+
+Both corrections, for a topocentric MJD `t_topo` and a barycentric frequency `f_bary` (run from the
+repository root):
+
+```python
+import json
+from injector.setup_manager import SetupManager
+report, fil = "report_<injection_id>_<seed>.json", "<injected>.fil"
+ephem = json.load(open(report))["injection_report"]["ephem"]
+models = SetupManager(report, fil, ephem, generate=True, stats_samples=0).pulsar_models
+obs = models[0].obs
+t_bary = obs.topo2bary([t_topo])[0]
+v_r = obs.earth_radial_velocity([t_topo])[0]
+f_topo = f_bary * (1 - v_r / 299792458.0)
+```
+
 ### Turning steps on and off
 
 Comment out the step's line in `main.nf` with `//`, then **pass the removed step's input channel to
@@ -690,6 +726,38 @@ whatever read its output**. Then set that step to `false` in `collector_args`.
 - `batch_size` limits how many exist at once.
 - `save_inj_fb: false` keeps them out of `output_dir` (only if no later step needs them).
 - Delete `work/` after a successful run (with approval).
+
+### Cost of a run
+
+Measured per injection in one campaign (10 pulsars, 12 PEASOUP searches per injection): injection 6.2 CPU-h,
+PulsarX parfolds 5.4 CPU-h, PulsarX candidate folds 10.6 CPU-h, PEASOUP 4.9 GPU-h. An estimate from the
+injection cost alone was 4 times too low. Parfolds scale with pulsars, candidate folds with pulsars ×
+segments × `max_folds` (more with `fold_all`), searches with DDplan entries × segments. Time the
+one-injection test and scale from it.
+
+## Multi-epoch injections
+
+- Fixed pulsar values, or a fixed `seed` per pulsar entry, so every injection gets the same pulsars.
+- `PEPOCH`, `T0`, `POSEPOCH` as MJDs, not fractions, so spin and orbit continue between epochs; the same
+  Solar System ephemeris for all epochs.
+- One `data` entry per epoch, `filterbank: "injection_number"`, `start` 1, `end` = number of epochs.
+  Never reuse injection numbers within a campaign (the number sets the noise and the draws).
+- Synthetic epochs need a header with the right `tstart`; with `--generate_fb` only the input's header and
+  length are used, so write a header-only (sparse) copy with a new `tstart`:
+
+```python
+import os, struct
+src, dst, new_tstart = "template.fil", "epoch_02.fil", 60530.25
+raw = open(src, "rb").read(65536)
+end = raw.index(b"HEADER_END") + len(b"HEADER_END")
+i = raw.index(b"tstart") + len(b"tstart")
+header = raw[:i] + struct.pack("<d", new_tstart) + raw[i + 8:end]
+with open(dst, "wb") as f:
+    f.write(header)
+    f.truncate(len(header) + os.path.getsize(src) - end)
+```
+
+- Check phase connection by folding every epoch with the same par file.
 
 ## Follow-up mode (task E)
 
@@ -834,6 +902,10 @@ Follow-up (task E): every pulsar with `"SNR": 0`; known pulsars by `pint_polycos
   use absolute paths.
 - In the pipelines, `collector_args` must match the steps in `main.nf`, and every path must be under a
   container bind (`-B`).
+- Injected S/N is for the whole observation, folded. A search segment sees about
+  S/N × √(T_seg/T_obs); Fourier searches see roughly the pulsed S/N (√(1 − DC) of the total for a top-hat
+  pulse) minus harmonic-summing losses that depend on duty cycle and set-up. For a target search S/N, run
+  a small pilot (PEASOUP with `inj_DM`) and scale from it.
 - In the pipelines, the plan's `global_seed` is replaced per injection; a fixed `seed` inside a pulsar entry
   gives that pulsar the same draws in every injection. Never reuse injection numbers within a campaign.
 - Compact binaries (orbital periods of a few hours or less): a TEMPO2 predictor that PulsarX builds from a
@@ -854,6 +926,7 @@ As of INCEPTION version 1.0.9.
 | `inj_DM` with PINT pulsars | The search uses the plan's `DM`, which is an offset for `pint_polycos` pulsars | Use the full DM plan, or give the DMs explicitly. |
 | Candidate folding's `delete_inj_fb` waits for the parfold | If the parfold is removed from `main.nf`, injected filterbanks are never deleted | Delete them yourself (with approval) or keep the parfold. |
 | The injector does not create `--output` | It fails if the directory is missing | `mkdir -p` first. |
+| The candidate matcher does not check acceleration | For compact binaries the expected frequency range spans many bins, so at low thresholds (about 10,000 candidates per segment at S/N 6) most matches are noise | Judge compact-binary matches by their folds and S/N; tell the user the match flag alone is unreliable there. |
 | PulsarX writes no PNG, without an error, when the PNG path is longer than 90 characters | Parfolds give `.ar` and `.cands` but no PNG. The path is `<work_dir>/_<ID>/<ID>_<MJD>_<beam>_00001.png`, about len(work_dir) + 2 len(ID) + 40 characters, which passes 90 in a Nextflow scratch directory for IDs longer than about 12 characters | Keep pulsar IDs to 12 characters or less, or use a short `tmp_dir`. Check that the number of PNGs equals the number of pulsars after the test run. |
 | PulsarX writes fixed files `/tmp/stdout.txt` and `/tmp/stderr.txt` when it builds a predictor from a par file | Parallel folds sharing `/tmp` can overwrite each other's files | Give each fold a private `/tmp` (SLURM `job_container/tmpfs`, or bind a per-job directory to `/tmp`). |
 | Rarely (about 1 in 200 folds) a parfold PNG is missing although the fold succeeded | Missing PNG, data products fine | Re-run that fold if the PNG is needed. |
