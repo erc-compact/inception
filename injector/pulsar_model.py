@@ -58,7 +58,7 @@ class PulsarModel:
     def get_observed_profile(self):
         smeared_profile = self.prop_effect.intra_channel_DM_smearing(self.intrinsic_profile_chan)
         scatterd_profile = self.prop_effect.ISM_scattering(smeared_profile)
-        return scatterd_profile
+        return self.prop_effect.sample_smearing(scatterd_profile)
     
     def get_epochs(self):
         self.binary.T0 = self.obs.T0

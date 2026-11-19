@@ -279,6 +279,7 @@ class NullerProcess:
                 "DM": self.ar_data[psr_ID]['DM'] - par_float(params.get('DM', 0)),
                 "DM_ref": "top",
                 "DM_const": "historical",
+                "sample_smear": "off",
                 "SNR": -self.ar_data[psr_ID]['SNR'],
 
                 "profile": self.ar_data[psr_ID]['profile'],

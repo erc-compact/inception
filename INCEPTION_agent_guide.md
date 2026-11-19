@@ -1,6 +1,6 @@
 # INCEPTION guide for AI agents
 
-INCEPTION version 1.0.9. Source: <https://github.com/erc-compact/inception>.
+INCEPTION version 1.0.10. Source: <https://github.com/erc-compact/inception>.
 
 This file is for an AI agent that helps a user run INCEPTION. Read all of it before acting. It covers what
 INCEPTION does, how to run each part, what to check, and what to ask the user. Commands assume the
@@ -125,7 +125,8 @@ Report `telescope_id`, `nchans`, `nbits`, `tsamp`, the length, the band, `tstart
 - `nchans × nbits` is a multiple of 8 (each time sample fills whole bytes).
 - `telescope_id` is supported: MeerKAT 64, Arecibo 1, Nançay 3, Parkes 4, Jodrell Bank 5, GBT 6, GMRT 7,
   Effelsberg 8, SRT 10, LOFAR 11, CHIME 20, FAST 21, MWA 30.
-- For 1- and 2-bit data, warn that the injected S/N is approximate and must be checked by folding.
+- For 2-bit data, read *2-bit data* and tell the user its caveats; 1-bit data are untested. Set
+  `--gulp_size_GB` (or `gulp_size_GB` in the pipeline configs) to nbits/8 of its value: 0.0025 at 2 bits.
 - Free disk space in the output directory is at least the file size (times the number of filterbanks
   written at once).
 
@@ -212,7 +213,7 @@ python3 injector/SCRIPT_inject_pulsars.py --signal=plan.json --fb=obs.fil --outp
 | `--output` | required | Output directory. Must exist; the injector does not create it. |
 | `--ephem` | `builtin` | JPL `.bsp` file (needs `jplephem`), an Astropy ephemeris name (`de440`) or `builtin`. |
 | `--ncpu` | 1 | Processes; the data are split in time. Use the number of cores. |
-| `--gulp_size_GB` | 0.01 | Block size per read and write. |
+| `--gulp_size_GB` | 0.01 | Block size per read and write, in file bytes. Below 8 bits a block holds 8/nbits times more samples and memory: scale by nbits/8 (0.0025 at 2 bits). |
 | `--stats_samples` | 1e6 | Samples used to measure channel means and standard deviations. |
 | `--cache` | none | Directory for downloads (Astropy IERS tables, PINT clock files). |
 | `--offline` | off | Never download. Uses cached or bundled tables and built-in telescope positions. |
@@ -272,6 +273,20 @@ How plan parameters map to the written ephemerides:
   `--t2pred <file>`, DSPSR `-P <file>`. `polycos`: PRESTO `prepfold -polycos <file> -psr <name>`, DSPSR
   `-P <file>`. Use them for compact orbits, orbits plus accelerations, or PINT models with extra terms.
 
+### 2-bit data
+
+- Injecting into existing 2-bit data uses two approximations: the outer levels are treated like all others,
+  although a digitiser puts the noise tails into them (injected pulsar slightly too bright), and the noise
+  is measured from the stored values, which look narrower than the real noise (slightly too faint).
+- They cancel for a well-set digitiser: three thresholds at the noise mean and about one standard deviation
+  above and below it. Tested on 2-bit Parkes data: injected pulsars fold at the same S/N, to within one per
+  cent, as pulsars digitised together with the noise.
+- If the thresholds lie much closer to or further from the mean, the injected S/N can be off by a few per
+  cent. The share of samples at each level, per channel, shows where the thresholds lie.
+- `--generate_fb` is not affected: the pulsar is added before rounding.
+- 2-bit data lose S/N to the rounding compared with 8-bit, for injected and real pulsars alike; the injected
+  S/N refers to the signal before digitisation, so injections measure this loss directly.
+
 ### Caches, offline nodes, SLURM
 
 - The injector downloads Astropy IERS tables (when older than 30 days) and, for PINT, observatory clock
@@ -286,7 +301,8 @@ How plan parameters map to the written ephemerides:
   runs the injector in a Singularity image, copies the results back).
 - Measured cost on an HPC system (7.6 GB 8-bit beam, `--generate_fb`, 24 processes): pure noise about
   5 min, 10 pulsars 16–19 min (5–6 CPU-h), peak memory 4.5–9 GB. 24 cores and about 16 GB were enough;
-  whole nodes are rarely needed.
+  whole nodes are rarely needed. At 2 bits the default gulp made 24 processes exceed 64 GB and swap; with
+  `--gulp_size_GB=0.0025` a 2.5 GB 2-bit file took 6–7 min and 27–35 GB.
 
 ## Injection plans
 
@@ -413,6 +429,7 @@ the results no longer describe a single pulsar in that data.
 | `DM` | 0 | pc cm⁻³. With `pint_polycos` it is an offset added to the par-file DM. |
 | `cDM` | 0 | Coherent dedispersion DM of the data; smearing uses abs(DM − cDM). |
 | `DM_smear` | `off` | `exact` (recommended), `approx` (default profile only) or `off`. Use `approx`/`off` only to test their effect. |
+| `sample_smear` | `on` | Average the profile over one sampling time, as the backend does; pulses narrower than a sample lose S/N. Keep `on`; `off` only for profiles that already contain it (Nullsar's fold-based models). |
 | `DM_ref` | `inf` | Reference frequency of the delays: `inf` or `top`. |
 | `DM_const` | `exact` | `exact` (4148.806), `historical` (4149.378, TEMPO/TEMPO2/PINT/PRESTO/PulsarX) or a number. |
 | `scattering_time` | 0 | ms at the centre frequency. |
@@ -917,7 +934,7 @@ Follow-up (task E): every pulsar with `"SNR": 0`; known pulsars by `pint_polycos
 
 ## Known issues
 
-As of INCEPTION version 1.0.9.
+As of INCEPTION version 1.0.10.
 
 | Issue | Effect | Work-around |
 |---|---|---|

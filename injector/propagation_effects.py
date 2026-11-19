@@ -153,6 +153,29 @@ class PropagationEffects:
 
         return smeared_pulse
     
+    def boxcar_kernel(self, width_phase):
+        width = max(1, int(round(width_phase * len(self.phase))))
+        width = min(width, len(self.phase))
+        if width % 2 == 0:
+            width += 1
+        return np.ones(width) / width
+
+    def sample_smearing(self, pulse):
+        if (self.pulsar_pars.get('sample_smear', 'on') == 'off') or (self.period <= 0):
+            return pulse
+
+        kernel = self.boxcar_kernel(self.obs.dt / self.period)
+        if len(kernel) == 1:
+            return pulse
+
+        conv_profiles = [convolve1d(pulse(self.phase, nchan), kernel, mode='wrap') for nchan in range(self.obs.n_chan)]
+        self.sample_smeared_profiles = [interp1d(self.phase, profile, bounds_error=False, fill_value='extrapolate') for profile in conv_profiles]
+
+        def sample_smeared_pulse(phase, chan_num):
+            return self.sample_smeared_profiles[chan_num](phase)
+
+        return sample_smeared_pulse
+
     def numerical_DM_smearing(self, intrinsic_pulse):
 
         def dm_smearing_kernel(nchan):
@@ -162,16 +185,7 @@ class PropagationEffects:
 
             smear = abs(self.DM_const * (self.DM - self.cDM) * (chan_top**-2 - chan_bottom**-2))
 
-            smear_phase = smear / self.period
-            width = max(1, int(round(smear_phase * len(self.phase))))
-            width = min(width, len(self.phase))
-            if width % 2 == 0:
-                width += 1
-
-            kernel = np.ones(width)
-            kernel /= kernel.sum()
-
-            return kernel
+            return self.boxcar_kernel(smear / self.period)
 
         conv_profiles = [convolve1d(intrinsic_pulse(self.phase, nchan), dm_smearing_kernel(nchan), mode="wrap") for nchan in range(self.obs.n_chan)]
         self.smeared_profiles = [ interp1d( self.phase, profile, bounds_error=False, fill_value="extrapolate") for profile in conv_profiles ]
