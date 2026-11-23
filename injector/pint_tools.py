@@ -60,8 +60,10 @@ def par_frequency(lines):
 
 
 def ephemeris_values(ephemeris_path):
-    if (not ephemeris_path) or (not os.path.exists(ephemeris_path)):
+    if not ephemeris_path:
         return 0., 0.
+    if not os.path.exists(ephemeris_path):
+        sys.exit(f'Ephemeris file not found: {ephemeris_path}')
     if ephemeris_path.endswith('.par'):
         lines = read_par(ephemeris_path)
         return par_frequency(lines), float(get_par_value(lines, 'DM') or 0)

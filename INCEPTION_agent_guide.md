@@ -1,6 +1,6 @@
 # INCEPTION guide for AI agents
 
-INCEPTION version 1.0.10. Source: <https://github.com/erc-compact/inception>.
+INCEPTION version 1.0.11. Source: <https://github.com/erc-compact/inception>.
 
 This file is for an AI agent that helps a user run INCEPTION. Read all of it before acting. It covers what
 INCEPTION does, how to run each part, what to check, and what to ask the user. Commands assume the
@@ -33,6 +33,12 @@ Rules:
   (ephemerides, container images), delete anything (including Nextflow's `work/`), or write outside the
   agreed output directory.
 - Check free disk space before injecting. Every injection writes a full-size copy of the input filterbank.
+- Whenever you wait for something that runs longer than a few minutes (an injection, a cluster job, a
+  Nextflow run), set up a **heartbeat of at most one hour**: a scheduled wake-up, a timer or a background
+  check with a time limit, whatever your environment offers. Never wait on a job without a time limit. At
+  each heartbeat check that the run is progressing (*Pipeline set-up*, step 8). If it has not progressed
+  since the last heartbeat, treat it as hung: find the cause and tell the user. Cancel a hung job only with
+  the user's approval; for unattended runs, ask for that approval before you start.
 - Do not edit INCEPTION's code to make a run work. Tell the user what failed and why.
 - Check every plan against *Pitfalls* and *Known issues* before you run it.
 - When you start from an existing plan, show the user its `DM_smear`, `DM_const` and `SNR_def` (or say
@@ -577,8 +583,23 @@ How they work:
    (or run `nextflow run main.nf -c cluster.config` inside `tmux` or `screen`). Add `-resume` to continue
    an interrupted run without repeating finished jobs.
 
-8. Monitor with `squeue -u $USER`, the head job's output and `.nextflow.log`. A failed job's error names its
-   work directory; read `.command.sh` (exact command), `.command.err` and `.command.log` there.
+8. Monitor with a heartbeat of at most one hour (see *How to work with the user*). At each heartbeat check:
+   - `squeue -u $USER`: the head job is running; states and pending reasons of the other jobs (`Priority`,
+     `Resources` or a per-user job limit are normal queuing, not a hang);
+   - the head job's output and when `.nextflow.log` last changed (Nextflow writes to it whenever a job is
+     submitted or finishes);
+   - the number of finished injections, for example `ls <output_dir>/inj_*/report_*.json | wc -l`, compared
+     with the previous heartbeat.
+
+   A job running more than about three times as long as the same step in the test, or no change in
+   `.nextflow.log` for an hour while jobs are running, means a hang. Read that job's work directory, tell
+   the user, and with their approval cancel it (`scancel`); the templates' `errorStrategy = 'retry'` then
+   reruns it, otherwise continue with `-resume`. Set each process's `time` in `cluster.config` to about
+   three times its test run time (not less than
+   30 minutes), so that SLURM also ends hung jobs by itself.
+
+   A failed job's error names its work directory; read `.command.sh` (exact command), `.command.err` and
+   `.command.log` there.
 
 9. After a successful run, with the user's approval, delete `work/` and `.nextflow.log*`. Keep them while
    `-resume` may still be needed.
@@ -645,6 +666,15 @@ fftsize}`; `"1"` full observation, `"2"` halves, ...), `inj_DM` and `inj_DM_offs
 injected DMs, offsets like `[-0.05, 0, 0.05]`; include 0), `birdie_list` (`"f:width,..."` Hz),
 `channel_mask`, `cmd`, `save_*`, `delete_*`. Jobs per injection = DDplan entries × total segments, for
 example 3 × (1 + 2) = 9.
+
+**GPU memory.** `fftsize` is either a list of prime factors (the pipeline takes the smallest product of
+them that covers the segment) or one fixed length. The pipeline does not check the GPU. PEASOUP keeps the
+whole FFT on the GPU, about 45 bytes per point plus cuFFT working space, which grows for lengths with large
+powers of 3 and 5. Long, finely sampled segments can therefore run out of GPU memory: a 2-h observation at
+15 µs (4.7 × 10⁸ samples) failed on 23 GB cards with `[2, 3, 5]` (3⁵ × 5⁹) and with 2²⁹, and ran with the
+fixed length 2¹⁷ × 3⁶ × 5 = 477,757,440 (21.4 GB). For segments above about 3 × 10⁸ samples, check the
+cards' memory (`nvidia-smi`), test the length on one job first, and if it does not fit, use a fixed length
+dominated by powers of 2, shorter segments, or time-downsampled data (`tscrunch`).
 
 **PRESTO sections**: `presto_rfi_args` (rfifind time and options, zero-DM birdie detection);
 `presto_search_args` (`rfi_cleaner`: `rfifind`, `filtool` or `none`; `mask`, `birdies`, `bary`, `ddplan`,
@@ -934,7 +964,7 @@ Follow-up (task E): every pulsar with `"SNR": 0`; known pulsars by `pint_polycos
 
 ## Known issues
 
-As of INCEPTION version 1.0.10.
+As of INCEPTION version 1.0.11.
 
 | Issue | Effect | Work-around |
 |---|---|---|
@@ -962,6 +992,8 @@ As of INCEPTION version 1.0.10.
 | `create_parfile` rejected | Must be `"par"` or `"pulsarx"`. |
 | Recovered S/N differs from injected | `SNR_def` against the folding software; smearing, scattering, masks and RFI lower it. |
 | Nextflow process fails | Read `.command.err` and `.command.log` in the work directory named in the error. Path missing in a container: add a `-B` bind. |
+| PEASOUP job fails with "No xml file produced" | PEASOUP did not finish; look in `.command.log` for the cause. `CUDA failed with error: out of memory`: FFT length too large for the GPU (see *GPU memory* under `pipeline_configs.json`). |
+| Matcher stops with "Ephemeris file not found" | The report points to a `.polycos` file that no longer exists, typically a report from an older INCEPTION version, which pointed to the injection job's scratch copy. Point the report's `pint_polycos` to the copy in `inj_pulsars/`, or rerun the injection. |
 | Collector fails or columns empty | `collector_args` has a step that is not in `main.nf`. |
 | Injected filterbanks not deleted | Parfold removed (see *Known issues*). |
 

@@ -176,9 +176,9 @@ class PeasoupProcess:
             if self.processing_args['peasoup_args']['save_xml']:
                 inj_tools.rsync(xml_name_old, f"{processing_dir}/PEASOUP/{prefix}.xml")
         else:
-            print_exe('No xml file produced!')
+            sys.exit('No xml file produced: PEASOUP did not finish (see the log above).')
 
-            
+
         peasoup_cands = f'{self.work_dir}/candidates.peasoup'
         if os.path.exists(peasoup_cands):
             if self.processing_args['peasoup_args']['save_peasoup']:

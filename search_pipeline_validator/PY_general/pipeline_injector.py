@@ -125,13 +125,28 @@ class InjectorProcess:
         if self.processing_args['injection_args']['save_inj_fb']:
             inj_tools.rsync(injected_fb, results_dir)
         if self.processing_args['injection_args']['save_report']:
+            self.point_report_to_saved_ephemerides(injection_report, par_dir)
             inj_tools.rsync(injection_report, results_dir)
         if self.processing_args['injection_args']['save_pars']:
             inj_tools.rsync(f'{self.work_dir}/*.par', par_dir)
             inj_tools.rsync(f'{self.work_dir}/*.polycos', par_dir)
             inj_tools.rsync(f'{self.work_dir}/*.candfile', par_dir)
             inj_tools.rsync(f'{self.work_dir}/*.t2pred', par_dir)
-        
+
+    def point_report_to_saved_ephemerides(self, injection_report, par_dir):
+        with open(injection_report) as file:
+            report = json.load(file)
+
+        work_dir = Path(self.work_dir).resolve()
+        for pulsar in report['pulsars']:
+            ephemeris = pulsar.get('pint_polycos')
+            if ephemeris and Path(ephemeris).resolve().parent == work_dir:
+                inj_tools.rsync(ephemeris, par_dir)
+                pulsar['pint_polycos'] = f'{par_dir}/{Path(ephemeris).name}'
+
+        with open(injection_report, 'w') as file:
+            json.dump(report, file, indent=4)
+
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(prog='INCEPTION - injector process',
