@@ -487,6 +487,7 @@ the `EPHEM` line of the par file.
 
 - `pint-pulsar` installed; clock files reachable or cached.
 - The par file is valid at the epoch of the data.
+- Several epochs: the par file needs `TZRMJD` (see *Multi-epoch injections*).
 - If the user wants microsecond-level timing across epochs, tell them INCEPTION is not yet verified for
   timing-grade injections (see *Known issues*).
 
@@ -787,6 +788,9 @@ one-injection test and scale from it.
 - Fixed pulsar values, or a fixed `seed` per pulsar entry, so every injection gets the same pulsars.
 - `PEPOCH`, `T0`, `POSEPOCH` as MJDs, not fractions, so spin and orbit continue between epochs; the same
   Solar System ephemeris for all epochs.
+- PINT pulsars: the par file needs `TZRMJD` (normally with `TZRSITE`, `TZRFRQ`), or PINT picks a new phase
+  reference per observation and the epochs are not phase-connected (INCEPTION prints a warning). For a
+  made-up pulsar use e.g. `TZRMJD` = `PEPOCH`, `TZRSITE @`, `TZRFRQ 0`. Extra plan terms follow the point above.
 - One `data` entry per epoch, `filterbank: "injection_number"`, `start` 1, `end` = number of epochs.
   Never reuse injection numbers within a campaign (the number sets the noise and the draws).
 - Synthetic epochs need a header with the right `tstart`; with `--generate_fb` only the input's header and
@@ -989,6 +993,7 @@ As of INCEPTION version 1.0.11.
 | Job hangs after printing the filterbank statistics | Waiting for downloads. Use `--cache` and `--offline`. |
 | `--offline` fails at once for PINT | Clock files not cached. Run once online with `--cache`. |
 | Phase jumps every few minutes in a PINT injection | A `.polycos` file from an older INCEPTION version (see *Known issues*); regenerate it from the par file. |
+| PINT injections at different epochs not phase-connected | Par file has no `TZRMJD` (warning in the log); add `TZRMJD`, `TZRSITE`, `TZRFRQ` (see *Multi-epoch injections*). |
 | `create_parfile` rejected | Must be `"par"` or `"pulsarx"`. |
 | Recovered S/N differs from injected | `SNR_def` against the folding software; smearing, scattering, masks and RFI lower it. |
 | Nextflow process fails | Read `.command.err` and `.command.log` in the work directory named in the error. Path missing in a container: add a `-B` bind. |

@@ -94,6 +94,9 @@ def shift_polyco_phases(polycos):
 def create_polycos(par_file, pulsar_pars, obs, output_path):
     models, Polycos = load_pint()
     timing_model = models.get_model(par_file, EPHEM=solar_system_ephemeris(obs.ephem))
+    if 'AbsPhase' not in timing_model.components:
+        print(f'WARNING: {par_file} has no TZRMJD. PINT sets its own phase reference for this observation, '
+              'so injections into different epochs will not be phase-connected.', flush=True)
 
     t_mid = obs.obs_start + obs.obs_len/2 * u.s.to(u.day)
     polco_range = obs.obs_len/2 + 100*u.min.to(u.s)
