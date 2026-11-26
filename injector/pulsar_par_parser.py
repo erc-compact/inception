@@ -83,6 +83,7 @@ class PulsarParParser:
         parser.add_argument('--fold_harmonic', metavar='(float)', required=False, type=float, help="Generate fold file with p0 * harmonic")
         parser.add_argument('--pint_N', metavar='(-)', required=False, default=12, type=int, help='Number of coefficients per timestep for polycos generation')
         parser.add_argument('--pint_T', metavar='(min)', required=False, default=5, type=float, help='Timestep for polycos generation')
+        parser.add_argument('--pint_nfreq', metavar='(-)', required=False, default=8, type=int, help='Number of frequencies across the band at which PINT polycos are generated (1: band centre only)')
         parser.add_argument('--pint_polycos', metavar='(file)', required=False, default='', type=str, help='Inject using a PINT ephemeris: a .polycos file is used directly, a .par file is converted to polycos with PINT.')
 
         self.parser = parser

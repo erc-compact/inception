@@ -1,6 +1,6 @@
 # INCEPTION guide for AI agents
 
-INCEPTION version 1.0.11. Source: <https://github.com/erc-compact/inception>.
+INCEPTION version 1.0.12. Source: <https://github.com/erc-compact/inception>.
 
 This file is for an AI agent that helps a user run INCEPTION. Read all of it before acting. It covers what
 INCEPTION does, how to run each part, what to check, and what to ask the user. Commands assume the
@@ -457,6 +457,7 @@ the results no longer describe a single pulsar in that data.
 | **PINT** | | |
 | `pint_polycos` | none | `.par` file (converted with PINT) or an existing `.polycos` file. Replaces the in-built timing model. |
 | `pint_N`, `pint_T` | 12, 5 | Coefficients per polyco segment and segment length (minutes). Shorter or more for compact binaries. |
+| `pint_nfreq` | 8 | Frequencies across the band for polycos, besides the centre (1: centre only, as up to 1.0.11). |
 
 Notes:
 
@@ -493,8 +494,12 @@ the `EPHEM` line of the par file.
 
 ### What happens and what is written
 
-1. PINT writes polycos for the telescope at the band centre, covering the observation ±100 minutes,
-   segments of `pint_T` minutes with `pint_N` coefficients.
+1. PINT writes polycos for the telescope at the band centre and at `pint_nfreq` (8) further frequencies
+   across the band, covering the observation ±100 minutes, segments of `pint_T` minutes with `pint_N`
+   coefficients. Each set is checked against PINT; segments are halved until the error is below 1e-6
+   turns (printed). Between the frequencies the delay is interpolated, so every channel follows the full
+   model (Earth's Doppler on the DM delay, DMX, FD, solar wind). `pint_nfreq: 1`: centre only, other
+   channels follow the par-file DM alone (as up to 1.0.11).
 2. The pulsar is injected with them; they are saved as `out/<ID>.polycos`.
 3. `out/<ID>.par` is written: the input par with the plan's DM offset and extra terms. Fold with it.
 
@@ -968,11 +973,11 @@ Follow-up (task E): every pulsar with `"SNR": 0`; known pulsars by `pint_polycos
 
 ## Known issues
 
-As of INCEPTION version 1.0.11.
+As of INCEPTION version 1.0.12.
 
 | Issue | Effect | Work-around |
 |---|---|---|
-| Not verified for timing-grade injections (µs or better across epochs) | In-built model: no Solar System Shapiro delay or topocentric TT–TDB term (up to tens of µs), TT(TAI) without observatory clock corrections while its par files state `CLK TT(BIPM)` (about 27 µs), fixed `EPHEM DE421` in par files, no solar-wind dispersion. PINT injections: about 0.5 µs from PINT's rounding of polyco reference times. No µs-level validation yet | Negligible for searches and folding. If the user needs timing-grade injections, tell them this will be addressed in a future version. |
+| Not verified for timing-grade injections (µs or better across epochs) | In-built model: no Solar System Shapiro delay or topocentric TT–TDB term (up to tens of µs), TT(TAI) without observatory clock corrections while its par files state `CLK TT(BIPM)` (about 27 µs), fixed `EPHEM DE421` in par files, no solar-wind dispersion, DM delay without the Earth's Doppler shift (about 1e-4 of the delay). PINT injections: match PINT to a few ns per channel in local tests. No µs-level validation with folded data yet | Negligible for searches and folding. If the user needs timing-grade injections, tell them this will be addressed in a future version. |
 | `.polycos` files written by older INCEPTION versions | PINT wrote wrong reference phases for times before the par file's `TZRMJD`, so injections with such a file jump in phase every few minutes | Regenerate the polycos from the par file. |
 | `inj_DM` with PINT pulsars | The search uses the plan's `DM`, which is an offset for `pint_polycos` pulsars | Use the full DM plan, or give the DMs explicitly. |
 | Candidate folding's `delete_inj_fb` waits for the parfold | If the parfold is removed from `main.nf`, injected filterbanks are never deleted | Delete them yourself (with approval) or keep the parfold. |
@@ -993,6 +998,7 @@ As of INCEPTION version 1.0.11.
 | Job hangs after printing the filterbank statistics | Waiting for downloads. Use `--cache` and `--offline`. |
 | `--offline` fails at once for PINT | Clock files not cached. Run once online with `--cache`. |
 | Phase jumps every few minutes in a PINT injection | A `.polycos` file from an older INCEPTION version (see *Known issues*); regenerate it from the par file. |
+| Annual or frequency-dependent trend in timing residuals of a PINT injection | `.polycos` covers only the band centre (user-supplied, INCEPTION 1.0.11 or earlier, or `pint_nfreq: 1`); regenerate from the par file with `pint_nfreq` above 1. |
 | PINT injections at different epochs not phase-connected | Par file has no `TZRMJD` (warning in the log); add `TZRMJD`, `TZRSITE`, `TZRFRQ` (see *Multi-epoch injections*). |
 | `create_parfile` rejected | Must be `"par"` or `"pulsarx"`. |
 | Recovered S/N differs from injected | `SNR_def` against the folding software; smearing, scattering, masks and RFI lower it. |
