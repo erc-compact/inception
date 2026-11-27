@@ -331,7 +331,9 @@ def band_error(timing_model, path, obs, n_times=9, max_chans=64):
     n_chan = len(obs.freq_arr)
     chans = np.unique(np.round(np.linspace(0, n_chan - 1, min(max_chans, n_chan))).astype(int))
     freqs = np.asarray(obs.freq_arr, dtype=np.float64)[chans]
-    t_sec = np.repeat(np.linspace(0., obs.obs_len, n_times), len(freqs))
+    # check times fall at different places between the points of the delay grid, not on them
+    edge = min(DELAY_GRID_STEP / 2, obs.obs_len / 4)
+    t_sec = np.repeat(np.linspace(edge, obs.obs_len - edge, n_times), len(freqs))
     f_all = np.tile(freqs, n_times)
 
     prop = SimpleNamespace(DM=float(timing_model.DM.value or 0), DM_const=TEMPO_DM_CONST)

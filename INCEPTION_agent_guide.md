@@ -1,6 +1,6 @@
 # INCEPTION guide for AI agents
 
-INCEPTION version 1.0.13. Source: <https://github.com/erc-compact/inception>.
+INCEPTION version 1.0.14. Source: <https://github.com/erc-compact/inception>.
 
 This file is for an AI agent that helps a user run INCEPTION. Read all of it before acting. It covers what
 INCEPTION does, how to run each part, what to check, and what to ask the user. Commands assume the
@@ -500,7 +500,8 @@ built-in ephemeris (about 10 µs, not timing-grade), with a WARNING.
 1. PINT writes polycos for the telescope at the band centre and at `pint_nfreq` (8) further frequencies
    across the band, covering the observation ±10 minutes, segments of `pint_T` minutes with `pint_N`
    coefficients, with the par file's `EPHEM`, `CLK` and `PLANET_SHAPIRO`. Each set is checked against PINT;
-   segments are halved until the error is below 1e-6 turns. Between the frequencies the delay is
+   segments are halved until the error is below 1e-6 turns (relativistic binaries fine: made-up DD, 4.3-h
+   orbit, e = 0.6, OMDOT/GAMMA/PBDOT/Shapiro: 0.5 ns rms, 2.7 ns max). Between the frequencies the delay is
    interpolated (ν⁻² and ln ν, ln² ν terms fitted, spline in ln ν for the rest), so every channel follows
    the full model (Earth's Doppler on the DM delay, DMX, FD, solar wind) for any channel count and
    bandwidth. `pint_nfreq: 1`: centre only, other channels follow the par-file DM alone (as up to 1.0.11).
@@ -830,7 +831,8 @@ with open(dst, "wb") as f:
 
 PINT injections were validated end to end on 1.0.12 (2026-11; the two constant offsets the test found, `CLK`
 ignored and samples timed at their start, are fixed in 1.0.13; re-test: folded pulse within 0.2 µs of the
-PINT model, was +4.3 µs): three pulsars at DM 200
+PINT model, was +4.3 µs; checks without folding: about 0.2 ns rms, at most 1 ns, from 110–190 MHz to
+704–4032 MHz, plus EPHEM/CLK/PLANET_SHAPIRO/offline handling): three pulsars at DM 200
 in the ecliptic (isolated; DM1+FD+NE_SW; ELL1), seven epochs over a year, MeerKAT L and UHF, DSPSR folds,
 per-channel PSRCHIVE TOAs, PINT and TEMPO2 residuals against the unchanged par files: white at the 0.7–0.9 µs
 TOA precision, reduced χ² 0.95–1.03, no annual, frequency or orbital structure; injected phase within 3 ns
@@ -847,15 +849,21 @@ Injection side, for timing-grade work:
   `TT(BIPMxxxx)` whose clock file PINT cannot load falls back to PINT's default realisation (about 1 ns
   apart) with a WARNING; to match exactly, put `tai2tt_bipmxxxx.clk` into the cache. `out/<ID>.par` keeps
   the `CLK` line (the user's timing software may have that file).
+- A par file, not a ready-made `.polycos` file (used as is, at its own frequency only, not checked).
 - Check the log's accuracy line (largest deviation from PINT across the band).
 - Coherently dedispersed timing data: `cDM` = DM.
+- Effects that move TOAs as for a real pulsar: scattering, frequency-dependent (2D) profiles against one
+  standard profile, `micro_structure` (experimental). Leave them out unless the user wants them.
+- Standalone injector with `--generate_fb`: a different `global_seed` per epoch.
 - Fold and time with `out/<ID>.par`.
 
 Fold and timing side, each worth 0.3–34 µs:
 
 - Fold with a TEMPO2 predictor with enough coefficients:
-  `tempo2 -f psr.par -pred "<site> <MJD1> <MJD2> <f_low> <f_high> 12 8 1800"`, DSPSR `-P`. DSPSR's own
-  (2 frequency coefficients, 1-h segments) is off by µs. PSRCHIVE config: `Predictor::default = tempo2`,
+  `tempo2 -f out/<ID>.par -pred "<site> <MJD1> <MJD2> <f_low> <f_high> 12 8 1800"`, DSPSR `-P`. DSPSR's
+  own (2 frequency coefficients, 1-h segments) is off by µs. Compact or eccentric orbits: check the
+  predictor against the par file, shorten the segments (last number, s) if needed. PSRCHIVE config:
+  `Predictor::default = tempo2`,
   `Predictor::policy = default`.
 - Binaries in DSPSR: small blocks (`-U 1`); the default block (about a minute here) advances the phase
   linearly with the period at the block start (34 µs for a 0.3-d orbit).
@@ -1026,7 +1034,7 @@ Follow-up (task E): every pulsar with `"SNR": 0`; known pulsars by `pint_polycos
 
 ## Known issues
 
-As of INCEPTION version 1.0.13.
+As of INCEPTION version 1.0.14.
 
 | Issue | Effect | Work-around |
 |---|---|---|
