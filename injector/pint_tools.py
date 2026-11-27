@@ -16,7 +16,7 @@ MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 
 POLYCO_TOLERANCE = 1e-6
 BAND_TOLERANCE = 1e-8
 MAX_NFREQ = 64
-DELAY_GRID_STEP = 600.
+DELAY_GRID_STEP = 60.
 
 
 @lru_cache(maxsize=None)
@@ -97,6 +97,18 @@ def set_par_ephemeris(lines, name):
     lines.append(f'{"EPHEM":<15}{name.upper()}')
 
 
+def register_kernel(name, path):
+    # PINT 1.0.1 only checks that a given kernel file exists and then asks astropy for the kernel by name, which
+    # needs the network unless astropy's cache holds it; put the file into the cache under astropy's URL for it
+    from astropy.utils.data import import_file_to_cache, is_url_in_cache    # type: ignore
+    url = f'https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/{name}.bsp'
+    try:
+        if not is_url_in_cache(url):
+            import_file_to_cache(url, path, remove_original=False)
+    except Exception:
+        pass
+
+
 @lru_cache(maxsize=None)
 def pint_ephemeris(ephem, par_ephem):
     # PINT follows the par file's EPHEM; the --ephem file supplies it when the names match. Returns the kernel
@@ -105,25 +117,29 @@ def pint_ephemeris(ephem, par_ephem):
     from pint.solar_system_ephemerides import load_kernel    # type: ignore
     previous = solar_system_ephemeris.get()
     given = os.path.splitext(os.path.basename(ephem))[0].lower() if os.path.isfile(ephem) else None
+    if given:
+        register_kernel(given, ephem)
 
     def load(name, path=None):
         loaded = load_kernel(name, path=path)
         return loaded if isinstance(loaded, (str, os.PathLike)) else solar_system_ephemeris.get()
 
     try:
-        if given == par_ephem:
-            return par_ephem, load(par_ephem, ephem)
         try:
-            return par_ephem, load(par_ephem)
+            return par_ephem, load(par_ephem, ephem if given == par_ephem else None)
         except Exception:
             pass
-        if given:
-            print(f'WARNING: PINT could not load {par_ephem.upper()} named in the par file; using the --ephem kernel '
-                  f'{given.upper()} instead (written to the output par file).', flush=True)
-            return given, load(given, ephem)
-        print(f'WARNING: PINT could not load {par_ephem.upper()} named in the par file and --ephem gives no kernel; '
-              "using astropy's built-in ephemeris, good to about 10 us only (not timing-grade). Give --ephem "
-              f'with the {par_ephem} kernel.', flush=True)
+        if given and given != par_ephem:
+            try:
+                kernel = load(given, ephem)
+                print(f'WARNING: PINT could not load {par_ephem.upper()} named in the par file; using the --ephem '
+                      f'kernel {given.upper()} instead (written to the output par file).', flush=True)
+                return given, kernel
+            except Exception:
+                pass
+        print(f'WARNING: PINT could not load the {par_ephem.upper()} ephemeris named in the par file (not cached, no '
+              "network, no matching --ephem file); using astropy's built-in ephemeris, good to about 10 us only (not "
+              f'timing-grade). Give --ephem with the {par_ephem} kernel.', flush=True)
         return 'builtin', 'builtin'
     finally:
         solar_system_ephemeris.set(previous)
@@ -319,12 +335,13 @@ def band_error(timing_model, path, obs, n_times=9, max_chans=64):
     f_all = np.tile(freqs, n_times)
 
     prop = SimpleNamespace(DM=float(timing_model.DM.value or 0), DM_const=TEMPO_DM_CONST)
-    injected = PolycoPhase(path, obs, prop, 'inf')(t_sec, f_all).astype(np.longdouble)
+    injected = PolycoPhase(path, obs, prop, 'inf')(t_sec, f_all)
     times = obs.obs_start_time_TIME + TimeDelta(t_sec, format='sec')
     mjd = (times.jd1 - 2400000.5).astype(np.longdouble) + times.jd2.astype(np.longdouble)
-    model_int, model_frac, _, _ = model_phase(timing_model, mjd, obs.tempo_id, f_all)
+    _, model_frac, _, _ = model_phase(timing_model, mjd, obs.tempo_id, f_all)
 
-    diff = (model_int - injected + model_frac).astype(np.float64)
+    # compare fractional phases only: absolute pulse numbers (~1e9) would lose nanoseconds in float64
+    diff = model_frac.astype(np.float64) - (injected - np.round(injected)).astype(np.float64)
     seconds = (diff - np.round(diff)) / float(timing_model.F0.value)
     return len(freqs), float(np.max(np.abs(seconds))), float(np.sqrt(np.mean(seconds**2)))
 
@@ -348,6 +365,7 @@ def make_polycos(models, Polycos, par_file, pulsar_pars, obs, output_path, ephem
     t_span = max(1, int(pulsar_pars['pint_T']))
     polycos_path = f"{output_path}/{pulsar_pars['ID']}.polycos"
     margin = coverage_margin(timing_model, pulsar_pars, obs)
+    largest = np.inf
 
     while True:
         freqs = polyco_frequencies(obs, n_freq)
@@ -362,9 +380,10 @@ def make_polycos(models, Polycos, par_file, pulsar_pars, obs, output_path, ephem
                 break
             t_span = max(1, t_span // 2)
 
-        # pint_nfreq: 1 keeps the band centre only on purpose; otherwise add frequencies until the band is followed
+        # pint_nfreq: 1 keeps the band centre only on purpose; otherwise add frequencies while that helps
+        previous = largest
         n_checked, largest, rms = band_error(timing_model, polycos_path, obs)
-        if largest <= BAND_TOLERANCE or n_freq == 1 or n_freq >= MAX_NFREQ:
+        if largest <= BAND_TOLERANCE or n_freq == 1 or n_freq >= MAX_NFREQ or largest > previous / 2:
             break
         n_freq = min(MAX_NFREQ, 2 * n_freq)
 

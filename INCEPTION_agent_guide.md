@@ -482,7 +482,8 @@ Notes:
 ```
 
 The command is the same as for any plan. Add `--cache` (PINT downloads clock files). PINT uses the par
-file's `EPHEM`; pass the same kernel with `--ephem` (needed offline, otherwise PINT downloads it). If PINT
+file's `EPHEM`; pass the same kernel with `--ephem` (INCEPTION copies it into the astropy cache, so it works
+offline; otherwise PINT downloads it). If PINT
 cannot load it, the injector falls back to the `--ephem` kernel (written to `out/<ID>.par`) or to the
 built-in ephemeris (about 10 µs, not timing-grade), with a WARNING.
 
@@ -504,10 +505,10 @@ built-in ephemeris (about 10 µs, not timing-grade), with a WARNING.
    the full model (Earth's Doppler on the DM delay, DMX, FD, solar wind) for any channel count and
    bandwidth. `pint_nfreq: 1`: centre only, other channels follow the par-file DM alone (as up to 1.0.11).
    Then the injected phase is compared with PINT in 64 channels spread over the band (all if fewer) × 9
-   times; above 10 ns `pint_nfreq` is doubled (up to 64) and everything repeated. Log line:
+   times; above 10 ns `pint_nfreq` is doubled (up to 64, only while that halves the deviation). Log line:
    `PINT polycos for <ID> (<EPHEM>, <CLK>): ... Injected phase against PINT over <n> of <N> channels:
-   largest <x> ns, rms <y> ns`; WARNING if 10 ns is not reached. Tested at DM 200 from LOFAR HBA to the
-   Parkes UWL, 64–4096 channels: at most 1.4 ns with the default.
+   largest <x> ns, rms <y> ns`; WARNING if 10 ns is not reached. Tested at DM 200–300 from LOFAR HBA to
+   the Parkes UWL, 64–4096 channels: at most 0.9 ns, 0.2 ns rms with the default.
 2. The pulsar is injected with them; they are saved as `out/<ID>.polycos`.
 3. `out/<ID>.par` is written: the input par with the plan's DM offset and extra terms. Fold with it.
 
@@ -833,7 +834,7 @@ PINT model, was +4.3 µs): three pulsars at DM 200
 in the ecliptic (isolated; DM1+FD+NE_SW; ELL1), seven epochs over a year, MeerKAT L and UHF, DSPSR folds,
 per-channel PSRCHIVE TOAs, PINT and TEMPO2 residuals against the unchanged par files: white at the 0.7–0.9 µs
 TOA precision, reduced χ² 0.95–1.03, no annual, frequency or orbital structure; injected phase within 3 ns
-rms (L) and 6 ns rms (UHF) of PINT, at most 24 ns (1.0.13 interpolates better: below 2 ns). Samples are evaluated at their centre (`tstart` = start
+rms (L) and 6 ns rms (UHF) of PINT, at most 24 ns (1.0.13 interpolates better: below 1 ns). Samples are evaluated at their centre (`tstart` = start
 of the first sample).
 
 Injection side, for timing-grade work:
@@ -844,7 +845,8 @@ Injection side, for timing-grade work:
   about 10 µs).
 - `--ephem` with the kernel named in `EPHEM`; PINT clock files current (one online run with `--cache`). A
   `TT(BIPMxxxx)` whose clock file PINT cannot load falls back to PINT's default realisation (about 1 ns
-  apart) with a WARNING; to match exactly, put `tai2tt_bipmxxxx.clk` into the cache.
+  apart) with a WARNING; to match exactly, put `tai2tt_bipmxxxx.clk` into the cache. `out/<ID>.par` keeps
+  the `CLK` line (the user's timing software may have that file).
 - Check the log's accuracy line (largest deviation from PINT across the band).
 - Coherently dedispersed timing data: `cDM` = DM.
 - Fold and time with `out/<ID>.par`.
