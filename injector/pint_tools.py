@@ -14,6 +14,8 @@ from .propagation_effects import TEMPO_DM_CONST
 MIN_PER_DAY = 1440
 MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 POLYCO_TOLERANCE = 1e-6
+BAND_TOLERANCE = 1e-8
+MAX_NFREQ = 64
 DELAY_GRID_STEP = 600.
 
 
@@ -77,13 +79,54 @@ def ephemeris_values(ephemeris_path):
     return float(polyco_table['entry'][0].f0), float(polyco_table['dm'][0])
 
 
-def solar_system_ephemeris(ephem):
-    if not os.path.isfile(ephem):
-        return ephem
-    from pint.solar_system_ephemerides import load_kernel # type: ignore
-    ephem_name = os.path.splitext(os.path.basename(ephem))[0].lower()
-    load_kernel(ephem_name, path=ephem)
-    return ephem_name
+def par_ephemeris(lines):
+    for line in lines:
+        parts = line.split()
+        if len(parts) > 1 and parts[0] == 'EPHEM':
+            return parts[1].lower()
+    return 'de421'
+
+
+def set_par_ephemeris(lines, name):
+    for n, line in enumerate(lines):
+        parts = line.split()
+        if len(parts) > 1 and parts[0] == 'EPHEM':
+            head, tail = re.match(r'(\s*\S+\s+)\S+(.*)', line).groups()
+            lines[n] = head + name.upper() + tail
+            return
+    lines.append(f'{"EPHEM":<15}{name.upper()}')
+
+
+@lru_cache(maxsize=None)
+def pint_ephemeris(ephem, par_ephem):
+    # PINT follows the par file's EPHEM; the --ephem file supplies it when the names match. Returns the kernel
+    # name for PINT and the value astropy needs while PINT runs (PINT reads astropy's global ephemeris).
+    from astropy.coordinates import solar_system_ephemeris    # type: ignore
+    from pint.solar_system_ephemerides import load_kernel    # type: ignore
+    previous = solar_system_ephemeris.get()
+    given = os.path.splitext(os.path.basename(ephem))[0].lower() if os.path.isfile(ephem) else None
+
+    def load(name, path=None):
+        loaded = load_kernel(name, path=path)
+        return loaded if isinstance(loaded, (str, os.PathLike)) else solar_system_ephemeris.get()
+
+    try:
+        if given == par_ephem:
+            return par_ephem, load(par_ephem, ephem)
+        try:
+            return par_ephem, load(par_ephem)
+        except Exception:
+            pass
+        if given:
+            print(f'WARNING: PINT could not load {par_ephem.upper()} named in the par file; using the --ephem kernel '
+                  f'{given.upper()} instead (written to the output par file).', flush=True)
+            return given, load(given, ephem)
+        print(f'WARNING: PINT could not load {par_ephem.upper()} named in the par file and --ephem gives no kernel; '
+              "using astropy's built-in ephemeris, good to about 10 us only (not timing-grade). Give --ephem "
+              f'with the {par_ephem} kernel.', flush=True)
+        return 'builtin', 'builtin'
+    finally:
+        solar_system_ephemeris.set(previous)
 
 
 def shift_polyco_phases(tables):
@@ -123,15 +166,26 @@ def polyco_frequencies(obs, n_freq):
     return np.unique(np.round(np.append(1/np.sqrt(inv_sq), centre), 3))
 
 
+BIPM_FALLBACK = set()
+
+
 def clock_settings(timing_model):
     # PINT's get_TOAs reads CLOCK from the model, get_TOAs_array (and generate_polycos) does not
     clock = getattr(timing_model, 'CLOCK', None)
     clock = str(clock.value if clock is not None and clock.value is not None else '').replace(' ', '').upper()
     if clock in ('TT(TAI)', 'UNCORR'):
         return {'include_bipm': False}
-    if clock.startswith('TT(BIPM') and clock != 'TT(BIPM)':
+    if clock.startswith('TT(BIPM') and clock != 'TT(BIPM)' and clock[3:-1] not in BIPM_FALLBACK:
         return {'include_bipm': True, 'bipm_version': clock[3:-1]}
     return {'include_bipm': True}
+
+
+def clock_label(timing_model):
+    clock = getattr(timing_model, 'CLOCK', None)
+    label = clock.value if clock is not None and clock.value else 'default clock'
+    if 'bipm_version' not in clock_settings(timing_model) and str(label).upper().replace(' ', '')[3:-1] in BIPM_FALLBACK:
+        label += ' unavailable, PINT default used'
+    return label
 
 
 def planet_shapiro(timing_model):
@@ -139,13 +193,29 @@ def planet_shapiro(timing_model):
     return bool(param is not None and param.value)
 
 
-def model_phase(timing_model, mjd, obs_code, freq):
+def model_toas(timing_model, mjd, obs_code, freq):
     import pint.toa as toa    # type: ignore
-    mjd = np.asarray(mjd, dtype=np.longdouble)
     day = np.floor(mjd)
-    toas = toa.get_TOAs_array((day.astype(np.float64), (mjd - day).astype(np.float64)), obs=obs_code,
-                              freqs=freq * u.MHz, ephem=timing_model.EPHEM.value,
-                              planets=planet_shapiro(timing_model), **clock_settings(timing_model))
+    times = (day.astype(np.float64), (mjd - day).astype(np.float64))
+    common = dict(obs=obs_code, freqs=freq * u.MHz, ephem=timing_model.EPHEM.value, planets=planet_shapiro(timing_model))
+    settings = clock_settings(timing_model)
+    try:
+        return toa.get_TOAs_array(times, **common, **settings)
+    except Exception as error:
+        version = settings.get('bipm_version')
+        if not version or 'bipm' not in str(error).lower():
+            raise
+    # the TT(BIPMxxxx) realisations differ by about a nanosecond; a missing clock file should not stop the run
+    BIPM_FALLBACK.add(version)
+    print(f'WARNING: PINT cannot load the clock file for TT({version}) named in the par file; using PINT\'s default '
+          f'TT(BIPM) realisation instead (they differ by about a nanosecond). Put tai2tt_{version.lower()}.clk into '
+          'the cache for an exact match.', flush=True)
+    return toa.get_TOAs_array(times, **common, **clock_settings(timing_model))
+
+
+def model_phase(timing_model, mjd, obs_code, freq):
+    mjd = np.asarray(mjd, dtype=np.longdouble)
+    toas = model_toas(timing_model, mjd, obs_code, freq)
     phase = timing_model.phase(toas, abs_phase=True)
     order = np.argsort(np.asarray(toas.table['index']))
     return (np.asarray(phase.int.value, dtype=np.longdouble)[order],
@@ -239,40 +309,84 @@ def polyco_error(timing_model, Polycos, path, obs, freqs, n_test=41):
     return worst
 
 
+def band_error(timing_model, path, obs, n_times=9, max_chans=64):
+    # injected phase (polycos + interpolation between their frequencies) against PINT, over the channels
+    from types import SimpleNamespace
+    n_chan = len(obs.freq_arr)
+    chans = np.unique(np.round(np.linspace(0, n_chan - 1, min(max_chans, n_chan))).astype(int))
+    freqs = np.asarray(obs.freq_arr, dtype=np.float64)[chans]
+    t_sec = np.repeat(np.linspace(0., obs.obs_len, n_times), len(freqs))
+    f_all = np.tile(freqs, n_times)
+
+    prop = SimpleNamespace(DM=float(timing_model.DM.value or 0), DM_const=TEMPO_DM_CONST)
+    injected = PolycoPhase(path, obs, prop, 'inf')(t_sec, f_all).astype(np.longdouble)
+    times = obs.obs_start_time_TIME + TimeDelta(t_sec, format='sec')
+    mjd = (times.jd1 - 2400000.5).astype(np.longdouble) + times.jd2.astype(np.longdouble)
+    model_int, model_frac, _, _ = model_phase(timing_model, mjd, obs.tempo_id, f_all)
+
+    diff = (model_int - injected + model_frac).astype(np.float64)
+    seconds = (diff - np.round(diff)) / float(timing_model.F0.value)
+    return len(freqs), float(np.max(np.abs(seconds))), float(np.sqrt(np.mean(seconds**2)))
+
+
 def create_polycos(par_file, pulsar_pars, obs, output_path):
+    from astropy.coordinates import solar_system_ephemeris    # type: ignore
     models, Polycos = load_pint()
-    timing_model = models.get_model(par_file, EPHEM=solar_system_ephemeris(obs.ephem))
+    ephem_name, kernel = pint_ephemeris(str(obs.ephem), par_ephemeris(read_par(par_file)))
+    with solar_system_ephemeris.set(kernel):
+        return make_polycos(models, Polycos, par_file, pulsar_pars, obs, output_path, ephem_name)
+
+
+def make_polycos(models, Polycos, par_file, pulsar_pars, obs, output_path, ephem_name):
+    timing_model = models.get_model(par_file, EPHEM=ephem_name)
     if 'AbsPhase' not in timing_model.components:
         print(f'WARNING: {par_file} has no TZRMJD. PINT sets its own phase reference for this observation, '
               'so injections into different epochs will not be phase-connected.', flush=True)
 
-    freqs = polyco_frequencies(obs, pulsar_pars.get('pint_nfreq', 8))
+    n_freq = max(1, int(pulsar_pars.get('pint_nfreq', 8)))
     n_coeff = max(1, pulsar_pars['pint_N'])
     t_span = max(1, int(pulsar_pars['pint_T']))
     polycos_path = f"{output_path}/{pulsar_pars['ID']}.polycos"
     margin = coverage_margin(timing_model, pulsar_pars, obs)
 
     while True:
-        tables = [generate_polyco_table(timing_model, obs, freq, n_coeff, t_span, margin) for freq in freqs]
-        for table in tables:
-            anchor_written_tmid(table)
-        shift_polyco_phases(tables)
-        write_polyco_tables(tables, polycos_path)
-        error = polyco_error(timing_model, Polycos, polycos_path, obs, freqs)
-        if error <= POLYCO_TOLERANCE or t_span == 1:
-            break
-        t_span = max(1, t_span // 2)
+        freqs = polyco_frequencies(obs, n_freq)
+        while True:
+            tables = [generate_polyco_table(timing_model, obs, freq, n_coeff, t_span, margin) for freq in freqs]
+            for table in tables:
+                anchor_written_tmid(table)
+            shift_polyco_phases(tables)
+            write_polyco_tables(tables, polycos_path)
+            error = polyco_error(timing_model, Polycos, polycos_path, obs, freqs)
+            if error <= POLYCO_TOLERANCE or t_span == 1:
+                break
+            t_span = max(1, t_span // 2)
 
-    print(f"PINT polycos for {pulsar_pars['ID']}: {len(freqs)} frequencies, {t_span}-min segments, "
-          f"largest error {error:.1e} turns", flush=True)
+        # pint_nfreq: 1 keeps the band centre only on purpose; otherwise add frequencies until the band is followed
+        n_checked, largest, rms = band_error(timing_model, polycos_path, obs)
+        if largest <= BAND_TOLERANCE or n_freq == 1 or n_freq >= MAX_NFREQ:
+            break
+        n_freq = min(MAX_NFREQ, 2 * n_freq)
+
+    print(f"PINT polycos for {pulsar_pars['ID']} ({ephem_name.upper()}, {clock_label(timing_model)}): {len(freqs)} frequencies, "
+          f"{t_span}-min segments. Injected phase against PINT over {n_checked} of {len(obs.freq_arr)} channels: "
+          f"largest {largest*1e9:.1f} ns, rms {rms*1e9:.1f} ns", flush=True)
     if error > POLYCO_TOLERANCE:
         print(f"WARNING: PINT polycos for {pulsar_pars['ID']} deviate from the timing model by up to "
               f"{error:.1e} turns; increase pint_N.", flush=True)
+    if largest > BAND_TOLERANCE:
+        hint = 'pint_nfreq: 1 uses the band centre only' if n_freq == 1 else f'even with pint_nfreq {n_freq}'
+        print(f"WARNING: injected phase of {pulsar_pars['ID']} deviates from PINT by up to {largest*1e9:.0f} ns "
+              f"across the band ({hint}); not timing-grade at that level.", flush=True)
     return polycos_path
 
 
 def write_parfile(pulsar_model, par_path, new_path):
     lines = read_par(par_path)
+    par_ephem = par_ephemeris(lines)
+    ephem_name, _ = pint_ephemeris(str(pulsar_model.obs.ephem), par_ephem)
+    if ephem_name not in (par_ephem, 'builtin'):
+        set_par_ephemeris(lines, ephem_name)
 
     prop = pulsar_model.prop_effect
     DM_offset = Decimal(repr(float(pulsar_model.pulsar_pars['DM'] * prop.DM_const / TEMPO_DM_CONST)))
@@ -374,8 +488,19 @@ class PolycoPhase:
                 ref_int, ref_frac = self.entry_phase(self.ref_table, shifted)
                 residual = (node_int - ref_int).astype(np.float64) + (node_frac - ref_frac).astype(np.float64)
                 delays[k] += residual / self.entry_freq(self.ref_table, shifted)
+        # terms in 1/f^2 (Doppler on the DM delay, DM changes, solar wind) and FD-like terms in ln f are fitted
+        # exactly; the spline only interpolates what is left, so wide bands need no extra frequencies
         remainder = delays - self.dispersion(nodes)[:, None]
-        return CubicSpline(np.log(nodes), remainder, axis=0)
+        basis = self.chromatic_basis(nodes, len(nodes))
+        self.basis_coef = np.linalg.lstsq(basis, remainder, rcond=None)[0]
+        return CubicSpline(np.log(nodes), remainder - basis @ self.basis_coef, axis=0)
+
+    def chromatic_basis(self, freq, n_nodes=None):
+        freq = np.asarray(freq, dtype=np.float64)
+        n_basis = min(4, n_nodes if n_nodes is not None else self.basis_coef.shape[0])
+        log_f = np.log(freq / self.ref_freq)
+        columns = [(self.ref_freq / freq)**2 - 1, np.ones_like(log_f), log_f, log_f**2]
+        return np.stack(columns[:n_basis], axis=-1)
 
     def dispersion(self, freq):
         return self.ephemeris_DM * TEMPO_DM_CONST * (1/self.ref_freq**2 - 1/freq**2)
@@ -384,7 +509,8 @@ class PolycoPhase:
         freq = np.asarray(freq, dtype=np.float64)
         chromatic = np.broadcast_to(self.dispersion(freq), (len(self.t_grid),) + freq.shape)
         if self.node_delays is not None:
-            chromatic = chromatic + np.moveaxis(self.node_delays(np.log(freq)), -1, 0)
+            fitted = np.moveaxis(self.chromatic_basis(freq) @ self.basis_coef, -1, 0)
+            chromatic = chromatic + fitted + np.moveaxis(self.node_delays(np.log(freq)), -1, 0)
         return chromatic - self.offset_sweep * (1/freq**2 - self.inv_ref)
 
     def grid_weights(self, t_sec):

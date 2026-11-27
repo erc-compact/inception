@@ -457,7 +457,7 @@ the results no longer describe a single pulsar in that data.
 | **PINT** | | |
 | `pint_polycos` | none | `.par` file (converted with PINT) or an existing `.polycos` file. Replaces the in-built timing model. |
 | `pint_N`, `pint_T` | 12, 5 | Coefficients per polyco segment and segment length (minutes). Shorter or more for compact binaries. |
-| `pint_nfreq` | 8 | Frequencies across the band for polycos, besides the centre (1: centre only, as up to 1.0.11). |
+| `pint_nfreq` | 8 | Frequencies across the band for polycos, besides the centre; doubled automatically (up to 64) while the injected phase deviates from PINT by more than 10 ns (1: centre only, never increased, as up to 1.0.11). |
 
 Notes:
 
@@ -481,8 +481,10 @@ Notes:
 }
 ```
 
-The command is the same as for any plan. Add `--cache` (PINT downloads clock files). `--ephem` replaces
-the `EPHEM` line of the par file.
+The command is the same as for any plan. Add `--cache` (PINT downloads clock files). PINT uses the par
+file's `EPHEM`; pass the same kernel with `--ephem` (needed offline, otherwise PINT downloads it). If PINT
+cannot load it, the injector falls back to the `--ephem` kernel (written to `out/<ID>.par`) or to the
+built-in ephemeris (about 10 µs, not timing-grade), with a WARNING.
 
 ### Requirements and checks
 
@@ -496,10 +498,16 @@ the `EPHEM` line of the par file.
 
 1. PINT writes polycos for the telescope at the band centre and at `pint_nfreq` (8) further frequencies
    across the band, covering the observation ±10 minutes, segments of `pint_T` minutes with `pint_N`
-   coefficients, with the par file's `CLK` and `PLANET_SHAPIRO`. Each set is checked against PINT; segments are halved until the error is below 1e-6
-   turns (printed). Between the frequencies the delay is interpolated, so every channel follows the full
-   model (Earth's Doppler on the DM delay, DMX, FD, solar wind). `pint_nfreq: 1`: centre only, other
-   channels follow the par-file DM alone (as up to 1.0.11).
+   coefficients, with the par file's `EPHEM`, `CLK` and `PLANET_SHAPIRO`. Each set is checked against PINT;
+   segments are halved until the error is below 1e-6 turns. Between the frequencies the delay is
+   interpolated (ν⁻² and ln ν, ln² ν terms fitted, spline in ln ν for the rest), so every channel follows
+   the full model (Earth's Doppler on the DM delay, DMX, FD, solar wind) for any channel count and
+   bandwidth. `pint_nfreq: 1`: centre only, other channels follow the par-file DM alone (as up to 1.0.11).
+   Then the injected phase is compared with PINT in 64 channels spread over the band (all if fewer) × 9
+   times; above 10 ns `pint_nfreq` is doubled (up to 64) and everything repeated. Log line:
+   `PINT polycos for <ID> (<EPHEM>, <CLK>): ... Injected phase against PINT over <n> of <N> channels:
+   largest <x> ns, rms <y> ns`; WARNING if 10 ns is not reached. Tested at DM 200 from LOFAR HBA to the
+   Parkes UWL, 64–4096 channels: at most 1.4 ns with the default.
 2. The pulsar is injected with them; they are saved as `out/<ID>.polycos`.
 3. `out/<ID>.par` is written: the input par with the plan's DM offset and extra terms. Fold with it.
 
@@ -820,13 +828,28 @@ with open(dst, "wb") as f:
 ## Timing injected data
 
 PINT injections were validated end to end on 1.0.12 (2026-11; the two constant offsets the test found, `CLK`
-ignored and samples timed at their start, are fixed in 1.0.13): three pulsars at DM 200
+ignored and samples timed at their start, are fixed in 1.0.13; re-test: folded pulse within 0.2 µs of the
+PINT model, was +4.3 µs): three pulsars at DM 200
 in the ecliptic (isolated; DM1+FD+NE_SW; ELL1), seven epochs over a year, MeerKAT L and UHF, DSPSR folds,
 per-channel PSRCHIVE TOAs, PINT and TEMPO2 residuals against the unchanged par files: white at the 0.7–0.9 µs
 TOA precision, reduced χ² 0.95–1.03, no annual, frequency or orbital structure; injected phase within 3 ns
-rms (L) and 6 ns rms (UHF) of PINT, at most 24 ns. Samples are evaluated at their centre (`tstart` = start
-of the first sample). Settings that matter when the user folds and times injected (or real) data, each
-worth 0.3–34 µs:
+rms (L) and 6 ns rms (UHF) of PINT, at most 24 ns (1.0.13 interpolates better: below 2 ns). Samples are evaluated at their centre (`tstart` = start
+of the first sample).
+
+Injection side, for timing-grade work:
+
+- Inject from the par file the user will time with (`TZRMJD`, `TZRSITE`, `TZRFRQ` for several epochs).
+  INCEPTION follows its `EPHEM` and `CLK`; recommend `EPHEM DE440` for new par files (DE421 against DE440:
+  Earth about 116 km apart relative to the barycentre, constant offset up to 0.4 ms; built-in ephemeris
+  about 10 µs).
+- `--ephem` with the kernel named in `EPHEM`; PINT clock files current (one online run with `--cache`). A
+  `TT(BIPMxxxx)` whose clock file PINT cannot load falls back to PINT's default realisation (about 1 ns
+  apart) with a WARNING; to match exactly, put `tai2tt_bipmxxxx.clk` into the cache.
+- Check the log's accuracy line (largest deviation from PINT across the band).
+- Coherently dedispersed timing data: `cDM` = DM.
+- Fold and time with `out/<ID>.par`.
+
+Fold and timing side, each worth 0.3–34 µs:
 
 - Fold with a TEMPO2 predictor with enough coefficients:
   `tempo2 -f psr.par -pred "<site> <MJD1> <MJD2> <f_low> <f_high> 12 8 1800"`, DSPSR `-P`. DSPSR's own
@@ -1005,7 +1028,7 @@ As of INCEPTION version 1.0.13.
 
 | Issue | Effect | Work-around |
 |---|---|---|
-| In-built model not timing-grade (µs or better across epochs) | No Solar System Shapiro delay or topocentric TT–TDB term (up to tens of µs), TT(TAI) without observatory clock corrections while its par files state `CLK TT(BIPM)` (about 27 µs), fixed `EPHEM DE421` in par files, no solar-wind dispersion, DM delay without the Earth's Doppler shift (about 1e-4 of the delay) | Negligible for searches and folding. For timing, inject from a par file (`pint_polycos`), which is timing-grade. |
+| In-built model not timing-grade (µs or better across epochs) | No Solar System Shapiro delay or topocentric TT–TDB term (up to tens of µs), TT(TAI) without observatory clock corrections while its par files state `CLK TT(BIPM)` (about 27 µs), fixed `EPHEM DE421` in par files (old TEMPO crashes with newer ones; against `--ephem de440.bsp` a constant fold offset up to 0.4 ms, changing < 1 µs per year), no solar-wind dispersion, DM delay without the Earth's Doppler shift (about 1e-4 of the delay) | Negligible for searches and folding. For timing, inject from a par file (`pint_polycos`), which is timing-grade. |
 | `.polycos` files written by older INCEPTION versions | PINT wrote wrong reference phases for times before the par file's `TZRMJD`, so injections with such a file jump in phase every few minutes | Regenerate the polycos from the par file. |
 | `inj_DM` with PINT pulsars | The search uses the plan's `DM`, which is an offset for `pint_polycos` pulsars | Use the full DM plan, or give the DMs explicitly. |
 | Candidate folding's `delete_inj_fb` waits for the parfold | If the parfold is removed from `main.nf`, injected filterbanks are never deleted | Delete them yourself (with approval) or keep the parfold. |

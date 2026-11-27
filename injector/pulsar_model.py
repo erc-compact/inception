@@ -140,7 +140,7 @@ class PulsarModel:
 
     def get_pulse(self, phase_abs, chan):
         if self.micro_structure:
-            pulse_generator = MicroStructure(phase_abs, chan, self.micro_structure, self.period, self.observed_profile, self.seed)
+            pulse_generator = MicroStructure(phase_abs, chan, self.micro_structure, self.period, self.observed_profile, self.seed) # experimental
             return pulse_generator.pulse_profile()
         else:
             return self.observed_profile(phase_abs % 1, chan)
