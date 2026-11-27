@@ -1,6 +1,6 @@
 # INCEPTION guide for AI agents
 
-INCEPTION version 1.0.14. Source: <https://github.com/erc-compact/inception>.
+INCEPTION version 1.0.15. Source: <https://github.com/erc-compact/inception>.
 
 This file is for an AI agent that helps a user run INCEPTION. Read all of it before acting. It covers what
 INCEPTION does, how to run each part, what to check, and what to ask the user. Commands assume the
@@ -435,7 +435,7 @@ the results no longer describe a single pulsar in that data.
 | `DM` | 0 | pc cm⁻³. With `pint_polycos` it is an offset added to the par-file DM. |
 | `cDM` | 0 | Coherent dedispersion DM of the data; smearing uses abs(DM − cDM). |
 | `DM_smear` | `off` | `exact` (recommended), `approx` (default profile only) or `off`. Use `approx`/`off` only to test their effect. |
-| `sample_smear` | `on` | Average the profile over one sampling time, as the backend does; pulses narrower than a sample lose S/N. Keep `on`; `off` only for profiles that already contain it (Nullsar's fold-based models). |
+| `sample_smear` | `off` | `on`: average the profile over one sampling time, as the backend does (pulses narrower than a sample lose S/N). Matters only for pulses not much wider than a sample (off: 0.1-ms pulses at 1-ms sampling fold about 2.7x too strong, 40-µs at 0.1 ms 1.4x; wide pulses < 0.5%); keep `off` for profiles that already contain it (Nullsar's fold-based models). |
 | `DM_ref` | `inf` | Reference frequency of the delays: `inf` or `top`. |
 | `DM_const` | `exact` | `exact` (4148.806), `historical` (4149.378, TEMPO/TEMPO2/PINT/PRESTO/PulsarX) or a number. |
 | `scattering_time` | 0 | ms at the centre frequency. |
@@ -457,7 +457,7 @@ the results no longer describe a single pulsar in that data.
 | **PINT** | | |
 | `pint_polycos` | none | `.par` file (converted with PINT) or an existing `.polycos` file. Replaces the in-built timing model. |
 | `pint_N`, `pint_T` | 12, 5 | Coefficients per polyco segment and segment length (minutes). Shorter or more for compact binaries. |
-| `pint_nfreq` | 8 | Frequencies across the band for polycos, besides the centre; doubled automatically (up to 64) while the injected phase deviates from PINT by more than 10 ns (1: centre only, never increased, as up to 1.0.11). |
+| `pint_nfreq` | 8 | Frequencies across the band for polycos, besides the centre; doubled automatically (up to 64) while the injected phase deviates from PINT by more than 10 ns (1: centre only, never increased). |
 
 Notes:
 
@@ -492,19 +492,19 @@ built-in ephemeris (about 10 µs, not timing-grade), with a WARNING.
 - `pint-pulsar` installed; clock files reachable or cached.
 - The par file is valid at the epoch of the data.
 - Several epochs: the par file needs `TZRMJD` (see *Multi-epoch injections*).
-- PINT injections are timing-grade (validated end to end with DSPSR, PSRCHIVE, PINT and TEMPO2). If the
-  user times the injected data, give them the settings in *Timing injected data*.
+- PINT injections are timing-grade from version 1.0.14 (validated end to end with DSPSR, PSRCHIVE, PINT
+  and TEMPO2). If the user times the injected data, give them the settings in *Timing injected data*.
 
 ### What happens and what is written
 
 1. PINT writes polycos for the telescope at the band centre and at `pint_nfreq` (8) further frequencies
    across the band, covering the observation ±10 minutes, segments of `pint_T` minutes with `pint_N`
    coefficients, with the par file's `EPHEM`, `CLK` and `PLANET_SHAPIRO`. Each set is checked against PINT;
-   segments are halved until the error is below 1e-6 turns (relativistic binaries fine: made-up DD, 4.3-h
-   orbit, e = 0.6, OMDOT/GAMMA/PBDOT/Shapiro: 0.5 ns rms, 2.7 ns max). Between the frequencies the delay is
+   segments are halved until the error is below 1e-6 turns (also for compact and relativistic binaries).
+   Between the frequencies the delay is
    interpolated (ν⁻² and ln ν, ln² ν terms fitted, spline in ln ν for the rest), so every channel follows
    the full model (Earth's Doppler on the DM delay, DMX, FD, solar wind) for any channel count and
-   bandwidth. `pint_nfreq: 1`: centre only, other channels follow the par-file DM alone (as up to 1.0.11).
+   bandwidth. `pint_nfreq: 1`: centre only, other channels follow the par-file DM alone.
    Then the injected phase is compared with PINT in 64 channels spread over the band (all if fewer) × 9
    times; above 10 ns `pint_nfreq` is doubled (up to 64, only while that halves the deviation). Log line:
    `PINT polycos for <ID> (<EPHEM>, <CLK>): ... Injected phase against PINT over <n> of <N> channels:
@@ -829,15 +829,16 @@ with open(dst, "wb") as f:
 
 ## Timing injected data
 
-PINT injections were validated end to end on 1.0.12 (2026-11; the two constant offsets the test found, `CLK`
-ignored and samples timed at their start, are fixed in 1.0.13; re-test: folded pulse within 0.2 µs of the
-PINT model, was +4.3 µs; checks without folding: about 0.2 ns rms, at most 1 ns, from 110–190 MHz to
-704–4032 MHz, plus EPHEM/CLK/PLANET_SHAPIRO/offline handling): three pulsars at DM 200
-in the ecliptic (isolated; DM1+FD+NE_SW; ELL1), seven epochs over a year, MeerKAT L and UHF, DSPSR folds,
-per-channel PSRCHIVE TOAs, PINT and TEMPO2 residuals against the unchanged par files: white at the 0.7–0.9 µs
-TOA precision, reduced χ² 0.95–1.03, no annual, frequency or orbital structure; injected phase within 3 ns
-rms (L) and 6 ns rms (UHF) of PINT, at most 24 ns (1.0.13 interpolates better: below 1 ns). Samples are evaluated at their centre (`tstart` = start
-of the first sample).
+PINT injections are timing-grade from version 1.0.14. Measured: three pulsars at DM 200 in the ecliptic
+(isolated; DM1+FD+NE_SW; ELL1), seven epochs over a year, MeerKAT L and UHF, DSPSR folds, per-channel PSRCHIVE
+TOAs, PINT and TEMPO2 residuals against the unchanged par files without any fit: white at the 0.7–0.9 µs TOA
+precision, reduced χ² 0.95–1.03, no annual, frequency or orbital structure, folded pulse at the model phase
+within 0.2 µs. Directly against PINT, without folding: about 0.2 ns rms, at most 1 ns in every channel, from
+110–190 MHz to 704–4032 MHz, 64–4096 channels; made-up DD binary (4.3-h orbit, e = 0.6, OMDOT, GAMMA, PBDOT,
+Shapiro) 0.5 ns rms, 2.7 ns max; the same binary at 12 epochs over a year, timed end to end: reduced χ² 1.02
+over 46,080 TOAs, no annual term, absolute offset −0.004 ± 0.026 µs, epoch means 0.13 µs rms against 0.09 µs
+errors; Shapiro delay recovered with scale 1.003 ± 0.002. `EPHEM`, `CLK`, `PLANET_SHAPIRO` followed, also offline. Samples are evaluated
+at their centre (`tstart` = start of the first sample).
 
 Injection side, for timing-grade work:
 
@@ -851,9 +852,10 @@ Injection side, for timing-grade work:
   the `CLK` line (the user's timing software may have that file).
 - A par file, not a ready-made `.polycos` file (used as is, at its own frequency only, not checked).
 - Check the log's accuracy line (largest deviation from PINT across the band).
-- Coherently dedispersed timing data: `cDM` = DM.
-- Effects that move TOAs as for a real pulsar: scattering, frequency-dependent (2D) profiles against one
-  standard profile, `micro_structure` (experimental). Leave them out unless the user wants them.
+- Smearing within channels only with `DM_smear` `approx`/`exact` (default `off`), from |DM − cDM|; `cDM` has
+  no effect otherwise. Coherently dedispersed data: `cDM` = DM; incoherent filterbanks: `DM_smear: "exact"`.
+- Effects that move TOAs as for a real pulsar (useful to study their effect on timing): scattering,
+  frequency-dependent (2D) profiles against one standard profile, `micro_structure` (experimental).
 - Standalone injector with `--generate_fb`: a different `global_seed` per epoch.
 - Fold and time with `out/<ID>.par`.
 
@@ -862,13 +864,18 @@ Fold and timing side, each worth 0.3–34 µs:
 - Fold with a TEMPO2 predictor with enough coefficients:
   `tempo2 -f out/<ID>.par -pred "<site> <MJD1> <MJD2> <f_low> <f_high> 12 8 1800"`, DSPSR `-P`. DSPSR's
   own (2 frequency coefficients, 1-h segments) is off by µs. Compact or eccentric orbits: check the
-  predictor against the par file, shorten the segments (last number, s) if needed. PSRCHIVE config:
+  predictor against the par file, shorten the segments (last number, s) if needed (4.3-h orbit, e = 0.6:
+  1800 s off by up to 10 µs, 300 s a few ns). PSRCHIVE config:
   `Predictor::default = tempo2`,
   `Predictor::policy = default`.
 - Binaries in DSPSR: small blocks (`-U 1`); the default block (about a minute here) advances the phase
   linearly with the period at the block start (34 µs for a 0.3-d orbit).
 - Binaries in PSRCHIVE: do not add sub-integrations (`pam -T`) before the channels are dedispersed; make
-  TOAs from short sub-integrations.
+  TOAs from short sub-integrations. DSPSR folds all channels with one phase, so outer channels of a fast
+  binary drift within a sub-integration (up to 1.3 µs TOA bias in the lowest L channels at periastron,
+  2-min sub-ints); shorter sub-integrations reduce it.
+- Standard profile of a binary: `psradd -ip` (add without re-alignment); the default re-aligns with
+  psradd's own phase model, off by tens of bins for a fast orbit.
 - Sub-band TOAs: PSRCHIVE dedisperses inside a sub-band without the Earth's Doppler shift (annual bias
   about 0.3 µs lowest L, 0.8 µs lowest UHF sub-band at DM 200, 8 channels each). Use per-channel TOAs or
   `Dispersion::barycentric_correction = 1`; also `WeightedFrequency::round_to_kHz = 0` (kHz rounding, 1.3 µs).
@@ -1034,7 +1041,7 @@ Follow-up (task E): every pulsar with `"SNR": 0`; known pulsars by `pint_polycos
 
 ## Known issues
 
-As of INCEPTION version 1.0.14.
+As of INCEPTION version 1.0.15.
 
 | Issue | Effect | Work-around |
 |---|---|---|

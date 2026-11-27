@@ -161,7 +161,7 @@ class PropagationEffects:
         return np.ones(width) / width
 
     def sample_smearing(self, pulse):
-        if (self.pulsar_pars.get('sample_smear', 'on') == 'off') or (self.period <= 0):
+        if (self.pulsar_pars.get('sample_smear', 'off') == 'off') or (self.period <= 0):
             return pulse
 
         kernel = self.boxcar_kernel(self.obs.dt / self.period)

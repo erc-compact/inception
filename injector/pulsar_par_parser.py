@@ -58,7 +58,7 @@ class PulsarParParser:
         parser.add_argument('--DM', metavar='(pc/cm^3)', required=False, default=0, type=float, help='Dispersion measure, added to the ephemeris DM when using pint_polycos')
         parser.add_argument('--cDM', metavar='(pc/cm^3)', required=False, default=0, type=float, help='coherent Dispersion measure')
         parser.add_argument('--DM_smear', metavar='(off, approx or exact)', required=False, default='off', choices=['off', 'approx', 'exact'], help='Smear the pulse profile due to intra-channel DM smearing')
-        parser.add_argument('--sample_smear', metavar='(on or off)', required=False, default='on', choices=['on', 'off'], help='Average the pulse profile over one sampling time, as the backend does')
+        parser.add_argument('--sample_smear', metavar='(on or off)', required=False, default='off', choices=['on', 'off'], help='Average the pulse profile over one sampling time, as the backend does (matters only for pulses not much wider than a sample)')
         parser.add_argument('--DM_ref', metavar='(top or inf)', required=False, default='inf', choices=['top', 'inf'], help='reference frequency for DM dispersion')
         parser.add_argument('--DM_const', metavar='(exact, historical or float)', required=False, default='exact', help="Dispersion constant: 'exact' from physical constants (4148.806), 'historical' 1/2.41e-4 (4149.378, TEMPO/PINT/PRESTO/PulsarX) or a value in MHz^2 pc^-1 cm^3 s")
 
