@@ -835,9 +835,9 @@ TOAs, PINT and TEMPO2 residuals against the unchanged par files without any fit:
 precision, reduced χ² 0.95–1.03, no annual, frequency or orbital structure, folded pulse at the model phase
 within 0.2 µs. Directly against PINT, without folding: about 0.2 ns rms, at most 1 ns in every channel, from
 110–190 MHz to 704–4032 MHz, 64–4096 channels; made-up DD binary (4.3-h orbit, e = 0.6, OMDOT, GAMMA, PBDOT,
-Shapiro) 0.5 ns rms, 2.7 ns max; the same binary at 12 epochs over a year, timed end to end: reduced χ² 1.02
-over 46,080 TOAs, no annual term, absolute offset −0.004 ± 0.026 µs, epoch means 0.13 µs rms against 0.09 µs
-errors; Shapiro delay recovered with scale 1.003 ± 0.002. `EPHEM`, `CLK`, `PLANET_SHAPIRO` followed, also offline. Samples are evaluated
+Shapiro) 0.5 ns rms, 2.7 ns max; the same binary at 12 epochs over a year, timed end to end: reduced χ² 1.03
+over 53,760 TOAs, no annual term, absolute offset −0.004 ± 0.026 µs, epoch means 0.09 µs rms against 0.09 µs
+errors (one epoch with three noise seeds: +0.29, −0.14, 0.00 µs, so such offsets are noise); Shapiro delay recovered with scale 1.003 ± 0.002. `EPHEM`, `CLK`, `PLANET_SHAPIRO` followed, also offline. Samples are evaluated
 at their centre (`tstart` = start of the first sample).
 
 Injection side, for timing-grade work:
@@ -882,6 +882,27 @@ Fold and timing side, each worth 0.3–34 µs:
 - TEMPO2 applies a tropospheric delay and `NE_SW` 4 when the par file has none; PINT and the injection
   apply neither unless asked. Add `CORRECT_TROPOSPHERE N` and an explicit `NE_SW` to par files used with
   TEMPO2.
+
+Worked example (the validation test; par file and plan in the human guide, *Example: a relativistic binary
+over a year*). Per epoch: inject, predictor, fold; then standard profile, TOAs, residuals.
+
+```bash
+python3 injector/SCRIPT_inject_pulsars.py --signal=plan_e1.json --fb=L_e1.fil --output=inj/e1/ \
+    --ephem=de440.bsp --cache=cache --ncpu=24 --generate_fb=128,6
+tempo2 -f R1_fold.par -pred "meerkat 59500.29 59500.40 856 1712 12 8 300"    # R1_fold.par: + CORRECT_TROPOSPHERE N
+PSRCHIVE_CONFIG=psrchive_t2.cfg dspsr -E R1_fold.par -P t2pred.dat -b 512 -L 120 -U 1 -A -t 2 -e ar -O R1 inj/e1/L_e1_relbin.fil
+export PSRCHIVE_CONFIG=psrchive_t2_bary.cfg      # for the standard profile only
+pam -F -e bFs e1/R1.ar; pam -T -e bF e1/R1.bFs   # every epoch
+psradd -ip -T -o R1.add e*/R1.bF; pam -FTp -e std R1.add
+PSRCHIVE_CONFIG=psrchive_t2.cfg pat -A FDM -f "tempo2 IPTA" -s R1.std e*/R1.ar > R1.tim
+```
+
+`psrchive_t2.cfg`: `Predictor::default = tempo2`, `Predictor::policy = default`,
+`WeightedFrequency::round_to_kHz = 0`; `psrchive_t2_bary.cfg`: the same plus
+`Dispersion::barycentric_correction = 1`. Residuals: `Residuals(toa.get_TOAs("R1.tim", model=model), model)`
+from `pint.residuals` (no fit, weighted mean removed; `get_TOAs` takes `EPHEM`/`CLK` from the model).
+Result: χ²_red 1.03 over 53,760 TOAs (epoch 9 with three noise seeds), no annual term, absolute offset
+−0.004 ± 0.026 µs, epoch means 0.09 µs rms against 0.09 µs errors.
 
 ## Follow-up mode (task E)
 
