@@ -93,7 +93,7 @@ class PropagationEffects:
                 return kernal / np.sum(kernal)
             
             conv_profiles = [convolve1d(intrinsic_pulse(self.phase, nchan), scattering_kernel(nchan), mode='wrap') for nchan in range(self.obs.n_chan)]
-            phase_shift = [np.roll(profile, int(round(len(self.phase)/2))) for profile in conv_profiles]
+            phase_shift = [np.roll(profile, len(self.phase) // 2) for profile in conv_profiles]
             self.scattered_profiles = [interp1d(self.phase, profile) for profile in phase_shift]
 
             def scattered_pulse(phase, chan_num):

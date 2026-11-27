@@ -12,6 +12,7 @@ from scipy.interpolate import interp1d, CubicSpline
 from .propagation_effects import TEMPO_DM_CONST
 
 MIN_PER_DAY = 1440
+MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 POLYCO_TOLERANCE = 1e-6
 DELAY_GRID_STEP = 600.
 
@@ -122,12 +123,94 @@ def polyco_frequencies(obs, n_freq):
     return np.unique(np.round(np.append(1/np.sqrt(inv_sq), centre), 3))
 
 
-def generate_polyco_table(timing_model, Polycos, obs, freq, n_coeff, t_span, margin):
-    t_mid = obs.obs_start + obs.obs_len/2 * u.s.to(u.day)
-    half = (obs.obs_len/2 + margin) * u.s.to(u.day)
-    polycos = Polycos.generate_polycos(timing_model, t_mid - half, t_mid + half, obs.tempo_id,
-                                       t_span, n_coeff, freq, progress=False)
-    return polycos.polycoTable
+def clock_settings(timing_model):
+    # PINT's get_TOAs reads CLOCK from the model, get_TOAs_array (and generate_polycos) does not
+    clock = getattr(timing_model, 'CLOCK', None)
+    clock = str(clock.value if clock is not None and clock.value is not None else '').replace(' ', '').upper()
+    if clock in ('TT(TAI)', 'UNCORR'):
+        return {'include_bipm': False}
+    if clock.startswith('TT(BIPM') and clock != 'TT(BIPM)':
+        return {'include_bipm': True, 'bipm_version': clock[3:-1]}
+    return {'include_bipm': True}
+
+
+def planet_shapiro(timing_model):
+    param = getattr(timing_model, 'PLANET_SHAPIRO', None)
+    return bool(param is not None and param.value)
+
+
+def model_phase(timing_model, mjd, obs_code, freq):
+    import pint.toa as toa    # type: ignore
+    mjd = np.asarray(mjd, dtype=np.longdouble)
+    day = np.floor(mjd)
+    toas = toa.get_TOAs_array((day.astype(np.float64), (mjd - day).astype(np.float64)), obs=obs_code,
+                              freqs=freq * u.MHz, ephem=timing_model.EPHEM.value,
+                              planets=planet_shapiro(timing_model), **clock_settings(timing_model))
+    phase = timing_model.phase(toas, abs_phase=True)
+    order = np.argsort(np.asarray(toas.table['index']))
+    return (np.asarray(phase.int.value, dtype=np.longdouble)[order],
+            np.asarray(phase.frac.value, dtype=np.longdouble)[order], toas, order)
+
+
+def coverage_margin(timing_model, pulsar_pars, obs):
+    DM = abs(float(timing_model.DM.value or 0)) + abs(float(pulsar_pars.get('DM') or 0))
+    return 600. + 1.5 * DM * TEMPO_DM_CONST / obs.low_f**2
+
+
+def polyco_tmids(obs, t_span, margin):
+    start = np.floor((obs.obs_start - margin / 86400) * MIN_PER_DAY)
+    stop = np.ceil((obs.obs_start + (obs.obs_len + margin) / 86400) * MIN_PER_DAY)
+    n_seg = max(1, int(np.ceil((stop - start) / t_span)))
+    return (np.longdouble(start) + t_span * (np.arange(n_seg) + 0.5)) / MIN_PER_DAY
+
+
+def orbit_columns(timing_model, toas, order, n_seg):
+    if not timing_model.is_binary:
+        return None
+    try:
+        orbital = np.asarray(timing_model.orbital_phase(toas, radians=False), dtype=np.float64)[order][:n_seg]
+        component = timing_model.get_components_by_category()['pulsar_system'][0]
+        PB = getattr(component, 'PB', None)
+        f_orbit = 1/float(PB.value) if PB is not None and PB.value else float(component.FB0.value) * 86400
+        return orbital, f_orbit
+    except Exception:
+        return None
+
+
+def generate_polyco_table(timing_model, obs, freq, n_coeff, t_span, margin, n_nodes=20):
+    # TEMPO-style polycos as PINT's generate_polycos makes them, but with one TOA call for all segments,
+    # the par file's CLOCK and PLANET_SHAPIRO, and segments that cover the observation plus margin
+    from astropy.table import Table
+    from astropy.time import Time
+    from pint.polycos import PolycoEntry    # type: ignore
+    n_nodes = max(n_nodes, n_coeff + 1)
+    tmids = polyco_tmids(obs, t_span, margin)
+    n_seg = len(tmids)
+    dt = np.linspace(-t_span/2, t_span/2, n_nodes)
+    nodes = tmids[:, None] + dt.astype(np.longdouble)[None, :] / MIN_PER_DAY
+
+    ints, fracs, toas, order = model_phase(timing_model, np.concatenate([tmids, nodes.ravel()]), obs.tempo_id, freq)
+    ref_int, ref_frac = ints[:n_seg], fracs[:n_seg]
+    f0 = timing_model.F0.value
+    reduced = ((ints[n_seg:].reshape(n_seg, n_nodes) - ref_int[:, None]) - dt[None, :] * 60 * f0
+               + (fracs[n_seg:].reshape(n_seg, n_nodes) - ref_frac[:, None]))
+    coeffs = np.polyfit(dt, reduced.astype(np.float64).T, n_coeff - 1)[::-1].T
+    orbit = orbit_columns(timing_model, toas, order, n_seg)
+
+    rows = []
+    for k, iso in enumerate(Time(tmids.astype(np.float64), format='mjd', scale='utc').iso):
+        date, hms = iso.split()
+        yy, mm, dd = date.split('-')
+        entry = PolycoEntry(tmids[k], t_span, np.array([ref_int[k]]), np.array([ref_frac[k]]), f0, n_coeff, coeffs[k])
+        row = {'psr': timing_model.PSR.value, 'date': f'{dd}-{MONTHS[int(mm) - 1]}-{yy[-2:]}',
+               'utc': float(hms.replace(':', '')), 'tmid': tmids[k], 'dm': timing_model.DM.value,
+               'doppler': 0., 'logrms': 0., 'mjd_span': t_span, 't_start': entry.tstart, 't_stop': entry.tstop,
+               'obs': obs.tempo_id, 'obsfreq': float(freq)}
+        if orbit is not None:
+            row['binary_phase'], row['f_orbit'] = orbit[0][k], orbit[1]
+        row['entry'] = entry
+        rows.append(row)
+    return Table(rows=rows, meta={'name': 'Polyco Data Table'})
 
 
 def write_polyco_tables(tables, path):
@@ -142,7 +225,6 @@ def write_polyco_tables(tables, path):
 
 
 def polyco_error(timing_model, Polycos, path, obs, freqs, n_test=41):
-    import pint.toa as toa    # type: ignore
     table = Polycos.read(path).polycoTable
     obsfreq = np.asarray(table['obsfreq'], dtype=np.float64)
 
@@ -150,8 +232,7 @@ def polyco_error(timing_model, Polycos, path, obs, freqs, n_test=41):
     mjd = (times.jd1 - 2400000.5).astype(np.longdouble) + times.jd2.astype(np.longdouble)
     worst = 0.
     for freq in freqs:
-        toas = toa.get_TOAs_array(times, obs=obs.tempo_id, freqs=freq * u.MHz, ephem=timing_model.EPHEM.value)
-        model_frac = timing_model.phase(toas, abs_phase=True).frac.value.astype(np.float64)
+        model_frac = model_phase(timing_model, mjd, obs.tempo_id, freq)[1].astype(np.float64)
         _, polyco_frac = PolycoPhase.entry_phase(table[obsfreq == freq], mjd)
         diff = polyco_frac.astype(np.float64) - model_frac
         worst = max(worst, float(np.max(np.abs(diff - np.round(diff)))))
@@ -169,10 +250,10 @@ def create_polycos(par_file, pulsar_pars, obs, output_path):
     n_coeff = max(1, pulsar_pars['pint_N'])
     t_span = max(1, int(pulsar_pars['pint_T']))
     polycos_path = f"{output_path}/{pulsar_pars['ID']}.polycos"
+    margin = coverage_margin(timing_model, pulsar_pars, obs)
 
     while True:
-        tables = [generate_polyco_table(timing_model, Polycos, obs, freq, n_coeff, t_span, 100*u.min.to(u.s))
-                  for freq in freqs]
+        tables = [generate_polyco_table(timing_model, obs, freq, n_coeff, t_span, margin) for freq in freqs]
         for table in tables:
             anchor_written_tmid(table)
         shift_polyco_phases(tables)

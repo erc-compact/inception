@@ -153,8 +153,12 @@ class PulsarModel:
         phase_abs = self.phase_func(T_proper)
         return phase_abs 
     
+    def sample_times(self, n_samples, sample_start):
+        # sample n integrates from n*dt to (n+1)*dt after tstart, so it is evaluated at its centre
+        return self.obs.dt * (np.arange(n_samples) + sample_start + 0.5)
+
     def generate_signal_polcos_bary(self, n_samples, sample_start=0):
-        timeseries = np.linspace(self.obs.dt*sample_start, self.obs.dt*(n_samples+sample_start-1), n_samples)
+        timeseries = self.sample_times(n_samples, sample_start)
         DM_delays = self.prop_effect.DM_delays[None, :]
         bary_times = self.obs.topo2bary(timeseries, return_mjd=False, interp=True)
 
@@ -163,7 +167,7 @@ class PulsarModel:
         return self.get_pulse(phase, np.arange(self.obs.n_chan)[None, :]) * gain_map
     
     def generate_signal_polcos_topo(self, n_samples, sample_start=0):
-        timeseries = np.linspace(self.obs.dt*sample_start, self.obs.dt*(n_samples+sample_start-1), n_samples)
+        timeseries = self.sample_times(n_samples, sample_start)
         DM_delays = self.prop_effect.DM_delays[None, :]
 
         phase = self.polycos.channels(timeseries) + self.get_phase(timeseries[:, None] + DM_delays)
@@ -171,7 +175,7 @@ class PulsarModel:
         return self.get_pulse(phase, np.arange(self.obs.n_chan)[None, :]) * gain_map
         
     def generate_signal_python_bary(self, n_samples, sample_start=0):
-        timeseries = np.linspace(self.obs.dt*sample_start, self.obs.dt*(n_samples+sample_start-1), n_samples)
+        timeseries = self.sample_times(n_samples, sample_start)
         bary_times = self.obs.topo2bary(timeseries, return_mjd=False, interp=True)
 
         phase_array = self.get_phase(bary_times[:, None] + self.prop_effect.DM_delays[None, :])
@@ -179,7 +183,7 @@ class PulsarModel:
         return self.get_pulse(phase_array, np.arange(self.obs.n_chan)[None, :]) * gain_map
     
     def generate_signal_python_topo(self, n_samples, sample_start=0):
-        timeseries = np.linspace(self.obs.dt*sample_start, self.obs.dt*(n_samples+sample_start-1), n_samples)
+        timeseries = self.sample_times(n_samples, sample_start)
 
         phase_array = self.get_phase(timeseries[:, None] + self.prop_effect.DM_delays[None, :])
         gain_map = self.emission.gain(timeseries)

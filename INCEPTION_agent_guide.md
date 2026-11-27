@@ -1,6 +1,6 @@
 # INCEPTION guide for AI agents
 
-INCEPTION version 1.0.12. Source: <https://github.com/erc-compact/inception>.
+INCEPTION version 1.0.13. Source: <https://github.com/erc-compact/inception>.
 
 This file is for an AI agent that helps a user run INCEPTION. Read all of it before acting. It covers what
 INCEPTION does, how to run each part, what to check, and what to ask the user. Commands assume the
@@ -489,14 +489,14 @@ the `EPHEM` line of the par file.
 - `pint-pulsar` installed; clock files reachable or cached.
 - The par file is valid at the epoch of the data.
 - Several epochs: the par file needs `TZRMJD` (see *Multi-epoch injections*).
-- If the user wants microsecond-level timing across epochs, tell them INCEPTION is not yet verified for
-  timing-grade injections (see *Known issues*).
+- PINT injections are timing-grade (validated end to end with DSPSR, PSRCHIVE, PINT and TEMPO2). If the
+  user times the injected data, give them the settings in *Timing injected data*.
 
 ### What happens and what is written
 
 1. PINT writes polycos for the telescope at the band centre and at `pint_nfreq` (8) further frequencies
-   across the band, covering the observation ±100 minutes, segments of `pint_T` minutes with `pint_N`
-   coefficients. Each set is checked against PINT; segments are halved until the error is below 1e-6
+   across the band, covering the observation ±10 minutes, segments of `pint_T` minutes with `pint_N`
+   coefficients, with the par file's `CLK` and `PLANET_SHAPIRO`. Each set is checked against PINT; segments are halved until the error is below 1e-6
    turns (printed). Between the frequencies the delay is interpolated, so every channel follows the full
    model (Earth's Doppler on the DM delay, DMX, FD, solar wind). `pint_nfreq: 1`: centre only, other
    channels follow the par-file DM alone (as up to 1.0.11).
@@ -798,6 +798,8 @@ one-injection test and scale from it.
   made-up pulsar use e.g. `TZRMJD` = `PEPOCH`, `TZRSITE @`, `TZRFRQ 0`. Extra plan terms follow the point above.
 - One `data` entry per epoch, `filterbank: "injection_number"`, `start` 1, `end` = number of epochs.
   Never reuse injection numbers within a campaign (the number sets the noise and the draws).
+- Standalone injector with `--generate_fb`: a different `global_seed` per epoch, or every epoch gets the
+  same noise.
 - Synthetic epochs need a header with the right `tstart`; with `--generate_fb` only the input's header and
   length are used, so write a header-only (sparse) copy with a new `tstart`:
 
@@ -814,6 +816,32 @@ with open(dst, "wb") as f:
 ```
 
 - Check phase connection by folding every epoch with the same par file.
+
+## Timing injected data
+
+PINT injections were validated end to end on 1.0.12 (2026-11; the two constant offsets the test found, `CLK`
+ignored and samples timed at their start, are fixed in 1.0.13): three pulsars at DM 200
+in the ecliptic (isolated; DM1+FD+NE_SW; ELL1), seven epochs over a year, MeerKAT L and UHF, DSPSR folds,
+per-channel PSRCHIVE TOAs, PINT and TEMPO2 residuals against the unchanged par files: white at the 0.7–0.9 µs
+TOA precision, reduced χ² 0.95–1.03, no annual, frequency or orbital structure; injected phase within 3 ns
+rms (L) and 6 ns rms (UHF) of PINT, at most 24 ns. Samples are evaluated at their centre (`tstart` = start
+of the first sample). Settings that matter when the user folds and times injected (or real) data, each
+worth 0.3–34 µs:
+
+- Fold with a TEMPO2 predictor with enough coefficients:
+  `tempo2 -f psr.par -pred "<site> <MJD1> <MJD2> <f_low> <f_high> 12 8 1800"`, DSPSR `-P`. DSPSR's own
+  (2 frequency coefficients, 1-h segments) is off by µs. PSRCHIVE config: `Predictor::default = tempo2`,
+  `Predictor::policy = default`.
+- Binaries in DSPSR: small blocks (`-U 1`); the default block (about a minute here) advances the phase
+  linearly with the period at the block start (34 µs for a 0.3-d orbit).
+- Binaries in PSRCHIVE: do not add sub-integrations (`pam -T`) before the channels are dedispersed; make
+  TOAs from short sub-integrations.
+- Sub-band TOAs: PSRCHIVE dedisperses inside a sub-band without the Earth's Doppler shift (annual bias
+  about 0.3 µs lowest L, 0.8 µs lowest UHF sub-band at DM 200, 8 channels each). Use per-channel TOAs or
+  `Dispersion::barycentric_correction = 1`; also `WeightedFrequency::round_to_kHz = 0` (kHz rounding, 1.3 µs).
+- TEMPO2 applies a tropospheric delay and `NE_SW` 4 when the par file has none; PINT and the injection
+  apply neither unless asked. Add `CORRECT_TROPOSPHERE N` and an explicit `NE_SW` to par files used with
+  TEMPO2.
 
 ## Follow-up mode (task E)
 
@@ -973,11 +1001,11 @@ Follow-up (task E): every pulsar with `"SNR": 0`; known pulsars by `pint_polycos
 
 ## Known issues
 
-As of INCEPTION version 1.0.12.
+As of INCEPTION version 1.0.13.
 
 | Issue | Effect | Work-around |
 |---|---|---|
-| Not verified for timing-grade injections (µs or better across epochs) | In-built model: no Solar System Shapiro delay or topocentric TT–TDB term (up to tens of µs), TT(TAI) without observatory clock corrections while its par files state `CLK TT(BIPM)` (about 27 µs), fixed `EPHEM DE421` in par files, no solar-wind dispersion, DM delay without the Earth's Doppler shift (about 1e-4 of the delay). PINT injections: match PINT to a few ns per channel in local tests. No µs-level validation with folded data yet | Negligible for searches and folding. If the user needs timing-grade injections, tell them this will be addressed in a future version. |
+| In-built model not timing-grade (µs or better across epochs) | No Solar System Shapiro delay or topocentric TT–TDB term (up to tens of µs), TT(TAI) without observatory clock corrections while its par files state `CLK TT(BIPM)` (about 27 µs), fixed `EPHEM DE421` in par files, no solar-wind dispersion, DM delay without the Earth's Doppler shift (about 1e-4 of the delay) | Negligible for searches and folding. For timing, inject from a par file (`pint_polycos`), which is timing-grade. |
 | `.polycos` files written by older INCEPTION versions | PINT wrote wrong reference phases for times before the par file's `TZRMJD`, so injections with such a file jump in phase every few minutes | Regenerate the polycos from the par file. |
 | `inj_DM` with PINT pulsars | The search uses the plan's `DM`, which is an offset for `pint_polycos` pulsars | Use the full DM plan, or give the DMs explicitly. |
 | Candidate folding's `delete_inj_fb` waits for the parfold | If the parfold is removed from `main.nf`, injected filterbanks are never deleted | Delete them yourself (with approval) or keep the parfold. |
@@ -999,6 +1027,7 @@ As of INCEPTION version 1.0.12.
 | `--offline` fails at once for PINT | Clock files not cached. Run once online with `--cache`. |
 | Phase jumps every few minutes in a PINT injection | A `.polycos` file from an older INCEPTION version (see *Known issues*); regenerate it from the par file. |
 | Annual or frequency-dependent trend in timing residuals of a PINT injection | `.polycos` covers only the band centre (user-supplied, INCEPTION 1.0.11 or earlier, or `pint_nfreq: 1`); regenerate from the par file with `pint_nfreq` above 1. |
+| Constant offset of about 27.7 µs, or of half a sampling time, in timing residuals of a PINT injection | INCEPTION 1.0.12 or earlier: polycos ignored the par file's `CLK` (27.67 µs for `TT(TAI)`) and samples were evaluated at their start. Fixed in 1.0.13; reinject. |
 | PINT injections at different epochs not phase-connected | Par file has no `TZRMJD` (warning in the log); add `TZRMJD`, `TZRSITE`, `TZRFRQ` (see *Multi-epoch injections*). |
 | `create_parfile` rejected | Must be `"par"` or `"pulsarx"`. |
 | Recovered S/N differs from injected | `SNR_def` against the folding software; smearing, scattering, masks and RFI lower it. |
